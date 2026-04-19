@@ -1,0 +1,96 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+//! Characterization snapshots for the Java backend.
+//!
+//! Captures the full set of generated `.java` files for a small set of
+//! representative fixtures. The snapshots act as a regression detector
+//! for the upcoming `LangOracle` extraction (P1.3) and marker-based
+//! file splitting (P1.2): any unintentional change in generated output
+//! surfaces as a snapshot diff that requires explicit acceptance.
+//!
+//! Review with `cargo insta review`; accept all with `cargo insta accept`.
+
+use anyhow::Result;
+use camino::{Utf8Path, Utf8PathBuf};
+use std::fs;
+use uniffi_bindgen::{BindgenLoader, BindgenPaths};
+use uniffi_bindgen_java::{GenerateOptions, generate};
+use uniffi_testing::UniFFITestHelper;
+
+fn snapshot_fixture(fixture_name: &str, snapshot_name: &str) -> Result<()> {
+    let test_helper = UniFFITestHelper::new(fixture_name)?;
+    let key = Utf8Path::new(".")
+        .join("tests")
+        .join("snapshots")
+        .join(snapshot_name);
+    let out_dir = test_helper.create_out_dir(env!("CARGO_TARGET_TMPDIR"), &key)?;
+    let cdylib_path = test_helper.cdylib_path()?;
+
+    let mut paths = BindgenPaths::default();
+    paths.add_cargo_metadata_layer(false)?;
+    let loader = BindgenLoader::new(paths);
+
+    generate(
+        &loader,
+        &GenerateOptions {
+            source: cdylib_path,
+            out_dir: out_dir.clone(),
+            format: false,
+            crate_filter: None,
+        },
+    )?;
+
+    let combined = collect_generated_files(&out_dir)?;
+
+    let mut settings = insta::Settings::clone_current();
+    settings.set_snapshot_path("snapshots");
+    settings.set_prepend_module_to_snapshot(false);
+    // Cargo embeds a 16-hex-char build hash in cdylib filenames
+    // (e.g. `uniffi_coverall-6022c3c5ece67733`) that varies per machine
+    // and per build. The hash leaks into generated `findLibraryName()`
+    // bodies. Redact it so snapshots are reproducible across CI and dev.
+    settings.add_filter(r"-[0-9a-f]{16}\b", "-CARGO_BUILD_HASH");
+    settings.bind(|| {
+        insta::assert_snapshot!(snapshot_name, combined);
+    });
+    Ok(())
+}
+
+fn collect_generated_files(out_dir: &Utf8PathBuf) -> Result<String> {
+    let pattern = out_dir.join("**/*.java");
+    let mut entries: Vec<(String, String)> = Vec::new();
+    for path in glob::glob(pattern.as_str())? {
+        let path = path?;
+        let rel = path
+            .strip_prefix(out_dir.as_std_path())?
+            .to_string_lossy()
+            .replace('\\', "/");
+        let content = fs::read_to_string(&path)?;
+        entries.push((rel, content));
+    }
+    entries.sort_by(|a, b| a.0.cmp(&b.0));
+
+    let combined = entries
+        .into_iter()
+        .map(|(rel, content)| format!("// === FILE: {} ===\n{}", rel, content))
+        .collect::<Vec<_>>()
+        .join("\n");
+    Ok(combined)
+}
+
+#[test]
+fn snapshot_arithmetic() -> Result<()> {
+    snapshot_fixture("uniffi-example-arithmetic", "arithmetic")
+}
+
+#[test]
+fn snapshot_geometry() -> Result<()> {
+    snapshot_fixture("uniffi-example-geometry", "geometry")
+}
+
+#[test]
+fn snapshot_coverall() -> Result<()> {
+    snapshot_fixture("uniffi-fixture-coverall", "coverall")
+}
