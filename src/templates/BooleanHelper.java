@@ -1,3 +1,5 @@
+
+// UNIFFI:FILE FfiConverterBoolean.java
 package {{ config.package_name() }};
 
 public enum FfiConverterBoolean implements FfiConverter<java.lang.Boolean, java.lang.Byte> {

@@ -1,3 +1,5 @@
+
+// UNIFFI:FILE FfiConverterInteger.java
 package {{ config.package_name() }};
 
 public enum FfiConverterInteger implements FfiConverter<java.lang.Integer, java.lang.Integer>{

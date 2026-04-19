@@ -1,5 +1,7 @@
+
 {%- import "macros.java" as java %}
 
+// UNIFFI:FILE AutoCloseableHelper.java
 package {{ config.package_name() }};
 
 import java.util.List;
@@ -57,6 +59,7 @@ public interface AutoCloseableHelper {
             });
     }
 }
+// UNIFFI:FILE NoHandle.java
 package {{ config.package_name() }};
 
 public class NoHandle {
@@ -67,6 +70,7 @@ public class NoHandle {
     public static final NoHandle INSTANCE = new NoHandle();
 }
 
+// UNIFFI:FILE UniffiWithHandle.java
 package {{ config.package_name() }};
 
 // Marker class for constructors that accept a raw handle.

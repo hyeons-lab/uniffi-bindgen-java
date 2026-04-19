@@ -1,3 +1,5 @@
+
+// UNIFFI:FILE UniffiRustCallStatus.java
 package {{ config.package_name() }};
 
 public final class UniffiRustCallStatus {
@@ -70,6 +72,7 @@ public final class UniffiRustCallStatus {
     }
 }
 
+// UNIFFI:FILE InternalException.java
 package {{ config.package_name() }};
 
 public class InternalException extends java.lang.RuntimeException {
@@ -78,12 +81,14 @@ public class InternalException extends java.lang.RuntimeException {
     }
 }
 
+// UNIFFI:FILE UniffiRustCallStatusErrorHandler.java
 package {{ config.package_name() }};
 
 public interface UniffiRustCallStatusErrorHandler<E extends java.lang.Exception> {
     E lift(java.lang.foreign.MemorySegment errorBuf);
 }
 
+// UNIFFI:FILE UniffiSlabAllocator.java
 package {{ config.package_name() }};
 
 // Thread-local slab allocator for short-lived native memory segments.
@@ -136,6 +141,7 @@ class UniffiSlabAllocator implements java.lang.foreign.SegmentAllocator {
     }
 }
 
+// UNIFFI:FILE UniffiNullRustCallStatusErrorHandler.java
 package {{ config.package_name() }};
 
 // UniffiRustCallStatusErrorHandler implementation for times when we don't expect a CALL_ERROR
@@ -147,6 +153,7 @@ class UniffiNullRustCallStatusErrorHandler implements UniffiRustCallStatusErrorH
     }
 }
 
+// UNIFFI:FILE UniffiHelpers.java
 package {{ config.package_name() }};
 
 // Helpers for calling Rust

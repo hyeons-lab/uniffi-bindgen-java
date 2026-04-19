@@ -1,3 +1,5 @@
+
+// UNIFFI:FILE AndroidSystemCleaner.java
 package {{ config.package_name() }};
 
 import android.os.Build;
@@ -19,6 +21,7 @@ class AndroidSystemCleaner implements UniffiCleaner {
     }
 }
 
+// UNIFFI:FILE AndroidSystemCleanable.java
 package {{ config.package_name() }};
 
 import android.os.Build;

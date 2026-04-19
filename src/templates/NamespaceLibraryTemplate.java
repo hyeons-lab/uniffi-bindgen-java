@@ -1,3 +1,5 @@
+
+// UNIFFI:FILE NamespaceLibrary.java
 package {{ config.package_name() }};
 
 final class NamespaceLibrary {
@@ -45,6 +47,7 @@ final class NamespaceLibrary {
 {%- for def in ci.ffi_definitions() %}
 {%- match def %}
 {%- when FfiDefinition::CallbackFunction(callback) %}
+// UNIFFI:FILE {{ callback.name()|ffi_callback_name }}.java
 package {{ config.package_name() }};
 
 public final class {{ callback.name()|ffi_callback_name }} {
@@ -82,6 +85,7 @@ public final class {{ callback.name()|ffi_callback_name }} {
     }
 }
 {%- when FfiDefinition::Struct(ffi_struct) %}
+// UNIFFI:FILE {{ ffi_struct.name()|ffi_struct_name }}.java
 package {{ config.package_name() }};
 
 public final class {{ ffi_struct.name()|ffi_struct_name }} {
@@ -129,6 +133,7 @@ public final class {{ ffi_struct.name()|ffi_struct_name }} {
 {%- endmatch %}
 {%- endfor %}
 
+// UNIFFI:FILE UniffiLib.java
 package {{ config.package_name() }};
 
 // FFM-based library binding. Each FFI function gets a MethodHandle and a wrapper method.
@@ -200,6 +205,7 @@ final class UniffiLib {
     }
 }
 
+// UNIFFI:FILE UniffiInitializer.java
 package {{ config.package_name() }};
 
 /**

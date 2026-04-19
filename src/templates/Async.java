@@ -1,3 +1,5 @@
+
+// UNIFFI:FILE UniffiAsyncHelpers.java
 package {{ config.package_name() }};
 
 public final class UniffiAsyncHelpers {

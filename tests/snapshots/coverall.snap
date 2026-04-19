@@ -5,7 +5,6 @@ expression: combined
 // === FILE: uniffi/coverall/AutoCloseableHelper.java ===
 package uniffi.coverall;
 
-
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -66,7 +65,6 @@ public interface AutoCloseableHelper {
 package uniffi.coverall;
 
 
-
 public enum Color {
   RED,
   BLUE,
@@ -82,7 +80,6 @@ public enum Color {
 
 // === FILE: uniffi/coverall/ComplexException.java ===
 package uniffi.coverall;
-
 
 
 public class ComplexException extends java.lang.Exception {
@@ -162,7 +159,6 @@ public class ComplexException extends java.lang.Exception {
 // === FILE: uniffi/coverall/ComplexExceptionErrorHandler.java ===
 package uniffi.coverall;
 
-
 public class ComplexExceptionErrorHandler implements UniffiRustCallStatusErrorHandler<ComplexException> {
   @Override
   public ComplexException lift(java.lang.foreign.MemorySegment errorBuf){
@@ -173,7 +169,6 @@ public class ComplexExceptionErrorHandler implements UniffiRustCallStatusErrorHa
 
 // === FILE: uniffi/coverall/ComplexMacroException.java ===
 package uniffi.coverall;
-
 
 
 public class ComplexMacroException extends java.lang.Exception {
@@ -253,7 +248,6 @@ public class ComplexMacroException extends java.lang.Exception {
 // === FILE: uniffi/coverall/ComplexMacroExceptionErrorHandler.java ===
 package uniffi.coverall;
 
-
 public class ComplexMacroExceptionErrorHandler implements UniffiRustCallStatusErrorHandler<ComplexMacroException> {
   @Override
   public ComplexMacroException lift(java.lang.foreign.MemorySegment errorBuf){
@@ -264,7 +258,6 @@ public class ComplexMacroExceptionErrorHandler implements UniffiRustCallStatusEr
 
 // === FILE: uniffi/coverall/Coverall.java ===
 package uniffi.coverall;
-
 
 import java.util.List;
 import java.util.Map;
@@ -872,7 +865,6 @@ public class Coverall {
 package uniffi.coverall;
 
 
-
 public class CoverallException extends java.lang.Exception {
     private CoverallException(java.lang.String message) {
       super(message);
@@ -891,7 +883,6 @@ public class CoverallException extends java.lang.Exception {
 // === FILE: uniffi/coverall/CoverallExceptionErrorHandler.java ===
 package uniffi.coverall;
 
-
 public class CoverallExceptionErrorHandler implements UniffiRustCallStatusErrorHandler<CoverallException> {
   @Override
   public CoverallException lift(java.lang.foreign.MemorySegment errorBuf){
@@ -902,7 +893,6 @@ public class CoverallExceptionErrorHandler implements UniffiRustCallStatusErrorH
 
 // === FILE: uniffi/coverall/CoverallFlatException.java ===
 package uniffi.coverall;
-
 
 
 public class CoverallFlatException extends java.lang.Exception {
@@ -923,7 +913,6 @@ public class CoverallFlatException extends java.lang.Exception {
 // === FILE: uniffi/coverall/CoverallFlatExceptionErrorHandler.java ===
 package uniffi.coverall;
 
-
 public class CoverallFlatExceptionErrorHandler implements UniffiRustCallStatusErrorHandler<CoverallFlatException> {
   @Override
   public CoverallFlatException lift(java.lang.foreign.MemorySegment errorBuf){
@@ -934,7 +923,6 @@ public class CoverallFlatExceptionErrorHandler implements UniffiRustCallStatusEr
 
 // === FILE: uniffi/coverall/CoverallFlatMacroException.java ===
 package uniffi.coverall;
-
 
 
 public class CoverallFlatMacroException extends java.lang.Exception {
@@ -955,7 +943,6 @@ public class CoverallFlatMacroException extends java.lang.Exception {
 // === FILE: uniffi/coverall/CoverallFlatMacroExceptionErrorHandler.java ===
 package uniffi.coverall;
 
-
 public class CoverallFlatMacroExceptionErrorHandler implements UniffiRustCallStatusErrorHandler<CoverallFlatMacroException> {
   @Override
   public CoverallFlatMacroException lift(java.lang.foreign.MemorySegment errorBuf){
@@ -966,7 +953,6 @@ public class CoverallFlatMacroExceptionErrorHandler implements UniffiRustCallSta
 
 // === FILE: uniffi/coverall/CoverallMacroException.java ===
 package uniffi.coverall;
-
 
 
 public class CoverallMacroException extends java.lang.Exception {
@@ -987,7 +973,6 @@ public class CoverallMacroException extends java.lang.Exception {
 // === FILE: uniffi/coverall/CoverallMacroExceptionErrorHandler.java ===
 package uniffi.coverall;
 
-
 public class CoverallMacroExceptionErrorHandler implements UniffiRustCallStatusErrorHandler<CoverallMacroException> {
   @Override
   public CoverallMacroException lift(java.lang.foreign.MemorySegment errorBuf){
@@ -998,7 +983,6 @@ public class CoverallMacroExceptionErrorHandler implements UniffiRustCallStatusE
 
 // === FILE: uniffi/coverall/CoverallRichErrorNoVariantData.java ===
 package uniffi.coverall;
-
 
 
 public class CoverallRichErrorNoVariantData extends java.lang.Exception {
@@ -1024,7 +1008,6 @@ public class CoverallRichErrorNoVariantData extends java.lang.Exception {
 // === FILE: uniffi/coverall/CoverallRichErrorNoVariantDataErrorHandler.java ===
 package uniffi.coverall;
 
-
 public class CoverallRichErrorNoVariantDataErrorHandler implements UniffiRustCallStatusErrorHandler<CoverallRichErrorNoVariantData> {
   @Override
   public CoverallRichErrorNoVariantData lift(java.lang.foreign.MemorySegment errorBuf){
@@ -1035,7 +1018,6 @@ public class CoverallRichErrorNoVariantDataErrorHandler implements UniffiRustCal
 
 // === FILE: uniffi/coverall/Coveralls.java ===
 package uniffi.coverall;
-
 public class Coveralls implements AutoCloseable, CoverallsInterface {
   protected long handle;
   protected UniffiCleaner.Cleanable cleanable;
@@ -1880,7 +1862,6 @@ public class Coveralls implements AutoCloseable, CoverallsInterface {
 
 // === FILE: uniffi/coverall/CoverallsInterface.java ===
 package uniffi.coverall;
-
 public interface CoverallsInterface {
     
     /**
@@ -1951,7 +1932,6 @@ public interface CoverallsInterface {
 
 // === FILE: uniffi/coverall/DictWithDefaults.java ===
 package uniffi.coverall;
-
 public class DictWithDefaults {
     private java.lang.String name;
     private java.lang.String category;
@@ -2056,7 +2036,6 @@ public class DictWithDefaults {
 
 // === FILE: uniffi/coverall/EmptyStruct.java ===
 package uniffi.coverall;
-
 public class EmptyStruct {
     @Override
     public boolean equals(java.lang.Object other) {
@@ -2076,7 +2055,6 @@ public class EmptyStruct {
 
 // === FILE: uniffi/coverall/ErrorDict.java ===
 package uniffi.coverall;
-
 public class ErrorDict {
     private ComplexException complexError;
     private RootException rootError;
@@ -2153,7 +2131,6 @@ public class ErrorDict {
 
 // === FILE: uniffi/coverall/FalliblePatch.java ===
 package uniffi.coverall;
-
 public class FalliblePatch implements AutoCloseable, FalliblePatchInterface {
   protected long handle;
   protected UniffiCleaner.Cleanable cleanable;
@@ -2299,7 +2276,6 @@ public class FalliblePatch implements AutoCloseable, FalliblePatchInterface {
 
 // === FILE: uniffi/coverall/FalliblePatchInterface.java ===
 package uniffi.coverall;
-
 public interface FalliblePatchInterface {
     
 }
@@ -2307,7 +2283,6 @@ public interface FalliblePatchInterface {
 
 // === FILE: uniffi/coverall/FfiConverter.java ===
 package uniffi.coverall;
-
 
 // The FfiConverter interface handles converter types to and from the FFI
 //
@@ -2377,7 +2352,6 @@ public interface FfiConverter<JavaType, FfiType> {
 // === FILE: uniffi/coverall/FfiConverterBoolean.java ===
 package uniffi.coverall;
 
-
 public enum FfiConverterBoolean implements FfiConverter<java.lang.Boolean, java.lang.Byte> {
   INSTANCE;
 
@@ -2408,9 +2382,9 @@ public enum FfiConverterBoolean implements FfiConverter<java.lang.Boolean, java.
 }
 
 
+
 // === FILE: uniffi/coverall/FfiConverterByte.java ===
 package uniffi.coverall;
-
 
 public enum FfiConverterByte implements FfiConverter<java.lang.Byte, java.lang.Byte>{
   INSTANCE;
@@ -2442,9 +2416,9 @@ public enum FfiConverterByte implements FfiConverter<java.lang.Byte, java.lang.B
 }
 
 
+
 // === FILE: uniffi/coverall/FfiConverterByteArray.java ===
 package uniffi.coverall;
-
 
 public enum FfiConverterByteArray implements FfiConverterRustBuffer<byte[]>{
   INSTANCE;
@@ -2471,9 +2445,9 @@ public enum FfiConverterByteArray implements FfiConverterRustBuffer<byte[]>{
 
 
 
+
 // === FILE: uniffi/coverall/FfiConverterCallbackInterface.java ===
 package uniffi.coverall;
-
 
 public abstract class FfiConverterCallbackInterface<CallbackInterface extends java.lang.Object> implements FfiConverter<CallbackInterface, java.lang.Long> {
     // Magic number for the Rust proxy to call using the same mechanism as every other method,
@@ -2520,7 +2494,6 @@ public abstract class FfiConverterCallbackInterface<CallbackInterface extends ja
 // === FILE: uniffi/coverall/FfiConverterDouble.java ===
 package uniffi.coverall;
 
-
 public enum FfiConverterDouble implements FfiConverter<java.lang.Double, java.lang.Double>{
   INSTANCE;
 
@@ -2551,9 +2524,9 @@ public enum FfiConverterDouble implements FfiConverter<java.lang.Double, java.la
 }
 
 
+
 // === FILE: uniffi/coverall/FfiConverterFloat.java ===
 package uniffi.coverall;
-
 
 public enum FfiConverterFloat implements FfiConverter<java.lang.Float, java.lang.Float>{
   INSTANCE;
@@ -2585,9 +2558,9 @@ public enum FfiConverterFloat implements FfiConverter<java.lang.Float, java.lang
 }
 
 
+
 // === FILE: uniffi/coverall/FfiConverterInt32Array.java ===
 package uniffi.coverall;
-
 
 public enum FfiConverterInt32Array implements FfiConverterRustBuffer<int[]> {
     INSTANCE;
@@ -2623,7 +2596,6 @@ public enum FfiConverterInt32Array implements FfiConverterRustBuffer<int[]> {
 // === FILE: uniffi/coverall/FfiConverterInteger.java ===
 package uniffi.coverall;
 
-
 public enum FfiConverterInteger implements FfiConverter<java.lang.Integer, java.lang.Integer>{
   INSTANCE;
 
@@ -2654,9 +2626,9 @@ public enum FfiConverterInteger implements FfiConverter<java.lang.Integer, java.
 }
 
 
+
 // === FILE: uniffi/coverall/FfiConverterLong.java ===
 package uniffi.coverall;
-
 
 public enum FfiConverterLong implements FfiConverter<java.lang.Long, java.lang.Long> {
     INSTANCE;
@@ -2689,9 +2661,9 @@ public enum FfiConverterLong implements FfiConverter<java.lang.Long, java.lang.L
 
 
 
+
 // === FILE: uniffi/coverall/FfiConverterMapIntegerLong.java ===
 package uniffi.coverall;
-
 
 public enum FfiConverterMapIntegerLong implements FfiConverterRustBuffer<java.util.Map<java.lang.Integer, java.lang.Long>> {
     INSTANCE;
@@ -2740,7 +2712,6 @@ public enum FfiConverterMapIntegerLong implements FfiConverterRustBuffer<java.ut
 // === FILE: uniffi/coverall/FfiConverterMapStringLong.java ===
 package uniffi.coverall;
 
-
 public enum FfiConverterMapStringLong implements FfiConverterRustBuffer<java.util.Map<java.lang.String, java.lang.Long>> {
     INSTANCE;
 
@@ -2788,7 +2759,6 @@ public enum FfiConverterMapStringLong implements FfiConverterRustBuffer<java.uti
 // === FILE: uniffi/coverall/FfiConverterMapStringOptionalTypeCoveralls.java ===
 package uniffi.coverall;
 
-
 public enum FfiConverterMapStringOptionalTypeCoveralls implements FfiConverterRustBuffer<java.util.Map<java.lang.String, Coveralls>> {
     INSTANCE;
 
@@ -2834,7 +2804,6 @@ public enum FfiConverterMapStringOptionalTypeCoveralls implements FfiConverterRu
 
 // === FILE: uniffi/coverall/FfiConverterMapStringString.java ===
 package uniffi.coverall;
-
 
 public enum FfiConverterMapStringString implements FfiConverterRustBuffer<java.util.Map<java.lang.String, java.lang.String>> {
     INSTANCE;
@@ -2883,7 +2852,6 @@ public enum FfiConverterMapStringString implements FfiConverterRustBuffer<java.u
 // === FILE: uniffi/coverall/FfiConverterMapStringTypeCoverallFlatError.java ===
 package uniffi.coverall;
 
-
 public enum FfiConverterMapStringTypeCoverallFlatError implements FfiConverterRustBuffer<java.util.Map<java.lang.String, CoverallFlatException>> {
     INSTANCE;
 
@@ -2930,7 +2898,6 @@ public enum FfiConverterMapStringTypeCoverallFlatError implements FfiConverterRu
 
 // === FILE: uniffi/coverall/FfiConverterOptionalBoolean.java ===
 package uniffi.coverall;
-
 public enum FfiConverterOptionalBoolean implements FfiConverterRustBuffer<java.lang.Boolean> {
   INSTANCE;
 
@@ -2967,7 +2934,6 @@ public enum FfiConverterOptionalBoolean implements FfiConverterRustBuffer<java.l
 
 // === FILE: uniffi/coverall/FfiConverterOptionalByte.java ===
 package uniffi.coverall;
-
 public enum FfiConverterOptionalByte implements FfiConverterRustBuffer<java.lang.Byte> {
   INSTANCE;
 
@@ -3004,7 +2970,6 @@ public enum FfiConverterOptionalByte implements FfiConverterRustBuffer<java.lang
 
 // === FILE: uniffi/coverall/FfiConverterOptionalByteArray.java ===
 package uniffi.coverall;
-
 public enum FfiConverterOptionalByteArray implements FfiConverterRustBuffer<byte[]> {
   INSTANCE;
 
@@ -3041,7 +3006,6 @@ public enum FfiConverterOptionalByteArray implements FfiConverterRustBuffer<byte
 
 // === FILE: uniffi/coverall/FfiConverterOptionalDouble.java ===
 package uniffi.coverall;
-
 public enum FfiConverterOptionalDouble implements FfiConverterRustBuffer<java.lang.Double> {
   INSTANCE;
 
@@ -3078,7 +3042,6 @@ public enum FfiConverterOptionalDouble implements FfiConverterRustBuffer<java.la
 
 // === FILE: uniffi/coverall/FfiConverterOptionalFloat.java ===
 package uniffi.coverall;
-
 public enum FfiConverterOptionalFloat implements FfiConverterRustBuffer<java.lang.Float> {
   INSTANCE;
 
@@ -3115,7 +3078,6 @@ public enum FfiConverterOptionalFloat implements FfiConverterRustBuffer<java.lan
 
 // === FILE: uniffi/coverall/FfiConverterOptionalLong.java ===
 package uniffi.coverall;
-
 public enum FfiConverterOptionalLong implements FfiConverterRustBuffer<java.lang.Long> {
   INSTANCE;
 
@@ -3152,7 +3114,6 @@ public enum FfiConverterOptionalLong implements FfiConverterRustBuffer<java.lang
 
 // === FILE: uniffi/coverall/FfiConverterOptionalShort.java ===
 package uniffi.coverall;
-
 public enum FfiConverterOptionalShort implements FfiConverterRustBuffer<java.lang.Short> {
   INSTANCE;
 
@@ -3189,7 +3150,6 @@ public enum FfiConverterOptionalShort implements FfiConverterRustBuffer<java.lan
 
 // === FILE: uniffi/coverall/FfiConverterOptionalString.java ===
 package uniffi.coverall;
-
 public enum FfiConverterOptionalString implements FfiConverterRustBuffer<java.lang.String> {
   INSTANCE;
 
@@ -3226,7 +3186,6 @@ public enum FfiConverterOptionalString implements FfiConverterRustBuffer<java.la
 
 // === FILE: uniffi/coverall/FfiConverterOptionalTypeComplexError.java ===
 package uniffi.coverall;
-
 public enum FfiConverterOptionalTypeComplexError implements FfiConverterRustBuffer<ComplexException> {
   INSTANCE;
 
@@ -3263,7 +3222,6 @@ public enum FfiConverterOptionalTypeComplexError implements FfiConverterRustBuff
 
 // === FILE: uniffi/coverall/FfiConverterOptionalTypeCoveralls.java ===
 package uniffi.coverall;
-
 public enum FfiConverterOptionalTypeCoveralls implements FfiConverterRustBuffer<Coveralls> {
   INSTANCE;
 
@@ -3300,7 +3258,6 @@ public enum FfiConverterOptionalTypeCoveralls implements FfiConverterRustBuffer<
 
 // === FILE: uniffi/coverall/FfiConverterOptionalTypeErrorDict.java ===
 package uniffi.coverall;
-
 public enum FfiConverterOptionalTypeErrorDict implements FfiConverterRustBuffer<ErrorDict> {
   INSTANCE;
 
@@ -3337,7 +3294,6 @@ public enum FfiConverterOptionalTypeErrorDict implements FfiConverterRustBuffer<
 
 // === FILE: uniffi/coverall/FfiConverterOptionalTypeIFirst.java ===
 package uniffi.coverall;
-
 public enum FfiConverterOptionalTypeIFirst implements FfiConverterRustBuffer<IFirst> {
   INSTANCE;
 
@@ -3374,7 +3330,6 @@ public enum FfiConverterOptionalTypeIFirst implements FfiConverterRustBuffer<IFi
 
 // === FILE: uniffi/coverall/FfiConverterOptionalTypeISecond.java ===
 package uniffi.coverall;
-
 public enum FfiConverterOptionalTypeISecond implements FfiConverterRustBuffer<ISecond> {
   INSTANCE;
 
@@ -3411,7 +3366,6 @@ public enum FfiConverterOptionalTypeISecond implements FfiConverterRustBuffer<IS
 
 // === FILE: uniffi/coverall/FfiConverterOptionalTypeNodeTrait.java ===
 package uniffi.coverall;
-
 public enum FfiConverterOptionalTypeNodeTrait implements FfiConverterRustBuffer<NodeTrait> {
   INSTANCE;
 
@@ -3448,7 +3402,6 @@ public enum FfiConverterOptionalTypeNodeTrait implements FfiConverterRustBuffer<
 
 // === FILE: uniffi/coverall/FfiConverterOptionalTypeRootError.java ===
 package uniffi.coverall;
-
 public enum FfiConverterOptionalTypeRootError implements FfiConverterRustBuffer<RootException> {
   INSTANCE;
 
@@ -3481,9 +3434,9 @@ public enum FfiConverterOptionalTypeRootError implements FfiConverterRustBuffer<
 }
 
 
+
 // === FILE: uniffi/coverall/FfiConverterRustBuffer.java ===
 package uniffi.coverall;
-
 
 // FfiConverter that uses `RustBuffer` as the FfiType
 public interface FfiConverterRustBuffer<JavaType> extends FfiConverter<JavaType, java.lang.foreign.MemorySegment> {
@@ -3497,9 +3450,9 @@ public interface FfiConverterRustBuffer<JavaType> extends FfiConverter<JavaType,
     }
 }
 
+
 // === FILE: uniffi/coverall/FfiConverterSequenceOptionalTypeCoveralls.java ===
 package uniffi.coverall;
-
 
 public enum FfiConverterSequenceOptionalTypeCoveralls implements FfiConverterRustBuffer<java.util.List<Coveralls>> {
   INSTANCE;
@@ -3529,7 +3482,6 @@ public enum FfiConverterSequenceOptionalTypeCoveralls implements FfiConverterRus
 
 // === FILE: uniffi/coverall/FfiConverterSequenceString.java ===
 package uniffi.coverall;
-
 
 public enum FfiConverterSequenceString implements FfiConverterRustBuffer<java.util.List<java.lang.String>> {
   INSTANCE;
@@ -3563,7 +3515,6 @@ public enum FfiConverterSequenceString implements FfiConverterRustBuffer<java.ut
 // === FILE: uniffi/coverall/FfiConverterSequenceTypeCoverallFlatError.java ===
 package uniffi.coverall;
 
-
 public enum FfiConverterSequenceTypeCoverallFlatError implements FfiConverterRustBuffer<java.util.List<CoverallFlatException>> {
   INSTANCE;
 
@@ -3595,7 +3546,6 @@ public enum FfiConverterSequenceTypeCoverallFlatError implements FfiConverterRus
 
 // === FILE: uniffi/coverall/FfiConverterSequenceTypeNodeTrait.java ===
 package uniffi.coverall;
-
 
 public enum FfiConverterSequenceTypeNodeTrait implements FfiConverterRustBuffer<java.util.List<NodeTrait>> {
   INSTANCE;
@@ -3629,7 +3579,6 @@ public enum FfiConverterSequenceTypeNodeTrait implements FfiConverterRustBuffer<
 // === FILE: uniffi/coverall/FfiConverterSequenceTypeRepair.java ===
 package uniffi.coverall;
 
-
 public enum FfiConverterSequenceTypeRepair implements FfiConverterRustBuffer<java.util.List<Repair>> {
   INSTANCE;
 
@@ -3661,7 +3610,6 @@ public enum FfiConverterSequenceTypeRepair implements FfiConverterRustBuffer<jav
 
 // === FILE: uniffi/coverall/FfiConverterSequenceTypeRootError.java ===
 package uniffi.coverall;
-
 
 public enum FfiConverterSequenceTypeRootError implements FfiConverterRustBuffer<java.util.List<RootException>> {
   INSTANCE;
@@ -3695,7 +3643,6 @@ public enum FfiConverterSequenceTypeRootError implements FfiConverterRustBuffer<
 // === FILE: uniffi/coverall/FfiConverterSequenceTypeStringUtil.java ===
 package uniffi.coverall;
 
-
 public enum FfiConverterSequenceTypeStringUtil implements FfiConverterRustBuffer<java.util.List<StringUtil>> {
   INSTANCE;
 
@@ -3728,7 +3675,6 @@ public enum FfiConverterSequenceTypeStringUtil implements FfiConverterRustBuffer
 // === FILE: uniffi/coverall/FfiConverterShort.java ===
 package uniffi.coverall;
 
-
 public enum FfiConverterShort implements FfiConverter<java.lang.Short, java.lang.Short>{
   INSTANCE;
 
@@ -3759,9 +3705,9 @@ public enum FfiConverterShort implements FfiConverter<java.lang.Short, java.lang
 }
 
 
+
 // === FILE: uniffi/coverall/FfiConverterString.java ===
 package uniffi.coverall;
-
 
 public enum FfiConverterString implements FfiConverter<java.lang.String, java.lang.foreign.MemorySegment> {
     INSTANCE;
@@ -3829,9 +3775,9 @@ public enum FfiConverterString implements FfiConverter<java.lang.String, java.la
 
 
 
+
 // === FILE: uniffi/coverall/FfiConverterTimestamp.java ===
 package uniffi.coverall;
-
 
 public enum FfiConverterTimestamp implements FfiConverterRustBuffer<java.time.Instant> {
     INSTANCE;
@@ -3878,6 +3824,7 @@ public enum FfiConverterTimestamp implements FfiConverterRustBuffer<java.time.In
         buf.putInt(epochOffset.getNano());
     }
 }
+
 
 
 // This template implements a class for working with a Rust struct via a handle
@@ -3976,9 +3923,9 @@ public enum FfiConverterTimestamp implements FfiConverterRustBuffer<java.time.In
 //
 // [1] https://stackoverflow.com/questions/24376768/can-java-finalize-an-object-when-it-is-still-in-scope/24380219
 //
+
 // === FILE: uniffi/coverall/FfiConverterTypeColor.java ===
 package uniffi.coverall;
-
 
 public enum FfiConverterTypeColor implements FfiConverterRustBuffer<Color> {
     INSTANCE;
@@ -4007,9 +3954,9 @@ public enum FfiConverterTypeColor implements FfiConverterRustBuffer<Color> {
 
 
 
+
 // === FILE: uniffi/coverall/FfiConverterTypeComplexError.java ===
 package uniffi.coverall;
-
 
 public enum FfiConverterTypeComplexError implements FfiConverterRustBuffer<ComplexException> {
     INSTANCE;
@@ -4074,9 +4021,9 @@ public enum FfiConverterTypeComplexError implements FfiConverterRustBuffer<Compl
 
 
 
+
 // === FILE: uniffi/coverall/FfiConverterTypeComplexMacroError.java ===
 package uniffi.coverall;
-
 
 public enum FfiConverterTypeComplexMacroError implements FfiConverterRustBuffer<ComplexMacroException> {
     INSTANCE;
@@ -4141,9 +4088,9 @@ public enum FfiConverterTypeComplexMacroError implements FfiConverterRustBuffer<
 
 
 
+
 // === FILE: uniffi/coverall/FfiConverterTypeCoverallError.java ===
 package uniffi.coverall;
-
 
 public enum FfiConverterTypeCoverallError implements FfiConverterRustBuffer<CoverallException> {
     INSTANCE;
@@ -4174,9 +4121,9 @@ public enum FfiConverterTypeCoverallError implements FfiConverterRustBuffer<Cove
 
 
 
+
 // === FILE: uniffi/coverall/FfiConverterTypeCoverallFlatError.java ===
 package uniffi.coverall;
-
 
 public enum FfiConverterTypeCoverallFlatError implements FfiConverterRustBuffer<CoverallFlatException> {
     INSTANCE;
@@ -4207,9 +4154,9 @@ public enum FfiConverterTypeCoverallFlatError implements FfiConverterRustBuffer<
 
 
 
+
 // === FILE: uniffi/coverall/FfiConverterTypeCoverallFlatMacroError.java ===
 package uniffi.coverall;
-
 
 public enum FfiConverterTypeCoverallFlatMacroError implements FfiConverterRustBuffer<CoverallFlatMacroException> {
     INSTANCE;
@@ -4240,9 +4187,9 @@ public enum FfiConverterTypeCoverallFlatMacroError implements FfiConverterRustBu
 
 
 
+
 // === FILE: uniffi/coverall/FfiConverterTypeCoverallMacroError.java ===
 package uniffi.coverall;
-
 
 public enum FfiConverterTypeCoverallMacroError implements FfiConverterRustBuffer<CoverallMacroException> {
     INSTANCE;
@@ -4273,9 +4220,9 @@ public enum FfiConverterTypeCoverallMacroError implements FfiConverterRustBuffer
 
 
 
+
 // === FILE: uniffi/coverall/FfiConverterTypeCoverallRichErrorNoVariantData.java ===
 package uniffi.coverall;
-
 
 public enum FfiConverterTypeCoverallRichErrorNoVariantData implements FfiConverterRustBuffer<CoverallRichErrorNoVariantData> {
     INSTANCE;
@@ -4313,9 +4260,9 @@ public enum FfiConverterTypeCoverallRichErrorNoVariantData implements FfiConvert
 
 
 
+
 // === FILE: uniffi/coverall/FfiConverterTypeCoveralls.java ===
 package uniffi.coverall;
-
 
 public enum FfiConverterTypeCoveralls implements FfiConverter<Coveralls, java.lang.Long> {
     INSTANCE;
@@ -4349,6 +4296,7 @@ public enum FfiConverterTypeCoveralls implements FfiConverter<Coveralls, java.la
         buf.putLong(lower(value));
     }
 }
+
 
 
 // This template implements a class for working with a Rust struct via a handle
@@ -4447,9 +4395,9 @@ public enum FfiConverterTypeCoveralls implements FfiConverter<Coveralls, java.la
 //
 // [1] https://stackoverflow.com/questions/24376768/can-java-finalize-an-object-when-it-is-still-in-scope/24380219
 //
+
 // === FILE: uniffi/coverall/FfiConverterTypeDictWithDefaults.java ===
 package uniffi.coverall;
-
 
 public enum FfiConverterTypeDictWithDefaults implements FfiConverterRustBuffer<DictWithDefaults> {
   INSTANCE;
@@ -4492,7 +4440,6 @@ public enum FfiConverterTypeDictWithDefaults implements FfiConverterRustBuffer<D
 // === FILE: uniffi/coverall/FfiConverterTypeEmptyStruct.java ===
 package uniffi.coverall;
 
-
 public enum FfiConverterTypeEmptyStruct implements FfiConverterRustBuffer<EmptyStruct> {
   INSTANCE;
 
@@ -4516,7 +4463,6 @@ public enum FfiConverterTypeEmptyStruct implements FfiConverterRustBuffer<EmptyS
 
 // === FILE: uniffi/coverall/FfiConverterTypeErrorDict.java ===
 package uniffi.coverall;
-
 
 public enum FfiConverterTypeErrorDict implements FfiConverterRustBuffer<ErrorDict> {
   INSTANCE;
@@ -4553,7 +4499,6 @@ public enum FfiConverterTypeErrorDict implements FfiConverterRustBuffer<ErrorDic
 // === FILE: uniffi/coverall/FfiConverterTypeFalliblePatch.java ===
 package uniffi.coverall;
 
-
 public enum FfiConverterTypeFalliblePatch implements FfiConverter<FalliblePatch, java.lang.Long> {
     INSTANCE;
 
@@ -4586,6 +4531,7 @@ public enum FfiConverterTypeFalliblePatch implements FfiConverter<FalliblePatch,
         buf.putLong(lower(value));
     }
 }
+
 
 
 // This template implements a class for working with a Rust struct via a handle
@@ -4684,9 +4630,9 @@ public enum FfiConverterTypeFalliblePatch implements FfiConverter<FalliblePatch,
 //
 // [1] https://stackoverflow.com/questions/24376768/can-java-finalize-an-object-when-it-is-still-in-scope/24380219
 //
+
 // === FILE: uniffi/coverall/FfiConverterTypeGetters.java ===
 package uniffi.coverall;
-
 
 public enum FfiConverterTypeGetters implements FfiConverter<Getters, java.lang.Long> {
     INSTANCE;
@@ -4737,6 +4683,7 @@ public enum FfiConverterTypeGetters implements FfiConverter<Getters, java.lang.L
 }
 
 
+
 // This template implements a class for working with a Rust struct via a handle
 // to the live Rust struct on the other side of the FFI.
 //
@@ -4833,9 +4780,9 @@ public enum FfiConverterTypeGetters implements FfiConverter<Getters, java.lang.L
 //
 // [1] https://stackoverflow.com/questions/24376768/can-java-finalize-an-object-when-it-is-still-in-scope/24380219
 //
+
 // === FILE: uniffi/coverall/FfiConverterTypeHTMLError.java ===
 package uniffi.coverall;
-
 
 public enum FfiConverterTypeHTMLError implements FfiConverterRustBuffer<HtmlException> {
     INSTANCE;
@@ -4869,7 +4816,6 @@ public enum FfiConverterTypeHTMLError implements FfiConverterRustBuffer<HtmlExce
 
 // === FILE: uniffi/coverall/FfiConverterTypeIFirst.java ===
 package uniffi.coverall;
-
 
 public enum FfiConverterTypeIFirst implements FfiConverter<IFirst, java.lang.Long> {
     INSTANCE;
@@ -4905,6 +4851,7 @@ public enum FfiConverterTypeIFirst implements FfiConverter<IFirst, java.lang.Lon
 }
 
 
+
 // This template implements a class for working with a Rust struct via a handle
 // to the live Rust struct on the other side of the FFI.
 //
@@ -5001,9 +4948,9 @@ public enum FfiConverterTypeIFirst implements FfiConverter<IFirst, java.lang.Lon
 //
 // [1] https://stackoverflow.com/questions/24376768/can-java-finalize-an-object-when-it-is-still-in-scope/24380219
 //
+
 // === FILE: uniffi/coverall/FfiConverterTypeISecond.java ===
 package uniffi.coverall;
-
 
 public enum FfiConverterTypeISecond implements FfiConverter<ISecond, java.lang.Long> {
     INSTANCE;
@@ -5039,6 +4986,7 @@ public enum FfiConverterTypeISecond implements FfiConverter<ISecond, java.lang.L
 }
 
 
+
 // This template implements a class for working with a Rust struct via a handle
 // to the live Rust struct on the other side of the FFI.
 //
@@ -5135,9 +5083,9 @@ public enum FfiConverterTypeISecond implements FfiConverter<ISecond, java.lang.L
 //
 // [1] https://stackoverflow.com/questions/24376768/can-java-finalize-an-object-when-it-is-still-in-scope/24380219
 //
+
 // === FILE: uniffi/coverall/FfiConverterTypeMaybeObject.java ===
 package uniffi.coverall;
-
 
 public enum FfiConverterTypeMaybeObject implements FfiConverterRustBuffer<MaybeObject> {
     INSTANCE;
@@ -5186,7 +5134,6 @@ public enum FfiConverterTypeMaybeObject implements FfiConverterRustBuffer<MaybeO
 // === FILE: uniffi/coverall/FfiConverterTypeMaybeSimpleDict.java ===
 package uniffi.coverall;
 
-
 public enum FfiConverterTypeMaybeSimpleDict implements FfiConverterRustBuffer<MaybeSimpleDict> {
     INSTANCE;
 
@@ -5234,7 +5181,6 @@ public enum FfiConverterTypeMaybeSimpleDict implements FfiConverterRustBuffer<Ma
 // === FILE: uniffi/coverall/FfiConverterTypeNode.java ===
 package uniffi.coverall;
 
-
 public enum FfiConverterTypeNode implements FfiConverter<Node, java.lang.Long> {
     INSTANCE;
 
@@ -5267,6 +5213,7 @@ public enum FfiConverterTypeNode implements FfiConverter<Node, java.lang.Long> {
         buf.putLong(lower(value));
     }
 }
+
 
 
 // This template implements a class for working with a Rust struct via a handle
@@ -5365,9 +5312,9 @@ public enum FfiConverterTypeNode implements FfiConverter<Node, java.lang.Long> {
 //
 // [1] https://stackoverflow.com/questions/24376768/can-java-finalize-an-object-when-it-is-still-in-scope/24380219
 //
+
 // === FILE: uniffi/coverall/FfiConverterTypeNodeTrait.java ===
 package uniffi.coverall;
-
 
 public enum FfiConverterTypeNodeTrait implements FfiConverter<NodeTrait, java.lang.Long> {
     INSTANCE;
@@ -5418,6 +5365,7 @@ public enum FfiConverterTypeNodeTrait implements FfiConverter<NodeTrait, java.la
 }
 
 
+
 // This template implements a class for working with a Rust struct via a handle
 // to the live Rust struct on the other side of the FFI.
 //
@@ -5514,9 +5462,9 @@ public enum FfiConverterTypeNodeTrait implements FfiConverter<NodeTrait, java.la
 //
 // [1] https://stackoverflow.com/questions/24376768/can-java-finalize-an-object-when-it-is-still-in-scope/24380219
 //
+
 // === FILE: uniffi/coverall/FfiConverterTypeOtherError.java ===
 package uniffi.coverall;
-
 
 public enum FfiConverterTypeOtherError implements FfiConverterRustBuffer<OtherError> {
     INSTANCE;
@@ -5548,7 +5496,6 @@ public enum FfiConverterTypeOtherError implements FfiConverterRustBuffer<OtherEr
 
 // === FILE: uniffi/coverall/FfiConverterTypePatch.java ===
 package uniffi.coverall;
-
 
 public enum FfiConverterTypePatch implements FfiConverter<Patch, java.lang.Long> {
     INSTANCE;
@@ -5584,6 +5531,7 @@ public enum FfiConverterTypePatch implements FfiConverter<Patch, java.lang.Long>
 }
 
 
+
 // This template implements a class for working with a Rust struct via a handle
 // to the live Rust struct on the other side of the FFI.
 //
@@ -5680,9 +5628,9 @@ public enum FfiConverterTypePatch implements FfiConverter<Patch, java.lang.Long>
 //
 // [1] https://stackoverflow.com/questions/24376768/can-java-finalize-an-object-when-it-is-still-in-scope/24380219
 //
+
 // === FILE: uniffi/coverall/FfiConverterTypeRepair.java ===
 package uniffi.coverall;
-
 
 public enum FfiConverterTypeRepair implements FfiConverterRustBuffer<Repair> {
   INSTANCE;
@@ -5716,7 +5664,6 @@ public enum FfiConverterTypeRepair implements FfiConverterRustBuffer<Repair> {
 // === FILE: uniffi/coverall/FfiConverterTypeReturnOnlyDict.java ===
 package uniffi.coverall;
 
-
 public enum FfiConverterTypeReturnOnlyDict implements FfiConverterRustBuffer<ReturnOnlyDict> {
   INSTANCE;
 
@@ -5745,7 +5692,6 @@ public enum FfiConverterTypeReturnOnlyDict implements FfiConverterRustBuffer<Ret
 
 // === FILE: uniffi/coverall/FfiConverterTypeReturnOnlyEnum.java ===
 package uniffi.coverall;
-
 
 public enum FfiConverterTypeReturnOnlyEnum implements FfiConverterRustBuffer<ReturnOnlyEnum> {
     INSTANCE;
@@ -5811,9 +5757,9 @@ public enum FfiConverterTypeReturnOnlyEnum implements FfiConverterRustBuffer<Ret
 
 
 
+
 // === FILE: uniffi/coverall/FfiConverterTypeRootError.java ===
 package uniffi.coverall;
-
 
 public enum FfiConverterTypeRootError implements FfiConverterRustBuffer<RootException> {
     INSTANCE;
@@ -5870,7 +5816,6 @@ public enum FfiConverterTypeRootError implements FfiConverterRustBuffer<RootExce
 
 // === FILE: uniffi/coverall/FfiConverterTypeSimpleDict.java ===
 package uniffi.coverall;
-
 
 public enum FfiConverterTypeSimpleDict implements FfiConverterRustBuffer<SimpleDict> {
   INSTANCE;
@@ -5970,7 +5915,6 @@ public enum FfiConverterTypeSimpleDict implements FfiConverterRustBuffer<SimpleD
 // === FILE: uniffi/coverall/FfiConverterTypeSimpleFlatMacroEnum.java ===
 package uniffi.coverall;
 
-
 public enum FfiConverterTypeSimpleFlatMacroEnum implements FfiConverterRustBuffer<SimpleFlatMacroEnum> {
     INSTANCE;
 
@@ -6021,7 +5965,6 @@ public enum FfiConverterTypeSimpleFlatMacroEnum implements FfiConverterRustBuffe
 // === FILE: uniffi/coverall/FfiConverterTypeStringUtil.java ===
 package uniffi.coverall;
 
-
 public enum FfiConverterTypeStringUtil implements FfiConverter<StringUtil, java.lang.Long> {
     INSTANCE;
 
@@ -6054,6 +5997,7 @@ public enum FfiConverterTypeStringUtil implements FfiConverter<StringUtil, java.
         buf.putLong(lower(value));
     }
 }
+
 
 
 // This template implements a class for working with a Rust struct via a handle
@@ -6152,9 +6096,9 @@ public enum FfiConverterTypeStringUtil implements FfiConverter<StringUtil, java.
 //
 // [1] https://stackoverflow.com/questions/24376768/can-java-finalize-an-object-when-it-is-still-in-scope/24380219
 //
+
 // === FILE: uniffi/coverall/FfiConverterTypeStringUtilObject.java ===
 package uniffi.coverall;
-
 
 public enum FfiConverterTypeStringUtilObject implements FfiConverter<StringUtilObject, java.lang.Long> {
     INSTANCE;
@@ -6190,6 +6134,7 @@ public enum FfiConverterTypeStringUtilObject implements FfiConverter<StringUtilO
 }
 
 
+
 // This template implements a class for working with a Rust struct via a handle
 // to the live Rust struct on the other side of the FFI.
 //
@@ -6286,9 +6231,9 @@ public enum FfiConverterTypeStringUtilObject implements FfiConverter<StringUtilO
 //
 // [1] https://stackoverflow.com/questions/24376768/can-java-finalize-an-object-when-it-is-still-in-scope/24380219
 //
+
 // === FILE: uniffi/coverall/FfiConverterTypeThreadsafeCounter.java ===
 package uniffi.coverall;
-
 
 public enum FfiConverterTypeThreadsafeCounter implements FfiConverter<ThreadsafeCounter, java.lang.Long> {
     INSTANCE;
@@ -6329,7 +6274,6 @@ public enum FfiConverterTypeThreadsafeCounter implements FfiConverter<Threadsafe
 // === FILE: uniffi/coverall/ForeignBytes.java ===
 package uniffi.coverall;
 
-
 // This is a helper for safely passing byte references into the rust code.
 // It's not actually used at the moment, because there aren't many things that you
 // can take a direct pointer to in the JVM, and if we're going to copy something
@@ -6364,9 +6308,9 @@ public final class ForeignBytes {
     }
 }
 
+
 // === FILE: uniffi/coverall/Getters.java ===
 package uniffi.coverall;
-
 public interface Getters {
     public boolean getBool(boolean v, boolean arg2);
     public int[] getList(int[] v, boolean arg2);
@@ -6380,7 +6324,6 @@ public interface Getters {
 
 // === FILE: uniffi/coverall/GettersImpl.java ===
 package uniffi.coverall;
-
 public class GettersImpl implements AutoCloseable, Getters {
   protected long handle;
   protected UniffiCleaner.Cleanable cleanable;
@@ -6679,9 +6622,10 @@ public class GettersImpl implements AutoCloseable, Getters {
 
 
 
+
+
 // === FILE: uniffi/coverall/HtmlException.java ===
 package uniffi.coverall;
-
 
 
 public class HtmlException extends java.lang.Exception {
@@ -6702,7 +6646,6 @@ public class HtmlException extends java.lang.Exception {
 // === FILE: uniffi/coverall/HtmlExceptionErrorHandler.java ===
 package uniffi.coverall;
 
-
 public class HtmlExceptionErrorHandler implements UniffiRustCallStatusErrorHandler<HtmlException> {
   @Override
   public HtmlException lift(java.lang.foreign.MemorySegment errorBuf){
@@ -6713,7 +6656,6 @@ public class HtmlExceptionErrorHandler implements UniffiRustCallStatusErrorHandl
 
 // === FILE: uniffi/coverall/IFirst.java ===
 package uniffi.coverall;
-
 public class IFirst implements AutoCloseable, IFirstInterface {
   protected long handle;
   protected UniffiCleaner.Cleanable cleanable;
@@ -6866,7 +6808,6 @@ public class IFirst implements AutoCloseable, IFirstInterface {
 
 // === FILE: uniffi/coverall/IFirstInterface.java ===
 package uniffi.coverall;
-
 public interface IFirstInterface {
     public boolean compare(ISecond other);
     
@@ -6875,7 +6816,6 @@ public interface IFirstInterface {
 
 // === FILE: uniffi/coverall/ISecond.java ===
 package uniffi.coverall;
-
 public class ISecond implements AutoCloseable, ISecondInterface {
   protected long handle;
   protected UniffiCleaner.Cleanable cleanable;
@@ -7028,7 +6968,6 @@ public class ISecond implements AutoCloseable, ISecondInterface {
 
 // === FILE: uniffi/coverall/ISecondInterface.java ===
 package uniffi.coverall;
-
 public interface ISecondInterface {
     public boolean compare(IFirst other);
     
@@ -7037,7 +6976,6 @@ public interface ISecondInterface {
 
 // === FILE: uniffi/coverall/InternalException.java ===
 package uniffi.coverall;
-
 
 public class InternalException extends java.lang.RuntimeException {
     public InternalException(java.lang.String message) {
@@ -7048,7 +6986,6 @@ public class InternalException extends java.lang.RuntimeException {
 
 // === FILE: uniffi/coverall/MaybeObject.java ===
 package uniffi.coverall;
-
 public sealed interface MaybeObject extends AutoCloseable {
   
   record Obj(
@@ -7086,7 +7023,6 @@ public sealed interface MaybeObject extends AutoCloseable {
 
 // === FILE: uniffi/coverall/MaybeSimpleDict.java ===
 package uniffi.coverall;
-
 public sealed interface MaybeSimpleDict extends AutoCloseable {
   
   record Yeah(
@@ -7124,7 +7060,6 @@ public sealed interface MaybeSimpleDict extends AutoCloseable {
 
 // === FILE: uniffi/coverall/NamespaceLibrary.java ===
 package uniffi.coverall;
-
 
 final class NamespaceLibrary {
     static synchronized String findLibraryName(String componentName) {
@@ -7416,7 +7351,6 @@ final class NamespaceLibrary {
 // === FILE: uniffi/coverall/NoHandle.java ===
 package uniffi.coverall;
 
-
 public class NoHandle {
     // Private constructor to prevent instantiation
     private NoHandle() {}
@@ -7428,7 +7362,6 @@ public class NoHandle {
 
 // === FILE: uniffi/coverall/Node.java ===
 package uniffi.coverall;
-
 public class Node implements AutoCloseable, NodeInterface, NodeTrait {
   protected long handle;
   protected UniffiCleaner.Cleanable cleanable;
@@ -7718,7 +7651,6 @@ public class Node implements AutoCloseable, NodeInterface, NodeTrait {
 
 // === FILE: uniffi/coverall/NodeInterface.java ===
 package uniffi.coverall;
-
 public interface NodeInterface {
     public java.lang.String describeParent();
     public NodeTrait getParent();
@@ -7731,7 +7663,6 @@ public interface NodeInterface {
 
 // === FILE: uniffi/coverall/NodeTrait.java ===
 package uniffi.coverall;
-
 public interface NodeTrait {
     
     /**
@@ -7753,7 +7684,6 @@ public interface NodeTrait {
 
 // === FILE: uniffi/coverall/NodeTraitImpl.java ===
 package uniffi.coverall;
-
 public class NodeTraitImpl implements AutoCloseable, NodeTrait {
   protected long handle;
   protected UniffiCleaner.Cleanable cleanable;
@@ -7998,9 +7928,9 @@ public class NodeTraitImpl implements AutoCloseable, NodeTrait {
 
 
 
+
 // === FILE: uniffi/coverall/OtherError.java ===
 package uniffi.coverall;
-
 
 
 public enum OtherError {
@@ -8016,7 +7946,6 @@ public enum OtherError {
 
 // === FILE: uniffi/coverall/Patch.java ===
 package uniffi.coverall;
-
 public class Patch implements AutoCloseable, PatchInterface {
   protected long handle;
   protected UniffiCleaner.Cleanable cleanable;
@@ -8169,7 +8098,6 @@ public class Patch implements AutoCloseable, PatchInterface {
 
 // === FILE: uniffi/coverall/PatchInterface.java ===
 package uniffi.coverall;
-
 public interface PatchInterface {
     public Color getColor();
     
@@ -8178,7 +8106,6 @@ public interface PatchInterface {
 
 // === FILE: uniffi/coverall/Repair.java ===
 package uniffi.coverall;
-
 public class Repair implements AutoCloseable{
     private java.time.Instant when;
     private Patch patch;
@@ -8249,7 +8176,6 @@ public class Repair implements AutoCloseable{
 
 // === FILE: uniffi/coverall/ReturnOnlyDict.java ===
 package uniffi.coverall;
-
 public class ReturnOnlyDict {
     private CoverallFlatException e;
 
@@ -8298,7 +8224,6 @@ public class ReturnOnlyDict {
 
 // === FILE: uniffi/coverall/ReturnOnlyEnum.java ===
 package uniffi.coverall;
-
 public sealed interface ReturnOnlyEnum {
   
   record One(
@@ -8340,7 +8265,6 @@ public sealed interface ReturnOnlyEnum {
 
 // === FILE: uniffi/coverall/RootException.java ===
 package uniffi.coverall;
-
 
 
 public class RootException extends java.lang.Exception {
@@ -8397,7 +8321,6 @@ public class RootException extends java.lang.Exception {
 // === FILE: uniffi/coverall/RootExceptionErrorHandler.java ===
 package uniffi.coverall;
 
-
 public class RootExceptionErrorHandler implements UniffiRustCallStatusErrorHandler<RootException> {
   @Override
   public RootException lift(java.lang.foreign.MemorySegment errorBuf){
@@ -8408,7 +8331,6 @@ public class RootExceptionErrorHandler implements UniffiRustCallStatusErrorHandl
 
 // === FILE: uniffi/coverall/RustBuffer.java ===
 package uniffi.coverall;
-
 
 /**
  * This is a helper for safely working with byte buffers returned from the Rust code.
@@ -8495,7 +8417,6 @@ public final class RustBuffer {
 
 // === FILE: uniffi/coverall/SimpleDict.java ===
 package uniffi.coverall;
-
 public class SimpleDict implements AutoCloseable{
     private java.lang.String text;
     private java.lang.String maybeText;
@@ -8896,7 +8817,6 @@ public class SimpleDict implements AutoCloseable{
 
 // === FILE: uniffi/coverall/SimpleFlatMacroEnum.java ===
 package uniffi.coverall;
-
 public sealed interface SimpleFlatMacroEnum {
   
   record First(
@@ -8922,7 +8842,6 @@ public sealed interface SimpleFlatMacroEnum {
 
 // === FILE: uniffi/coverall/StringUtil.java ===
 package uniffi.coverall;
-
 public class StringUtil implements AutoCloseable, StringUtilInterface {
   protected long handle;
   protected UniffiCleaner.Cleanable cleanable;
@@ -9067,7 +8986,6 @@ public class StringUtil implements AutoCloseable, StringUtilInterface {
 
 // === FILE: uniffi/coverall/StringUtilInterface.java ===
 package uniffi.coverall;
-
 public interface StringUtilInterface {
     public java.lang.String concat(java.lang.String a, java.lang.String b);
     
@@ -9076,7 +8994,6 @@ public interface StringUtilInterface {
 
 // === FILE: uniffi/coverall/StringUtilObject.java ===
 package uniffi.coverall;
-
 /**
  * Object that implements `StringUtil`
  * This lets us test what happens if foreign bindings pass in `StringUtilImpl` when `StringUtil` was expected.
@@ -9235,7 +9152,6 @@ public class StringUtilObject implements AutoCloseable, StringUtilObjectInterfac
 
 // === FILE: uniffi/coverall/StringUtilObjectInterface.java ===
 package uniffi.coverall;
-
 /**
  * Object that implements `StringUtil`
  * This lets us test what happens if foreign bindings pass in `StringUtilImpl` when `StringUtil` was expected.
@@ -9250,7 +9166,6 @@ public interface StringUtilObjectInterface {
 
 // === FILE: uniffi/coverall/ThreadsafeCounter.java ===
 package uniffi.coverall;
-
 public class ThreadsafeCounter implements AutoCloseable, ThreadsafeCounterInterface {
   protected long handle;
   protected UniffiCleaner.Cleanable cleanable;
@@ -9432,7 +9347,6 @@ public class ThreadsafeCounter implements AutoCloseable, ThreadsafeCounterInterf
 
 // === FILE: uniffi/coverall/ThreadsafeCounterInterface.java ===
 package uniffi.coverall;
-
 public interface ThreadsafeCounterInterface {
     public void busyWait(int ms);
     public int incrementIfBusy();
@@ -9442,7 +9356,6 @@ public interface ThreadsafeCounterInterface {
 
 // === FILE: uniffi/coverall/UniffiAsyncHelpers.java ===
 package uniffi.coverall;
-
 
 public final class UniffiAsyncHelpers {
     // Async return type handlers
@@ -9678,7 +9591,6 @@ public final class UniffiAsyncHelpers {
 // === FILE: uniffi/coverall/UniffiBackpressureCleaner.java ===
 package uniffi.coverall;
 
-
 // A Cleaner backed by PhantomReference + ReferenceQueue with opportunistic inline draining.
 //
 // How it works:
@@ -9792,9 +9704,9 @@ class UniffiBackpressureCleaner implements UniffiCleaner {
         }
     }
 }
+
 // === FILE: uniffi/coverall/UniffiCallbackInterfaceClone.java ===
 package uniffi.coverall;
-
 
 public final class UniffiCallbackInterfaceClone {
     public static final java.lang.foreign.FunctionDescriptor DESCRIPTOR = java.lang.foreign.FunctionDescriptor.of(java.lang.foreign.ValueLayout.JAVA_LONG, java.lang.foreign.ValueLayout.JAVA_LONG);
@@ -9822,7 +9734,6 @@ public final class UniffiCallbackInterfaceClone {
 // === FILE: uniffi/coverall/UniffiCallbackInterfaceFree.java ===
 package uniffi.coverall;
 
-
 public final class UniffiCallbackInterfaceFree {
     public static final java.lang.foreign.FunctionDescriptor DESCRIPTOR = java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG);
 
@@ -9848,7 +9759,6 @@ public final class UniffiCallbackInterfaceFree {
 
 // === FILE: uniffi/coverall/UniffiCallbackInterfaceGetters.java ===
 package uniffi.coverall;
-
 
 // Put the implementation in an object so we don't pollute the top-level namespace
 public class UniffiCallbackInterfaceGetters {
@@ -10050,7 +9960,6 @@ public class UniffiCallbackInterfaceGetters {
 // === FILE: uniffi/coverall/UniffiCallbackInterfaceGettersMethod0.java ===
 package uniffi.coverall;
 
-
 public final class UniffiCallbackInterfaceGettersMethod0 {
     public static final java.lang.foreign.FunctionDescriptor DESCRIPTOR = java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, java.lang.foreign.ValueLayout.JAVA_BYTE, java.lang.foreign.ValueLayout.JAVA_BYTE, java.lang.foreign.ValueLayout.ADDRESS, java.lang.foreign.ValueLayout.ADDRESS);
 
@@ -10081,7 +9990,6 @@ public final class UniffiCallbackInterfaceGettersMethod0 {
 
 // === FILE: uniffi/coverall/UniffiCallbackInterfaceGettersMethod1.java ===
 package uniffi.coverall;
-
 
 public final class UniffiCallbackInterfaceGettersMethod1 {
     public static final java.lang.foreign.FunctionDescriptor DESCRIPTOR = java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, RustBuffer.LAYOUT, java.lang.foreign.ValueLayout.JAVA_BYTE, java.lang.foreign.ValueLayout.ADDRESS, java.lang.foreign.ValueLayout.ADDRESS);
@@ -10114,7 +10022,6 @@ public final class UniffiCallbackInterfaceGettersMethod1 {
 // === FILE: uniffi/coverall/UniffiCallbackInterfaceGettersMethod2.java ===
 package uniffi.coverall;
 
-
 public final class UniffiCallbackInterfaceGettersMethod2 {
     public static final java.lang.foreign.FunctionDescriptor DESCRIPTOR = java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, RustBuffer.LAYOUT, java.lang.foreign.ValueLayout.ADDRESS, java.lang.foreign.ValueLayout.ADDRESS);
 
@@ -10144,7 +10051,6 @@ public final class UniffiCallbackInterfaceGettersMethod2 {
 
 // === FILE: uniffi/coverall/UniffiCallbackInterfaceGettersMethod3.java ===
 package uniffi.coverall;
-
 
 public final class UniffiCallbackInterfaceGettersMethod3 {
     public static final java.lang.foreign.FunctionDescriptor DESCRIPTOR = java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, RustBuffer.LAYOUT, java.lang.foreign.ValueLayout.JAVA_BYTE, java.lang.foreign.ValueLayout.ADDRESS, java.lang.foreign.ValueLayout.ADDRESS);
@@ -10177,7 +10083,6 @@ public final class UniffiCallbackInterfaceGettersMethod3 {
 // === FILE: uniffi/coverall/UniffiCallbackInterfaceGettersMethod4.java ===
 package uniffi.coverall;
 
-
 public final class UniffiCallbackInterfaceGettersMethod4 {
     public static final java.lang.foreign.FunctionDescriptor DESCRIPTOR = java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, RustBuffer.LAYOUT, java.lang.foreign.ValueLayout.JAVA_BYTE, java.lang.foreign.ValueLayout.ADDRESS, java.lang.foreign.ValueLayout.ADDRESS);
 
@@ -10209,7 +10114,6 @@ public final class UniffiCallbackInterfaceGettersMethod4 {
 // === FILE: uniffi/coverall/UniffiCallbackInterfaceGettersMethod5.java ===
 package uniffi.coverall;
 
-
 public final class UniffiCallbackInterfaceGettersMethod5 {
     public static final java.lang.foreign.FunctionDescriptor DESCRIPTOR = java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, java.lang.foreign.ValueLayout.JAVA_LONG, java.lang.foreign.ValueLayout.ADDRESS, java.lang.foreign.ValueLayout.ADDRESS);
 
@@ -10239,7 +10143,6 @@ public final class UniffiCallbackInterfaceGettersMethod5 {
 
 // === FILE: uniffi/coverall/UniffiCallbackInterfaceNodeTrait.java ===
 package uniffi.coverall;
-
 
 // Put the implementation in an object so we don't pollute the top-level namespace
 public class UniffiCallbackInterfaceNodeTrait {
@@ -10375,7 +10278,6 @@ public class UniffiCallbackInterfaceNodeTrait {
 // === FILE: uniffi/coverall/UniffiCallbackInterfaceNodeTraitMethod0.java ===
 package uniffi.coverall;
 
-
 public final class UniffiCallbackInterfaceNodeTraitMethod0 {
     public static final java.lang.foreign.FunctionDescriptor DESCRIPTOR = java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, java.lang.foreign.ValueLayout.ADDRESS, java.lang.foreign.ValueLayout.ADDRESS);
 
@@ -10405,7 +10307,6 @@ public final class UniffiCallbackInterfaceNodeTraitMethod0 {
 // === FILE: uniffi/coverall/UniffiCallbackInterfaceNodeTraitMethod1.java ===
 package uniffi.coverall;
 
-
 public final class UniffiCallbackInterfaceNodeTraitMethod1 {
     public static final java.lang.foreign.FunctionDescriptor DESCRIPTOR = java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, java.lang.foreign.ValueLayout.ADDRESS, java.lang.foreign.ValueLayout.ADDRESS);
 
@@ -10434,7 +10335,6 @@ public final class UniffiCallbackInterfaceNodeTraitMethod1 {
 
 // === FILE: uniffi/coverall/UniffiCallbackInterfaceNodeTraitMethod2.java ===
 package uniffi.coverall;
-
 
 public final class UniffiCallbackInterfaceNodeTraitMethod2 {
     public static final java.lang.foreign.FunctionDescriptor DESCRIPTOR = java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, RustBuffer.LAYOUT, java.lang.foreign.ValueLayout.ADDRESS, java.lang.foreign.ValueLayout.ADDRESS);
@@ -10466,7 +10366,6 @@ public final class UniffiCallbackInterfaceNodeTraitMethod2 {
 // === FILE: uniffi/coverall/UniffiCallbackInterfaceNodeTraitMethod3.java ===
 package uniffi.coverall;
 
-
 public final class UniffiCallbackInterfaceNodeTraitMethod3 {
     public static final java.lang.foreign.FunctionDescriptor DESCRIPTOR = java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, java.lang.foreign.ValueLayout.ADDRESS, java.lang.foreign.ValueLayout.ADDRESS);
 
@@ -10495,7 +10394,6 @@ public final class UniffiCallbackInterfaceNodeTraitMethod3 {
 
 // === FILE: uniffi/coverall/UniffiCallbackInterfaceStringUtilMethod0.java ===
 package uniffi.coverall;
-
 
 public final class UniffiCallbackInterfaceStringUtilMethod0 {
     public static final java.lang.foreign.FunctionDescriptor DESCRIPTOR = java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, RustBuffer.LAYOUT, RustBuffer.LAYOUT, java.lang.foreign.ValueLayout.ADDRESS, java.lang.foreign.ValueLayout.ADDRESS);
@@ -10528,7 +10426,6 @@ public final class UniffiCallbackInterfaceStringUtilMethod0 {
 // === FILE: uniffi/coverall/UniffiCleaner.java ===
 package uniffi.coverall;
 
-
 // The cleaner interface for Object finalization code to run.
 // Uses a custom PhantomReference-based implementation that provides backpressure:
 // when objects are created faster than the background cleaner thread can process them,
@@ -10549,7 +10446,6 @@ interface UniffiCleaner {
 
 // === FILE: uniffi/coverall/UniffiForeignFutureCompleteF32.java ===
 package uniffi.coverall;
-
 
 public final class UniffiForeignFutureCompleteF32 {
     public static final java.lang.foreign.FunctionDescriptor DESCRIPTOR = java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, UniffiForeignFutureResultF32.LAYOUT);
@@ -10578,7 +10474,6 @@ public final class UniffiForeignFutureCompleteF32 {
 // === FILE: uniffi/coverall/UniffiForeignFutureCompleteF64.java ===
 package uniffi.coverall;
 
-
 public final class UniffiForeignFutureCompleteF64 {
     public static final java.lang.foreign.FunctionDescriptor DESCRIPTOR = java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, UniffiForeignFutureResultF64.LAYOUT);
 
@@ -10605,7 +10500,6 @@ public final class UniffiForeignFutureCompleteF64 {
 
 // === FILE: uniffi/coverall/UniffiForeignFutureCompleteI16.java ===
 package uniffi.coverall;
-
 
 public final class UniffiForeignFutureCompleteI16 {
     public static final java.lang.foreign.FunctionDescriptor DESCRIPTOR = java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, UniffiForeignFutureResultI16.LAYOUT);
@@ -10634,7 +10528,6 @@ public final class UniffiForeignFutureCompleteI16 {
 // === FILE: uniffi/coverall/UniffiForeignFutureCompleteI32.java ===
 package uniffi.coverall;
 
-
 public final class UniffiForeignFutureCompleteI32 {
     public static final java.lang.foreign.FunctionDescriptor DESCRIPTOR = java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, UniffiForeignFutureResultI32.LAYOUT);
 
@@ -10661,7 +10554,6 @@ public final class UniffiForeignFutureCompleteI32 {
 
 // === FILE: uniffi/coverall/UniffiForeignFutureCompleteI64.java ===
 package uniffi.coverall;
-
 
 public final class UniffiForeignFutureCompleteI64 {
     public static final java.lang.foreign.FunctionDescriptor DESCRIPTOR = java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, UniffiForeignFutureResultI64.LAYOUT);
@@ -10690,7 +10582,6 @@ public final class UniffiForeignFutureCompleteI64 {
 // === FILE: uniffi/coverall/UniffiForeignFutureCompleteI8.java ===
 package uniffi.coverall;
 
-
 public final class UniffiForeignFutureCompleteI8 {
     public static final java.lang.foreign.FunctionDescriptor DESCRIPTOR = java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, UniffiForeignFutureResultI8.LAYOUT);
 
@@ -10717,7 +10608,6 @@ public final class UniffiForeignFutureCompleteI8 {
 
 // === FILE: uniffi/coverall/UniffiForeignFutureCompleteRustBuffer.java ===
 package uniffi.coverall;
-
 
 public final class UniffiForeignFutureCompleteRustBuffer {
     public static final java.lang.foreign.FunctionDescriptor DESCRIPTOR = java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, UniffiForeignFutureResultRustBuffer.LAYOUT);
@@ -10746,7 +10636,6 @@ public final class UniffiForeignFutureCompleteRustBuffer {
 // === FILE: uniffi/coverall/UniffiForeignFutureCompleteU16.java ===
 package uniffi.coverall;
 
-
 public final class UniffiForeignFutureCompleteU16 {
     public static final java.lang.foreign.FunctionDescriptor DESCRIPTOR = java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, UniffiForeignFutureResultU16.LAYOUT);
 
@@ -10773,7 +10662,6 @@ public final class UniffiForeignFutureCompleteU16 {
 
 // === FILE: uniffi/coverall/UniffiForeignFutureCompleteU32.java ===
 package uniffi.coverall;
-
 
 public final class UniffiForeignFutureCompleteU32 {
     public static final java.lang.foreign.FunctionDescriptor DESCRIPTOR = java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, UniffiForeignFutureResultU32.LAYOUT);
@@ -10802,7 +10690,6 @@ public final class UniffiForeignFutureCompleteU32 {
 // === FILE: uniffi/coverall/UniffiForeignFutureCompleteU64.java ===
 package uniffi.coverall;
 
-
 public final class UniffiForeignFutureCompleteU64 {
     public static final java.lang.foreign.FunctionDescriptor DESCRIPTOR = java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, UniffiForeignFutureResultU64.LAYOUT);
 
@@ -10829,7 +10716,6 @@ public final class UniffiForeignFutureCompleteU64 {
 
 // === FILE: uniffi/coverall/UniffiForeignFutureCompleteU8.java ===
 package uniffi.coverall;
-
 
 public final class UniffiForeignFutureCompleteU8 {
     public static final java.lang.foreign.FunctionDescriptor DESCRIPTOR = java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, UniffiForeignFutureResultU8.LAYOUT);
@@ -10858,7 +10744,6 @@ public final class UniffiForeignFutureCompleteU8 {
 // === FILE: uniffi/coverall/UniffiForeignFutureCompleteVoid.java ===
 package uniffi.coverall;
 
-
 public final class UniffiForeignFutureCompleteVoid {
     public static final java.lang.foreign.FunctionDescriptor DESCRIPTOR = java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, UniffiForeignFutureResultVoid.LAYOUT);
 
@@ -10886,7 +10771,6 @@ public final class UniffiForeignFutureCompleteVoid {
 // === FILE: uniffi/coverall/UniffiForeignFutureDroppedCallback.java ===
 package uniffi.coverall;
 
-
 public final class UniffiForeignFutureDroppedCallback {
     public static final java.lang.foreign.FunctionDescriptor DESCRIPTOR = java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG);
 
@@ -10912,7 +10796,6 @@ public final class UniffiForeignFutureDroppedCallback {
 
 // === FILE: uniffi/coverall/UniffiForeignFutureDroppedCallbackStruct.java ===
 package uniffi.coverall;
-
 
 public final class UniffiForeignFutureDroppedCallbackStruct {
     public static final java.lang.foreign.StructLayout LAYOUT = java.lang.foreign.MemoryLayout.structLayout(
@@ -10952,7 +10835,6 @@ public final class UniffiForeignFutureDroppedCallbackStruct {
 
 // === FILE: uniffi/coverall/UniffiForeignFutureResultF32.java ===
 package uniffi.coverall;
-
 
 public final class UniffiForeignFutureResultF32 {
     public static final java.lang.foreign.StructLayout LAYOUT = java.lang.foreign.MemoryLayout.structLayout(
@@ -10994,7 +10876,6 @@ public final class UniffiForeignFutureResultF32 {
 // === FILE: uniffi/coverall/UniffiForeignFutureResultF64.java ===
 package uniffi.coverall;
 
-
 public final class UniffiForeignFutureResultF64 {
     public static final java.lang.foreign.StructLayout LAYOUT = java.lang.foreign.MemoryLayout.structLayout(
         java.lang.foreign.ValueLayout.JAVA_DOUBLE.withName("returnValue"),
@@ -11033,7 +10914,6 @@ public final class UniffiForeignFutureResultF64 {
 
 // === FILE: uniffi/coverall/UniffiForeignFutureResultI16.java ===
 package uniffi.coverall;
-
 
 public final class UniffiForeignFutureResultI16 {
     public static final java.lang.foreign.StructLayout LAYOUT = java.lang.foreign.MemoryLayout.structLayout(
@@ -11075,7 +10955,6 @@ public final class UniffiForeignFutureResultI16 {
 // === FILE: uniffi/coverall/UniffiForeignFutureResultI32.java ===
 package uniffi.coverall;
 
-
 public final class UniffiForeignFutureResultI32 {
     public static final java.lang.foreign.StructLayout LAYOUT = java.lang.foreign.MemoryLayout.structLayout(
         java.lang.foreign.ValueLayout.JAVA_INT.withName("returnValue"),
@@ -11116,7 +10995,6 @@ public final class UniffiForeignFutureResultI32 {
 // === FILE: uniffi/coverall/UniffiForeignFutureResultI64.java ===
 package uniffi.coverall;
 
-
 public final class UniffiForeignFutureResultI64 {
     public static final java.lang.foreign.StructLayout LAYOUT = java.lang.foreign.MemoryLayout.structLayout(
         java.lang.foreign.ValueLayout.JAVA_LONG.withName("returnValue"),
@@ -11155,7 +11033,6 @@ public final class UniffiForeignFutureResultI64 {
 
 // === FILE: uniffi/coverall/UniffiForeignFutureResultI8.java ===
 package uniffi.coverall;
-
 
 public final class UniffiForeignFutureResultI8 {
     public static final java.lang.foreign.StructLayout LAYOUT = java.lang.foreign.MemoryLayout.structLayout(
@@ -11197,7 +11074,6 @@ public final class UniffiForeignFutureResultI8 {
 // === FILE: uniffi/coverall/UniffiForeignFutureResultRustBuffer.java ===
 package uniffi.coverall;
 
-
 public final class UniffiForeignFutureResultRustBuffer {
     public static final java.lang.foreign.StructLayout LAYOUT = java.lang.foreign.MemoryLayout.structLayout(
         RustBuffer.LAYOUT.withName("returnValue"),
@@ -11236,7 +11112,6 @@ public final class UniffiForeignFutureResultRustBuffer {
 
 // === FILE: uniffi/coverall/UniffiForeignFutureResultU16.java ===
 package uniffi.coverall;
-
 
 public final class UniffiForeignFutureResultU16 {
     public static final java.lang.foreign.StructLayout LAYOUT = java.lang.foreign.MemoryLayout.structLayout(
@@ -11278,7 +11153,6 @@ public final class UniffiForeignFutureResultU16 {
 // === FILE: uniffi/coverall/UniffiForeignFutureResultU32.java ===
 package uniffi.coverall;
 
-
 public final class UniffiForeignFutureResultU32 {
     public static final java.lang.foreign.StructLayout LAYOUT = java.lang.foreign.MemoryLayout.structLayout(
         java.lang.foreign.ValueLayout.JAVA_INT.withName("returnValue"),
@@ -11319,7 +11193,6 @@ public final class UniffiForeignFutureResultU32 {
 // === FILE: uniffi/coverall/UniffiForeignFutureResultU64.java ===
 package uniffi.coverall;
 
-
 public final class UniffiForeignFutureResultU64 {
     public static final java.lang.foreign.StructLayout LAYOUT = java.lang.foreign.MemoryLayout.structLayout(
         java.lang.foreign.ValueLayout.JAVA_LONG.withName("returnValue"),
@@ -11358,7 +11231,6 @@ public final class UniffiForeignFutureResultU64 {
 
 // === FILE: uniffi/coverall/UniffiForeignFutureResultU8.java ===
 package uniffi.coverall;
-
 
 public final class UniffiForeignFutureResultU8 {
     public static final java.lang.foreign.StructLayout LAYOUT = java.lang.foreign.MemoryLayout.structLayout(
@@ -11400,7 +11272,6 @@ public final class UniffiForeignFutureResultU8 {
 // === FILE: uniffi/coverall/UniffiForeignFutureResultVoid.java ===
 package uniffi.coverall;
 
-
 public final class UniffiForeignFutureResultVoid {
     public static final java.lang.foreign.StructLayout LAYOUT = java.lang.foreign.MemoryLayout.structLayout(
         UniffiRustCallStatus.LAYOUT.withName("callStatus")
@@ -11429,7 +11300,6 @@ public final class UniffiForeignFutureResultVoid {
 
 // === FILE: uniffi/coverall/UniffiHandleMap.java ===
 package uniffi.coverall;
-
 
 // This is used pass an opaque 64-bit handle representing a foreign object to the Rust code.
 // Handles are always odd numbers (LSB = 1) to distinguish them from Rust handles (which are even).
@@ -11480,9 +11350,9 @@ class UniffiHandleMap<T extends java.lang.Object> {
 // Contains loading, initialization code,
 // and the FFI Function declarations using Java FFM (Foreign Function & Memory API).
 
+
 // === FILE: uniffi/coverall/UniffiHelpers.java ===
 package uniffi.coverall;
-
 
 // Helpers for calling Rust
 // In practice we usually need to be synchronized to call this safely, so it doesn't
@@ -11742,9 +11612,9 @@ public final class UniffiHelpers {
     }
 }
 
+
 // === FILE: uniffi/coverall/UniffiInitializer.java ===
 package uniffi.coverall;
-
 
 /**
  * Ensures the native library is initialized.
@@ -11762,9 +11632,9 @@ public final class UniffiInitializer {
 
 // Async support
 
+
 // === FILE: uniffi/coverall/UniffiLib.java ===
 package uniffi.coverall;
-
 
 // FFM-based library binding. Each FFI function gets a MethodHandle and a wrapper method.
 final class UniffiLib {
@@ -14017,7 +13887,6 @@ final class UniffiLib {
 // === FILE: uniffi/coverall/UniffiNullRustCallStatusErrorHandler.java ===
 package uniffi.coverall;
 
-
 // UniffiRustCallStatusErrorHandler implementation for times when we don't expect a CALL_ERROR
 class UniffiNullRustCallStatusErrorHandler implements UniffiRustCallStatusErrorHandler<InternalException> {
     @Override
@@ -14030,7 +13899,6 @@ class UniffiNullRustCallStatusErrorHandler implements UniffiRustCallStatusErrorH
 
 // === FILE: uniffi/coverall/UniffiRustCallStatus.java ===
 package uniffi.coverall;
-
 
 public final class UniffiRustCallStatus {
     public static final java.lang.foreign.StructLayout LAYOUT = java.lang.foreign.MemoryLayout.structLayout(
@@ -14106,7 +13974,6 @@ public final class UniffiRustCallStatus {
 // === FILE: uniffi/coverall/UniffiRustCallStatusErrorHandler.java ===
 package uniffi.coverall;
 
-
 public interface UniffiRustCallStatusErrorHandler<E extends java.lang.Exception> {
     E lift(java.lang.foreign.MemorySegment errorBuf);
 }
@@ -14114,7 +13981,6 @@ public interface UniffiRustCallStatusErrorHandler<E extends java.lang.Exception>
 
 // === FILE: uniffi/coverall/UniffiRustFutureContinuationCallback.java ===
 package uniffi.coverall;
-
 
 public final class UniffiRustFutureContinuationCallback {
     public static final java.lang.foreign.FunctionDescriptor DESCRIPTOR = java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, java.lang.foreign.ValueLayout.JAVA_BYTE);
@@ -14142,7 +14008,6 @@ public final class UniffiRustFutureContinuationCallback {
 
 // === FILE: uniffi/coverall/UniffiSlabAllocator.java ===
 package uniffi.coverall;
-
 
 // Thread-local slab allocator for short-lived native memory segments.
 //
@@ -14197,7 +14062,6 @@ class UniffiSlabAllocator implements java.lang.foreign.SegmentAllocator {
 
 // === FILE: uniffi/coverall/UniffiVTableCallbackInterfaceGetters.java ===
 package uniffi.coverall;
-
 
 public final class UniffiVTableCallbackInterfaceGetters {
     public static final java.lang.foreign.StructLayout LAYOUT = java.lang.foreign.MemoryLayout.structLayout(
@@ -14298,7 +14162,6 @@ public final class UniffiVTableCallbackInterfaceGetters {
 // === FILE: uniffi/coverall/UniffiVTableCallbackInterfaceNodeTrait.java ===
 package uniffi.coverall;
 
-
 public final class UniffiVTableCallbackInterfaceNodeTrait {
     public static final java.lang.foreign.StructLayout LAYOUT = java.lang.foreign.MemoryLayout.structLayout(
         java.lang.foreign.ValueLayout.ADDRESS.withName("uniffiFree"),
@@ -14378,7 +14241,6 @@ public final class UniffiVTableCallbackInterfaceNodeTrait {
 // === FILE: uniffi/coverall/UniffiVTableCallbackInterfaceStringUtil.java ===
 package uniffi.coverall;
 
-
 public final class UniffiVTableCallbackInterfaceStringUtil {
     public static final java.lang.foreign.StructLayout LAYOUT = java.lang.foreign.MemoryLayout.structLayout(
         java.lang.foreign.ValueLayout.ADDRESS.withName("uniffiFree"),
@@ -14428,7 +14290,6 @@ public final class UniffiVTableCallbackInterfaceStringUtil {
 
 // === FILE: uniffi/coverall/UniffiWithHandle.java ===
 package uniffi.coverall;
-
 
 // Marker class for constructors that accept a raw handle.
 // This disambiguates constructor signatures when an interface has both

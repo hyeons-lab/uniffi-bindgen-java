@@ -1,3 +1,5 @@
+
+// UNIFFI:FILE FfiConverterString.java
 package {{ config.package_name() }};
 
 public enum FfiConverterString implements FfiConverter<java.lang.String, java.lang.foreign.MemorySegment> {

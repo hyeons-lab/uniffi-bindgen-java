@@ -1,5 +1,7 @@
+
 {% if self.include_once_check("CallbackInterfaceRuntime.java") %}{% include "CallbackInterfaceRuntime.java" %}{% endif %}
 
+// UNIFFI:FILE {{ trait_impl }}.java
 package {{ config.package_name() }};
 
 {%- let trait_impl=format!("UniffiCallbackInterface{}", name) %}
