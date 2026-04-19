@@ -8,6 +8,7 @@ use uniffi_bindgen::{
 };
 
 mod gen_java;
+mod gen_lang;
 use gen_java::Config;
 
 /// Options for generating Java bindings
