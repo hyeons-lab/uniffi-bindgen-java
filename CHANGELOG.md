@@ -1,3 +1,34 @@
+## 0.5.0
+
+- Added a Kotlin backend skeleton with the `--language kotlin` CLI flag
+  (defaults to `java`). The skeleton proves the pipeline end-to-end (CLI
+  dispatch, Kotlin-specific `[bindings.kotlin]` config parsing, marker-based
+  file splitting, kotlinc-valid output) but does not yet implement real type
+  mapping; later releases will grow it into a full Kotlin generator.
+- New public `Language` enum on the library API, alongside a new
+  `GenerateOptions::new(source, out_dir)` constructor.
+
+### Breaking
+
+- `GenerateOptions` is now `#[non_exhaustive]` and gained a `language: Language`
+  field. Downstream callers that constructed it with a struct literal must
+  switch to `GenerateOptions::new(source, out_dir)` and mutate the fields
+  they want to override:
+  ```rust
+  // Before (0.4.x):
+  GenerateOptions { source, out_dir, format: true, crate_filter: None }
+  // After (0.5.0):
+  let mut opts = GenerateOptions::new(source, out_dir);
+  opts.language = Language::Kotlin; // or whatever overrides you need
+  ```
+- The library's `pub fn potentially_add_external_package` moved from
+  `gen_java::` to the new `gen_lang::` module and is now generic over an
+  `ExternalPackageResolver` trait. This is internal refactoring that leaked
+  into the public API; external consumers (there are none known) would need
+  to import from the new path. Also fixes a pre-existing latent bug where
+  the fallback namespace used the rendered display label instead of the
+  actual UniFFI namespace.
+
 ## 0.4.2
 
 - Added `nullness_annotations` config option to emit JSpecify `@NullMarked` and
