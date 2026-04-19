@@ -22,6 +22,21 @@
 // using Java FFM (Foreign Function & Memory API).
 {% include "NamespaceLibraryTemplate.kt" %}
 
+// Primitive + String + ByteArray FfiConverters. All are emitted
+// unconditionally for now; a later revision will gate them on which types
+// the interface actually uses (mirroring the Java `Types.java` dispatch
+// logic, which needs Askama filter machinery on the Kotlin side that
+// doesn't exist yet).
+{% include "Int8Helper.kt" %}
+{% include "Int16Helper.kt" %}
+{% include "Int32Helper.kt" %}
+{% include "Int64Helper.kt" %}
+{% include "Float32Helper.kt" %}
+{% include "Float64Helper.kt" %}
+{% include "BooleanHelper.kt" %}
+{% include "StringHelper.kt" %}
+{% include "ByteArrayHelper.kt" %}
+
 // UNIFFI:FILE {{ self.namespace_class_name() }}.kt
 package {{ config.package_name() }}
 

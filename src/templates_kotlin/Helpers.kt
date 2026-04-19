@@ -140,15 +140,6 @@ package {{ config.package_name() }}
 // In practice we usually need to be synchronized to call this safely, so it
 // doesn't synchronize itself.
 object UniffiHelpers {
-    // Return a freshly-allocated, zeroed RustBuffer suitable for stuffing
-    // into an error_buf slot when the caller hasn't produced a meaningful
-    // error payload. The empty buffer is safe to pass back to Rust-side
-    // free (all three fields are zero, so Rust treats it as no-op).
-    internal fun zeroedRustBuffer(): java.lang.foreign.MemorySegment {
-        val seg = java.lang.foreign.Arena.ofAuto().allocate(RustBuffer.LAYOUT)
-        seg.fill(0.toByte())
-        return seg
-    }
 
     // Thread-local reusable RustCallStatus to avoid allocation on the hot path.
     private val REUSABLE_STATUS: ThreadLocal<java.lang.foreign.MemorySegment> =
@@ -207,12 +198,10 @@ object UniffiHelpers {
             UniffiRustCallStatus.isPanic(status) -> {
                 val errorBuf = UniffiRustCallStatus.getErrorBuf(status)
                 if (RustBuffer.getLen(errorBuf) > 0) {
-                    // TODO: lift the Rust panic message via the String
-                    // converter once it's ported. For now free the buffer
-                    // and surface a generic panic message so the runtime
-                    // stays self-contained.
-                    RustBuffer.free(errorBuf)
-                    throw InternalException("Rust panic (string lift not yet implemented)")
+                    // FfiConverterString.lift frees the RustBuffer as part of
+                    // the read; the resulting InternalException owns the
+                    // decoded message.
+                    throw InternalException(FfiConverterString.lift(errorBuf))
                 } else {
                     throw InternalException("Rust panic")
                 }
@@ -264,12 +253,10 @@ object UniffiHelpers {
             writeReturn.accept(makeCall.get())
         } catch (e: Exception) {
             UniffiRustCallStatus.setCode(callStatus, UniffiRustCallStatus.UNIFFI_CALL_UNEXPECTED_ERROR)
-            // TODO: lower the Kotlin stack trace into `error_buf` via the
-            // String converter once it's ported. In the interim, zero the
-            // error_buf so Rust-side cleanup doesn't read uninitialized
-            // data or attempt to free a stale pointer from the previous
-            // call.
-            UniffiRustCallStatus.setErrorBuf(callStatus, zeroedRustBuffer())
+            UniffiRustCallStatus.setErrorBuf(
+                callStatus,
+                FfiConverterString.lower(uniffiStackTraceToString(e)),
+            )
         }
     }
 
@@ -299,10 +286,10 @@ object UniffiHelpers {
                 UniffiRustCallStatus.setErrorBuf(callStatus, lowerError.apply(castedE))
             } else {
                 UniffiRustCallStatus.setCode(callStatus, UniffiRustCallStatus.UNIFFI_CALL_UNEXPECTED_ERROR)
-                // TODO: lower the Kotlin stack trace via the String converter
-                // once it's ported. In the interim, zero the error_buf so
-                // Rust-side cleanup doesn't observe a stale pointer.
-                UniffiRustCallStatus.setErrorBuf(callStatus, zeroedRustBuffer())
+                UniffiRustCallStatus.setErrorBuf(
+                    callStatus,
+                    FfiConverterString.lower(uniffiStackTraceToString(e)),
+                )
             }
         }
     }
