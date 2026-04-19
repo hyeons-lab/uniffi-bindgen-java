@@ -11,6 +11,9 @@ use std::{
 };
 use uniffi_bindgen::{interface::*, to_askama_error};
 
+use crate::gen_lang::ExternalPackageResolver;
+pub use crate::gen_lang::{CustomTypeConfig, potentially_add_external_package};
+
 mod callback_interface;
 mod compounds;
 mod custom;
@@ -44,28 +47,6 @@ pub(crate) fn nullable_type_label(type_label: &str) -> String {
         )
     } else {
         format!("{}{}", ANNOTATION, type_label)
-    }
-}
-
-pub fn potentially_add_external_package(
-    config: &Config,
-    ci: &ComponentInterface,
-    type_name: &str,
-    display_name: String,
-) -> String {
-    match ci.get_type(type_name) {
-        Some(typ) => {
-            if ci.is_external(&typ) {
-                format!(
-                    "{}.{}",
-                    config.external_type_package_name(typ.module_path().unwrap(), &display_name),
-                    display_name
-                )
-            } else {
-                display_name
-            }
-        }
-        None => display_name,
     }
 }
 
@@ -238,6 +219,12 @@ impl Config {
 
     // Get the package name for an external type
     pub fn external_type_package_name(&self, module_path: &str, namespace: &str) -> String {
+        <Self as ExternalPackageResolver>::external_type_package_name(self, module_path, namespace)
+    }
+}
+
+impl ExternalPackageResolver for Config {
+    fn external_type_package_name(&self, module_path: &str, namespace: &str) -> String {
         // config overrides are keyed by the crate name, default fallback is the namespace.
         let crate_name = module_path.split("::").next().unwrap();
         match self.external_packages.get(crate_name) {
@@ -248,36 +235,8 @@ impl Config {
     }
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
-#[serde(default)]
-pub struct CustomTypeConfig {
-    imports: Option<Vec<String>>,
-    type_name: Option<String>,
-    into_custom: String, // backcompat alias for lift
-    lift: String,
-    from_custom: String, // backcompat alias for lower
-    lower: String,
-}
-
-// functions replace literal "{}" in strings with a specified value.
-impl CustomTypeConfig {
-    fn lift(&self, name: &str) -> String {
-        let converter = if self.lift.is_empty() {
-            &self.into_custom
-        } else {
-            &self.lift
-        };
-        converter.replace("{}", name)
-    }
-    fn lower(&self, name: &str) -> String {
-        let converter = if self.lower.is_empty() {
-            &self.from_custom
-        } else {
-            &self.lower
-        };
-        converter.replace("{}", name)
-    }
-}
+// `CustomTypeConfig` and its lift/lower helpers now live in `crate::gen_lang`
+// so a future Kotlin backend can reuse the same config wire format.
 
 // Generate Java bindings for the given ComponentInterface, as a string.
 pub fn generate_bindings(config: &Config, ci: &ComponentInterface) -> Result<String> {
