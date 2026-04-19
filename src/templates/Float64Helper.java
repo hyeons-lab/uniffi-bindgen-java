@@ -1,3 +1,5 @@
+
+// UNIFFI:FILE FfiConverterDouble.java
 package {{ config.package_name() }};
 
 public enum FfiConverterDouble implements FfiConverter<java.lang.Double, java.lang.Double>{

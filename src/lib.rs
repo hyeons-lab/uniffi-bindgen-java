@@ -37,11 +37,22 @@ pub fn generate(loader: &BindgenLoader, options: &GenerateOptions) -> Result<()>
         c.ci.derive_ffi_funcs()?;
     }
 
-    // Generate and write bindings for each component
-    let filename_capture = regex::Regex::new(
-        r"(?m)^(?:public\s)?(?:final\s)?(?:sealed\s)?(?:abstract\s)?(?:static\s)?(?:class|interface|enum|record)\s(\w+)",
-    )
-    .unwrap();
+    // Generate and write bindings for each component.
+    //
+    // File splitting is driven by `// UNIFFI:FILE <name>` markers emitted by
+    // the templates. Each marker starts a new output file; content between
+    // markers (with the marker line stripped) is written verbatim. Anything
+    // before the first marker is template preamble (root-template comments,
+    // macro imports) that doesn't belong in any single output file and is
+    // discarded.
+    //
+    // Marker-based splitting replaces a regex over Java top-level decl
+    // keywords. The regex was fragile (every new modifier or keyword broke
+    // it) and unsuitable for the planned Kotlin backend, which has many
+    // more top-level forms (`data class`, `sealed interface`, `data object`,
+    // `fun interface`, etc.). Markers also let templates name their own
+    // output files explicitly, decoupling file naming from emitted syntax.
+    let marker_re = regex::Regex::new(r"(?m)^// UNIFFI:FILE (\S+)\n").unwrap();
 
     for Component { ci, config, .. } in components {
         if let Some(crate_filter) = &options.crate_filter
@@ -60,20 +71,26 @@ pub fn generate(loader: &BindgenLoader, options: &GenerateOptions) -> Result<()>
         );
         fs::create_dir_all(&java_package_out_dir)?;
 
-        let package_line = format!("package {};", config.package_name());
-        let split_classes = bindings_str.split(&package_line);
-        let writable = split_classes
-            .map(|file| (filename_capture.captures(file), file))
-            .filter(|(x, _)| x.is_some())
-            .map(|(captures, file)| (captures.unwrap().get(1).unwrap().as_str(), file))
-            .collect::<Vec<_>>();
+        let markers: Vec<(String, usize, usize)> = marker_re
+            .captures_iter(&bindings_str)
+            .map(|cap| {
+                let whole = cap.get(0).unwrap();
+                let filename = cap.get(1).unwrap().as_str().to_string();
+                (filename, whole.start(), whole.end())
+            })
+            .collect();
 
-        for (filename, file) in writable {
-            let java_file_location = java_package_out_dir.join(format!("{}.java", filename));
-            fs::write(&java_file_location, format!("{}\n{}", package_line, file))?;
+        for (i, (filename, _, content_start)) in markers.iter().enumerate() {
+            let content_end = markers
+                .get(i + 1)
+                .map(|(_, next_marker_start, _)| *next_marker_start)
+                .unwrap_or(bindings_str.len());
+            let content = &bindings_str[*content_start..content_end];
+            fs::write(java_package_out_dir.join(filename), content)?;
         }
 
         if config.nullness_annotations() {
+            let package_line = format!("package {};", config.package_name());
             let package_info = format!("@org.jspecify.annotations.NullMarked\n{}", package_line);
             fs::write(java_package_out_dir.join("package-info.java"), package_info)?;
         }

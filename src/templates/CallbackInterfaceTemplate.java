@@ -1,3 +1,4 @@
+
 {%- let cbi = ci.get_callback_interface_definition(name).unwrap() %}
 {%- let ffi_init_callback = cbi.ffi_init_callback() %}
 {%- let interface_name = cbi|type_name(ci, config) %}
@@ -9,6 +10,7 @@
 {% include "Interface.java" %}
 {% include "CallbackInterfaceImpl.java" %}
 
+// UNIFFI:FILE {{ ffi_converter_name }}.java
 package {{ config.package_name() }};
 
 // The ffiConverter which transforms the Callbacks in to handles to pass to Rust.

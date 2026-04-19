@@ -1,3 +1,5 @@
+
+// UNIFFI:FILE FfiConverterShort.java
 package {{ config.package_name() }};
 
 public enum FfiConverterShort implements FfiConverter<java.lang.Short, java.lang.Short>{

@@ -1,5 +1,7 @@
+
 {%- let rec = ci.get_record_definition(name).unwrap() %}
 {%- let uniffi_trait_methods = rec.uniffi_trait_methods() %}
+// UNIFFI:FILE {{ type_name }}.java
 package {{ config.package_name() }};
 
 {%- call java::docstring(rec, 0) %}
@@ -121,6 +123,7 @@ public class {{ type_name }}{% if uniffi_trait_methods.ord_cmp.is_some() %} impl
 }
 {%- endif %}
 
+// UNIFFI:FILE {{ rec|ffi_converter_name }}.java
 package {{ config.package_name() }};
 
 public enum {{ rec|ffi_converter_name }} implements FfiConverterRustBuffer<{{ type_name }}> {

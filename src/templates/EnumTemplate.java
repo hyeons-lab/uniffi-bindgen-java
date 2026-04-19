@@ -1,4 +1,6 @@
+
 {%- let uniffi_trait_methods = e.uniffi_trait_methods() %}
+// UNIFFI:FILE {{ type_name }}.java
 package {{ config.package_name() }};
 
 {%- if e.is_flat() %}
@@ -37,6 +39,7 @@ public enum {{ type_name }} {
 }
 {% endmatch %}
 
+// UNIFFI:FILE {{ e|ffi_converter_name}}.java
 package {{ config.package_name() }};
 
 public enum {{ e|ffi_converter_name}} implements FfiConverterRustBuffer<{{ type_name }}> {
@@ -105,6 +108,7 @@ public sealed interface {{ type_name }}{% if uniffi_trait_methods.ord_cmp.is_som
   {% endfor %}
 }
 
+// UNIFFI:FILE {{ e|ffi_converter_name}}.java
 package {{ config.package_name() }};
 
 public enum {{ e|ffi_converter_name}} implements FfiConverterRustBuffer<{{ type_name }}> {

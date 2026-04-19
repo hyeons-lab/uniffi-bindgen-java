@@ -1,3 +1,5 @@
+
+// UNIFFI:FILE {{ interface_name }}.java
 package {{ config.package_name() }};
 
 {%- call java::docstring_value(interface_docstring, 0) %}

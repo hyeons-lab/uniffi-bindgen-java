@@ -1,8 +1,10 @@
+
 {%- let namespace = ci.namespace_for_module_path(module_path)? %}
 {%- let external_package_name = self.external_type_package_name(module_path, namespace) %}
 {%- let class_name = name|class_name(ci) %}
 
 {%- if ci.is_name_used_as_error(name) %}
+// UNIFFI:FILE {{ class_name }}ExternalErrorHandler.java
 package {{ config.package_name() }};
 
 public class {{ class_name }}ExternalErrorHandler implements UniffiRustCallStatusErrorHandler<{{ external_package_name }}.{{ class_name }}> {

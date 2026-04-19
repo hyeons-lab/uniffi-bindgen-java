@@ -1,7 +1,9 @@
+
 {%- let inner_type_name = inner_type|type_name(ci, config) %}
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+// UNIFFI:FILE {{ ffi_converter_name }}.java
 package {{ config.package_name() }};
 
 public enum {{ ffi_converter_name }} implements FfiConverterRustBuffer<java.util.List<{{ inner_type_name }}>> {

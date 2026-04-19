@@ -1,3 +1,5 @@
+
+// UNIFFI:FILE FfiConverterFloat32Array.java
 package {{ config.package_name() }};
 
 public enum FfiConverterFloat32Array implements FfiConverterRustBuffer<float[]> {

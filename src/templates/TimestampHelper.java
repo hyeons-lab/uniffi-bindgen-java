@@ -1,3 +1,5 @@
+
+// UNIFFI:FILE FfiConverterTimestamp.java
 package {{ config.package_name() }};
 
 public enum FfiConverterTimestamp implements FfiConverterRustBuffer<java.time.Instant> {

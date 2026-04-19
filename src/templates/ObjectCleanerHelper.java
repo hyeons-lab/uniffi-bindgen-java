@@ -1,3 +1,5 @@
+
+// UNIFFI:FILE UniffiCleaner.java
 package {{ config.package_name() }};
 
 // The cleaner interface for Object finalization code to run.
@@ -17,6 +19,7 @@ interface UniffiCleaner {
     }
 }
 
+// UNIFFI:FILE UniffiBackpressureCleaner.java
 package {{ config.package_name() }};
 
 // A Cleaner backed by PhantomReference + ReferenceQueue with opportunistic inline draining.

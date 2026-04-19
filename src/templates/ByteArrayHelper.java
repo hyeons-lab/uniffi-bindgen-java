@@ -1,3 +1,5 @@
+
+// UNIFFI:FILE FfiConverterByteArray.java
 package {{ config.package_name() }};
 
 public enum FfiConverterByteArray implements FfiConverterRustBuffer<byte[]>{

@@ -1,3 +1,5 @@
+
+// UNIFFI:FILE {{ type_name }}.java
 package {{ config.package_name() }};
 
 {%- let type_name = type_|type_name(ci, config) %}
@@ -78,6 +80,7 @@ public class {{ type_name }} extends java.lang.Exception {
 }
 {%- endif %}
 
+// UNIFFI:FILE {{ type_name }}ErrorHandler.java
 package {{ config.package_name() }};
 
 public class {{ type_name }}ErrorHandler implements UniffiRustCallStatusErrorHandler<{{ type_name }}> {
@@ -87,6 +90,7 @@ public class {{ type_name }}ErrorHandler implements UniffiRustCallStatusErrorHan
   }
 }
 
+// UNIFFI:FILE {{ e|ffi_converter_name }}.java
 package {{ config.package_name() }};
 
 public enum {{ e|ffi_converter_name }} implements FfiConverterRustBuffer<{{ type_name }}> {
