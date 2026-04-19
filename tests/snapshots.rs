@@ -16,7 +16,7 @@ use anyhow::Result;
 use camino::{Utf8Path, Utf8PathBuf};
 use std::fs;
 use uniffi_bindgen::{BindgenLoader, BindgenPaths};
-use uniffi_bindgen_java::{GenerateOptions, generate};
+use uniffi_bindgen_java::{GenerateOptions, Language, generate};
 use uniffi_testing::UniFFITestHelper;
 
 fn snapshot_fixture(fixture_name: &str, snapshot_name: &str) -> Result<()> {
@@ -32,15 +32,10 @@ fn snapshot_fixture(fixture_name: &str, snapshot_name: &str) -> Result<()> {
     paths.add_cargo_metadata_layer(false)?;
     let loader = BindgenLoader::new(paths);
 
-    generate(
-        &loader,
-        &GenerateOptions {
-            source: cdylib_path,
-            out_dir: out_dir.clone(),
-            format: false,
-            crate_filter: None,
-        },
-    )?;
+    let mut options = GenerateOptions::new(cdylib_path, out_dir.clone());
+    options.format = false;
+    options.language = Language::Java;
+    generate(&loader, &options)?;
 
     let combined = collect_generated_files(&out_dir)?;
 
@@ -78,6 +73,37 @@ fn collect_generated_files(out_dir: &Utf8PathBuf) -> Result<String> {
         .collect::<Vec<_>>()
         .join("\n");
     Ok(combined)
+}
+
+/// Smoke test for the P2 Kotlin dispatch path. Asserts that
+/// `generate(.., Language::Kotlin)` runs the Kotlin codepath end-to-end
+/// (config parsing, marker splitting, file-extension plumbing) and writes
+/// at least one `.kt` file at the expected package-path directory. No
+/// snapshot yet — Kotlin snapshots arrive in P3 once real templates land.
+#[test]
+fn kotlin_dispatch_smoke() -> Result<()> {
+    let fixture = "uniffi-example-arithmetic";
+    let test_helper = UniFFITestHelper::new(fixture)?;
+    let key = Utf8Path::new(".").join("tests").join("kotlin-smoke");
+    let out_dir = test_helper.create_out_dir(env!("CARGO_TARGET_TMPDIR"), &key)?;
+    let cdylib_path = test_helper.cdylib_path()?;
+
+    let mut paths = BindgenPaths::default();
+    paths.add_cargo_metadata_layer(false)?;
+    let loader = BindgenLoader::new(paths);
+
+    let mut options = GenerateOptions::new(cdylib_path, out_dir.clone());
+    options.language = Language::Kotlin;
+    generate(&loader, &options)?;
+
+    let kt_files: Vec<_> = glob::glob(out_dir.join("**/*.kt").as_str())?
+        .filter_map(Result::ok)
+        .collect();
+    assert!(
+        !kt_files.is_empty(),
+        "expected at least one .kt file under {out_dir}, got none",
+    );
+    Ok(())
 }
 
 #[test]

@@ -65,15 +65,8 @@ fn run_test(fixture_name: &str, test_file: &str) -> Result<()> {
     let loader = BindgenLoader::new(paths);
 
     // generate the fixture bindings
-    generate(
-        &loader,
-        &GenerateOptions {
-            source: cdylib_path.clone(),
-            out_dir: out_dir.clone(),
-            format: true,
-            crate_filter: None,
-        },
-    )?;
+    let options = GenerateOptions::new(cdylib_path.clone(), out_dir.clone());
+    generate(&loader, &options)?;
 
     // Copy the cdylib to a flat directory for java.library.path.
     // System.loadLibrary expects "lib<name>.dylib" (macOS) or "lib<name>.so" (Linux).
@@ -165,15 +158,8 @@ fn run_test_with_library_override(
     paths.add_cargo_metadata_layer(false)?;
     let loader = BindgenLoader::new(paths);
 
-    generate(
-        &loader,
-        &GenerateOptions {
-            source: cdylib_path.clone(),
-            out_dir: out_dir.clone(),
-            format: true,
-            crate_filter: None,
-        },
-    )?;
+    let options = GenerateOptions::new(cdylib_path.clone(), out_dir.clone());
+    generate(&loader, &options)?;
 
     // Copy the cdylib to a known absolute path (no symlink needed since we pass the full path)
     let native_lib_dir = out_dir.join("native");
