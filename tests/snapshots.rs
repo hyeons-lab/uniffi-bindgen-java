@@ -20,6 +20,15 @@ use uniffi_bindgen_java::{GenerateOptions, Language, generate};
 use uniffi_testing::UniFFITestHelper;
 
 fn snapshot_fixture(fixture_name: &str, snapshot_name: &str) -> Result<()> {
+    snapshot_fixture_for(fixture_name, snapshot_name, Language::Java, "java")
+}
+
+fn snapshot_fixture_for(
+    fixture_name: &str,
+    snapshot_name: &str,
+    language: Language,
+    extension: &str,
+) -> Result<()> {
     let test_helper = UniFFITestHelper::new(fixture_name)?;
     let key = Utf8Path::new(".")
         .join("tests")
@@ -34,10 +43,10 @@ fn snapshot_fixture(fixture_name: &str, snapshot_name: &str) -> Result<()> {
 
     let mut options = GenerateOptions::new(cdylib_path, out_dir.clone());
     options.format = false;
-    options.language = Language::Java;
+    options.language = language;
     generate(&loader, &options)?;
 
-    let combined = collect_generated_files(&out_dir)?;
+    let combined = collect_generated_files(&out_dir, extension)?;
 
     let mut settings = insta::Settings::clone_current();
     settings.set_snapshot_path("snapshots");
@@ -53,8 +62,8 @@ fn snapshot_fixture(fixture_name: &str, snapshot_name: &str) -> Result<()> {
     Ok(())
 }
 
-fn collect_generated_files(out_dir: &Utf8PathBuf) -> Result<String> {
-    let pattern = out_dir.join("**/*.java");
+fn collect_generated_files(out_dir: &Utf8PathBuf, extension: &str) -> Result<String> {
+    let pattern = out_dir.join(format!("**/*.{extension}"));
     let mut entries: Vec<(String, String)> = Vec::new();
     for path in glob::glob(pattern.as_str())? {
         let path = path?;
@@ -109,6 +118,23 @@ fn kotlin_dispatch_smoke() -> Result<()> {
 #[test]
 fn snapshot_arithmetic() -> Result<()> {
     snapshot_fixture("uniffi-example-arithmetic", "arithmetic")
+}
+
+/// Kotlin-side snapshot for the same arithmetic fixture. Captures the
+/// full Kotlin runtime + namespace-function rendering so a change to
+/// either backend without a paired update surfaces as a CI diff (per
+/// the dual-backend maintenance strategy in the project plan). Geometry
+/// + coverall snapshots are Java-only until the Kotlin record / object /
+/// callback support lands (P3f+); for now they panic on
+/// `FfiType::Struct` / non-primitive `AsCodeType` arms.
+#[test]
+fn snapshot_arithmetic_kotlin() -> Result<()> {
+    snapshot_fixture_for(
+        "uniffi-example-arithmetic",
+        "arithmetic_kotlin",
+        Language::Kotlin,
+        "kt",
+    )
 }
 
 #[test]

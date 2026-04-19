@@ -37,9 +37,18 @@
 {% include "StringHelper.kt" %}
 {% include "ByteArrayHelper.kt" %}
 
+{# Only emit the namespace object when the interface has at least one
+   top-level function. Empty `object Foo` is legal Kotlin but pointless. #}
+{%- if !ci.function_definitions().is_empty() %}
 // UNIFFI:FILE {{ self.namespace_class_name() }}.kt
 package {{ config.package_name() }}
 
-// Skeleton namespace object. Real type mapping and callable functions
-// will be added as the Kotlin backend matures.
-object {{ self.namespace_class_name() }}
+object {{ self.namespace_class_name() }} {
+    {%- for func in ci.function_definitions() %}
+
+{% call kotlin::func_decl(func, "    ") %}
+    {%- endfor %}
+}
+{%- endif %}
+
+{%- import "macros.kt" as kotlin %}
