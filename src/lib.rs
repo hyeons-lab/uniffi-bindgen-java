@@ -1,17 +1,41 @@
 use anyhow::{Context, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 use clap::{Parser, Subcommand};
+use once_cell::sync::Lazy;
+use regex::Regex;
 use std::collections::HashMap;
 use std::fs;
 use uniffi_bindgen::{
     BindgenLoader, BindgenPaths, Component, ComponentInterface, interface::rename,
 };
 
-mod gen_java;
-mod gen_lang;
-use gen_java::Config;
+/// Shared splitter regex. Matches `// UNIFFI:FILE <name>` with an optional
+/// trailing `\r` so Windows checkouts with CRLF line endings still parse.
+/// Compiled once via `Lazy` rather than re-created on every call to
+/// `split_and_write`.
+static FILE_MARKER: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?m)^// UNIFFI:FILE (\S+)\r?\n").unwrap());
 
-/// Options for generating Java bindings
+mod gen_java;
+mod gen_kotlin;
+mod gen_lang;
+
+/// Target output language. Added in P2; Java is the default for
+/// backwards compatibility with pre-P2 callers of the library API.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum Language {
+    #[default]
+    Java,
+    Kotlin,
+}
+
+/// Options for generating bindings.
+///
+/// `#[non_exhaustive]` + the `new(..)` constructor below mean new fields can
+/// be added in future releases without breaking downstream callers. Prefer
+/// `GenerateOptions::new(source, out_dir)` over struct literals; mutate
+/// individual fields after construction to override defaults.
+#[non_exhaustive]
 pub struct GenerateOptions {
     /// Path to the source file (UDL or library)
     pub source: Utf8PathBuf,
@@ -21,39 +45,76 @@ pub struct GenerateOptions {
     pub format: bool,
     /// Optional crate filter - only generate bindings for this crate
     pub crate_filter: Option<String>,
+    /// Output language. Defaults to Java.
+    pub language: Language,
+}
+
+impl GenerateOptions {
+    /// Construct `GenerateOptions` with defaults for everything except the
+    /// source path and output directory (which never have a sensible
+    /// default). Mutate individual fields to override:
+    ///
+    /// ```ignore
+    /// let mut opts = GenerateOptions::new(cdylib_path, out_dir);
+    /// opts.language = Language::Kotlin;
+    /// opts.format = false;
+    /// generate(&loader, &opts)?;
+    /// ```
+    pub fn new(source: Utf8PathBuf, out_dir: Utf8PathBuf) -> Self {
+        Self {
+            source,
+            out_dir,
+            format: true,
+            crate_filter: None,
+            language: Language::Java,
+        }
+    }
 }
 
 pub fn generate(loader: &BindgenLoader, options: &GenerateOptions) -> Result<()> {
+    match options.language {
+        Language::Java => generate_java(loader, options),
+        Language::Kotlin => generate_kotlin(loader, options),
+    }
+}
+
+/// Split a `generate_bindings()` output string on `// UNIFFI:FILE <name>`
+/// markers and write each section as a separate file under `out_dir`. Used by
+/// both backends — the marker format is language-neutral.
+fn split_and_write(bindings_str: &str, out_dir: &Utf8Path) -> Result<()> {
+    let markers: Vec<(String, usize, usize)> = FILE_MARKER
+        .captures_iter(bindings_str)
+        .map(|cap| {
+            let whole = cap.get(0).unwrap();
+            let filename = cap.get(1).unwrap().as_str().to_string();
+            (filename, whole.start(), whole.end())
+        })
+        .collect();
+
+    for (i, (filename, _, content_start)) in markers.iter().enumerate() {
+        let content_end = markers
+            .get(i + 1)
+            .map(|(_, next_marker_start, _)| *next_marker_start)
+            .unwrap_or(bindings_str.len());
+        fs::write(
+            out_dir.join(filename),
+            &bindings_str[*content_start..content_end],
+        )?;
+    }
+    Ok(())
+}
+
+fn generate_java(loader: &BindgenLoader, options: &GenerateOptions) -> Result<()> {
     let metadata = loader.load_metadata(&options.source)?;
     let cis = loader.load_cis(metadata)?;
     let cdylib = loader.library_name(&options.source).map(|l| l.to_string());
     let mut components =
-        loader.load_components(cis, |ci, toml| parse_config(ci, toml, cdylib.clone()))?;
+        loader.load_components(cis, |ci, toml| parse_java_config(ci, toml, cdylib.clone()))?;
 
-    // Apply renames and update external package mappings (must happen before derive_ffi_funcs)
-    apply_renames_and_external_packages(&mut components);
-
-    // Derive FFI functions for each component (after renames)
+    apply_renames_and_external_packages_java(&mut components);
     for c in components.iter_mut() {
         c.ci.derive_ffi_funcs()?;
     }
-
-    // Generate and write bindings for each component.
-    //
-    // File splitting is driven by `// UNIFFI:FILE <name>` markers emitted by
-    // the templates. Each marker starts a new output file; content between
-    // markers (with the marker line stripped) is written verbatim. Anything
-    // before the first marker is template preamble (root-template comments,
-    // macro imports) that doesn't belong in any single output file and is
-    // discarded.
-    //
-    // Marker-based splitting replaces a regex over Java top-level decl
-    // keywords. The regex was fragile (every new modifier or keyword broke
-    // it) and unsuitable for the planned Kotlin backend, which has many
-    // more top-level forms (`data class`, `sealed interface`, `data object`,
-    // `fun interface`, etc.). Markers also let templates name their own
-    // output files explicitly, decoupling file naming from emitted syntax.
-    let marker_re = regex::Regex::new(r"(?m)^// UNIFFI:FILE (\S+)\n").unwrap();
 
     for Component { ci, config, .. } in components {
         if let Some(crate_filter) = &options.crate_filter
@@ -63,37 +124,20 @@ pub fn generate(loader: &BindgenLoader, options: &GenerateOptions) -> Result<()>
         }
 
         let bindings_str = gen_java::generate_bindings(&config, &ci)?;
-        let java_package_out_dir = options.out_dir.join(
+        let package_out_dir = options.out_dir.join(
             config
                 .package_name()
                 .split('.')
                 .collect::<Vec<_>>()
                 .join("/"),
         );
-        fs::create_dir_all(&java_package_out_dir)?;
-
-        let markers: Vec<(String, usize, usize)> = marker_re
-            .captures_iter(&bindings_str)
-            .map(|cap| {
-                let whole = cap.get(0).unwrap();
-                let filename = cap.get(1).unwrap().as_str().to_string();
-                (filename, whole.start(), whole.end())
-            })
-            .collect();
-
-        for (i, (filename, _, content_start)) in markers.iter().enumerate() {
-            let content_end = markers
-                .get(i + 1)
-                .map(|(_, next_marker_start, _)| *next_marker_start)
-                .unwrap_or(bindings_str.len());
-            let content = &bindings_str[*content_start..content_end];
-            fs::write(java_package_out_dir.join(filename), content)?;
-        }
+        fs::create_dir_all(&package_out_dir)?;
+        split_and_write(&bindings_str, &package_out_dir)?;
 
         if config.nullness_annotations() {
             let package_line = format!("package {};", config.package_name());
             let package_info = format!("@org.jspecify.annotations.NullMarked\n{}", package_line);
-            fs::write(java_package_out_dir.join("package-info.java"), package_info)?;
+            fs::write(package_out_dir.join("package-info.java"), package_info)?;
         }
 
         if options.format {
@@ -107,13 +151,47 @@ pub fn generate(loader: &BindgenLoader, options: &GenerateOptions) -> Result<()>
     Ok(())
 }
 
+fn generate_kotlin(loader: &BindgenLoader, options: &GenerateOptions) -> Result<()> {
+    let metadata = loader.load_metadata(&options.source)?;
+    let cis = loader.load_cis(metadata)?;
+    let cdylib = loader.library_name(&options.source).map(|l| l.to_string());
+    let mut components = loader.load_components(cis, |ci, toml| {
+        parse_kotlin_config(ci, toml, cdylib.clone())
+    })?;
+
+    apply_renames_and_external_packages_kotlin(&mut components);
+    for c in components.iter_mut() {
+        c.ci.derive_ffi_funcs()?;
+    }
+
+    for Component { ci, config, .. } in components {
+        if let Some(crate_filter) = &options.crate_filter
+            && ci.crate_name() != crate_filter
+        {
+            continue;
+        }
+
+        let bindings_str = gen_kotlin::generate_bindings(&config, &ci)?;
+        let package_out_dir = options.out_dir.join(
+            config
+                .package_name()
+                .split('.')
+                .collect::<Vec<_>>()
+                .join("/"),
+        );
+        fs::create_dir_all(&package_out_dir)?;
+        split_and_write(&bindings_str, &package_out_dir)?;
+    }
+    Ok(())
+}
+
 /// Parse Java configuration from TOML
-fn parse_config(
+fn parse_java_config(
     ci: &ComponentInterface,
     root_toml: toml::Value,
     cdylib: Option<String>,
-) -> Result<Config> {
-    let mut config: Config = match root_toml.get("bindings").and_then(|b| b.get("java")) {
+) -> Result<gen_java::Config> {
+    let mut config: gen_java::Config = match root_toml.get("bindings").and_then(|b| b.get("java")) {
         Some(v) => v.clone().try_into()?,
         None => Default::default(),
     };
@@ -128,10 +206,32 @@ fn parse_config(
     Ok(config)
 }
 
-/// Apply rename configurations and update external package mappings across all components.
-/// This must be called before derive_ffi_funcs() since renames affect FFI function names.
-fn apply_renames_and_external_packages(components: &mut Vec<Component<Config>>) {
-    // Collect all rename configurations from all components, keyed by module_path (crate name)
+/// Parse Kotlin configuration from TOML
+fn parse_kotlin_config(
+    ci: &ComponentInterface,
+    root_toml: toml::Value,
+    cdylib: Option<String>,
+) -> Result<gen_kotlin::Config> {
+    let mut config: gen_kotlin::Config =
+        match root_toml.get("bindings").and_then(|b| b.get("kotlin")) {
+            Some(v) => v.clone().try_into()?,
+            None => Default::default(),
+        };
+    config
+        .package_name
+        .get_or_insert_with(|| format!("uniffi.{}", ci.namespace()));
+    config.cdylib_name.get_or_insert_with(|| {
+        cdylib
+            .clone()
+            .unwrap_or_else(|| format!("uniffi_{}", ci.namespace()))
+    });
+    Ok(config)
+}
+
+/// Apply rename configurations and update external package mappings across all
+/// Java components. This must be called before derive_ffi_funcs() since
+/// renames affect FFI function names.
+fn apply_renames_and_external_packages_java(components: &mut Vec<Component<gen_java::Config>>) {
     let mut module_renames = HashMap::new();
     for c in components.iter() {
         if !c.config.rename.is_empty() {
@@ -140,14 +240,48 @@ fn apply_renames_and_external_packages(components: &mut Vec<Component<Config>>) 
         }
     }
 
-    // Apply rename configurations to all components
     if !module_renames.is_empty() {
         for c in &mut *components {
             rename(&mut c.ci, &module_renames);
         }
     }
 
-    // Update external package mappings
+    let packages = HashMap::<String, String>::from_iter(
+        components
+            .iter()
+            .map(|c| (c.ci.crate_name().to_string(), c.config.package_name())),
+    );
+    for c in components {
+        for (ext_crate, ext_package) in &packages {
+            if ext_crate != c.ci.crate_name() && !c.config.external_packages.contains_key(ext_crate)
+            {
+                c.config
+                    .external_packages
+                    .insert(ext_crate.to_string(), ext_package.clone());
+            }
+        }
+    }
+}
+
+/// Kotlin-side mirror of the Java rename/external-package pass. Structurally
+/// identical — the duplication is tolerated because `Component<C>` is
+/// generic over C and the shared post-processing would need a Config trait
+/// (wait for P3+ when that trait pays for itself).
+fn apply_renames_and_external_packages_kotlin(components: &mut Vec<Component<gen_kotlin::Config>>) {
+    let mut module_renames = HashMap::new();
+    for c in components.iter() {
+        if !c.config.rename.is_empty() {
+            let module_path = c.ci.crate_name().to_string();
+            module_renames.insert(module_path, c.config.rename.clone());
+        }
+    }
+
+    if !module_renames.is_empty() {
+        for c in &mut *components {
+            rename(&mut c.ci, &module_renames);
+        }
+    }
+
     let packages = HashMap::<String, String>::from_iter(
         components
             .iter()
@@ -185,11 +319,27 @@ fn create_bindgen_paths(
     Ok(paths)
 }
 
+#[derive(Debug, Clone, Copy, Default, clap::ValueEnum)]
+enum CliLanguage {
+    #[default]
+    Java,
+    Kotlin,
+}
+
+impl From<CliLanguage> for Language {
+    fn from(l: CliLanguage) -> Self {
+        match l {
+            CliLanguage::Java => Language::Java,
+            CliLanguage::Kotlin => Language::Kotlin,
+        }
+    }
+}
+
 #[derive(Parser)]
 #[clap(name = "uniffi-bindgen-java")]
 #[clap(version = clap::crate_version!())]
 #[clap(propagate_version = true, disable_help_subcommand = true)]
-/// Java scaffolding and bindings generator for Rust
+/// Java and Kotlin scaffolding and bindings generator for Rust
 struct Cli {
     #[clap(subcommand)]
     command: Commands,
@@ -197,8 +347,12 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Generate Java bindings
+    /// Generate bindings (Java by default; pass `--language kotlin` for Kotlin).
     Generate {
+        /// Target output language. Defaults to Java.
+        #[clap(long, value_enum, default_value_t = CliLanguage::Java)]
+        language: CliLanguage,
+
         /// Directory in which to write generated files. Default is same folder as .udl file.
         #[clap(long, short)]
         out_dir: Option<Utf8PathBuf>,
@@ -252,6 +406,7 @@ pub fn run_main() -> Result<()> {
     let cli = Cli::parse();
     match cli.command {
         Commands::Generate {
+            language,
             out_dir,
             no_format,
             config,
@@ -279,6 +434,7 @@ pub fn run_main() -> Result<()> {
                     out_dir,
                     format: !no_format,
                     crate_filter: crate_name,
+                    language: language.into(),
                 },
             )?;
         }
