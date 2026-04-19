@@ -1,3 +1,5 @@
+
+// UNIFFI:FILE FfiConverter.java
 package {{ config.package_name() }};
 
 // The FfiConverter interface handles converter types to and from the FFI
@@ -64,6 +66,7 @@ public interface FfiConverter<JavaType, FfiType> {
     }
 }
 
+// UNIFFI:FILE FfiConverterRustBuffer.java
 package {{ config.package_name() }};
 
 // FfiConverter that uses `RustBuffer` as the FfiType

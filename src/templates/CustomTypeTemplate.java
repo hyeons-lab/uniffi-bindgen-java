@@ -1,3 +1,4 @@
+
 {%- let package_name = config.package_name() %}
 {%- let ffi_type_name=builtin|ffi_type|ref|ffi_type_name(config, ci) %}
 {%- let ffi_type_name_boxed=builtin|ffi_type_name_boxed %}
@@ -5,6 +6,7 @@
 {%- when None %}
 {#- Define a newtype record that delegates to the builtin #}
 
+// UNIFFI:FILE {{ type_name }}.java
 package {{ package_name }};
 
 public record {{ type_name }}(
@@ -12,6 +14,7 @@ public record {{ type_name }}(
 ) {
 }
 
+// UNIFFI:FILE {{ ffi_converter_name }}.java
 package {{ package_name }};
 
 public enum {{ ffi_converter_name }} implements FfiConverter<{{ type_name }}, {{ ffi_type_name_boxed }}> {
@@ -52,6 +55,7 @@ public enum {{ ffi_converter_name }} implements FfiConverter<{{ type_name }}, {{
 {%- match custom_type_config.type_name %}
 {%- when Some(concrete_type_name) %}
 
+// UNIFFI:FILE {{ type_name }}.java
 package {{ package_name }};
 
 {%- match custom_type_config.imports %}
@@ -69,6 +73,7 @@ public record {{ type_name }}(
 {%- else %}
 {%- endmatch %}
 
+// UNIFFI:FILE {{ ffi_converter_name }}.java
 package {{ package_name }};
 
 {%- match custom_type_config.imports %}

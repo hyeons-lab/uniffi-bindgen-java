@@ -1,3 +1,5 @@
+
+// UNIFFI:FILE FfiConverterDuration.java
 package {{ config.package_name() }};
 
 public enum FfiConverterDuration implements FfiConverterRustBuffer<java.time.Duration> {

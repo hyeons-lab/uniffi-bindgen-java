@@ -5,7 +5,6 @@ expression: combined
 // === FILE: uniffi/arithmetic/Arithmetic.java ===
 package uniffi.arithmetic;
 
-
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -99,7 +98,6 @@ public class Arithmetic {
 package uniffi.arithmetic;
 
 
-
 public class ArithmeticException extends java.lang.Exception {
     private ArithmeticException(java.lang.String message) {
       super(message);
@@ -118,7 +116,6 @@ public class ArithmeticException extends java.lang.Exception {
 // === FILE: uniffi/arithmetic/ArithmeticExceptionErrorHandler.java ===
 package uniffi.arithmetic;
 
-
 public class ArithmeticExceptionErrorHandler implements UniffiRustCallStatusErrorHandler<ArithmeticException> {
   @Override
   public ArithmeticException lift(java.lang.foreign.MemorySegment errorBuf){
@@ -129,7 +126,6 @@ public class ArithmeticExceptionErrorHandler implements UniffiRustCallStatusErro
 
 // === FILE: uniffi/arithmetic/AutoCloseableHelper.java ===
 package uniffi.arithmetic;
-
 
 import java.util.List;
 import java.util.Map;
@@ -189,7 +185,6 @@ public interface AutoCloseableHelper {
 
 // === FILE: uniffi/arithmetic/FfiConverter.java ===
 package uniffi.arithmetic;
-
 
 // The FfiConverter interface handles converter types to and from the FFI
 //
@@ -259,7 +254,6 @@ public interface FfiConverter<JavaType, FfiType> {
 // === FILE: uniffi/arithmetic/FfiConverterBoolean.java ===
 package uniffi.arithmetic;
 
-
 public enum FfiConverterBoolean implements FfiConverter<java.lang.Boolean, java.lang.Byte> {
   INSTANCE;
 
@@ -290,9 +284,9 @@ public enum FfiConverterBoolean implements FfiConverter<java.lang.Boolean, java.
 }
 
 
+
 // === FILE: uniffi/arithmetic/FfiConverterLong.java ===
 package uniffi.arithmetic;
-
 
 public enum FfiConverterLong implements FfiConverter<java.lang.Long, java.lang.Long> {
     INSTANCE;
@@ -325,9 +319,9 @@ public enum FfiConverterLong implements FfiConverter<java.lang.Long, java.lang.L
 
 
 
+
 // === FILE: uniffi/arithmetic/FfiConverterRustBuffer.java ===
 package uniffi.arithmetic;
-
 
 // FfiConverter that uses `RustBuffer` as the FfiType
 public interface FfiConverterRustBuffer<JavaType> extends FfiConverter<JavaType, java.lang.foreign.MemorySegment> {
@@ -341,9 +335,9 @@ public interface FfiConverterRustBuffer<JavaType> extends FfiConverter<JavaType,
     }
 }
 
+
 // === FILE: uniffi/arithmetic/FfiConverterString.java ===
 package uniffi.arithmetic;
-
 
 public enum FfiConverterString implements FfiConverter<java.lang.String, java.lang.foreign.MemorySegment> {
     INSTANCE;
@@ -412,9 +406,9 @@ public enum FfiConverterString implements FfiConverter<java.lang.String, java.la
 
 
 
+
 // === FILE: uniffi/arithmetic/FfiConverterTypeArithmeticError.java ===
 package uniffi.arithmetic;
-
 
 public enum FfiConverterTypeArithmeticError implements FfiConverterRustBuffer<ArithmeticException> {
     INSTANCE;
@@ -447,7 +441,6 @@ public enum FfiConverterTypeArithmeticError implements FfiConverterRustBuffer<Ar
 
 // === FILE: uniffi/arithmetic/ForeignBytes.java ===
 package uniffi.arithmetic;
-
 
 // This is a helper for safely passing byte references into the rust code.
 // It's not actually used at the moment, because there aren't many things that you
@@ -483,9 +476,9 @@ public final class ForeignBytes {
     }
 }
 
+
 // === FILE: uniffi/arithmetic/InternalException.java ===
 package uniffi.arithmetic;
-
 
 public class InternalException extends java.lang.RuntimeException {
     public InternalException(java.lang.String message) {
@@ -496,7 +489,6 @@ public class InternalException extends java.lang.RuntimeException {
 
 // === FILE: uniffi/arithmetic/NamespaceLibrary.java ===
 package uniffi.arithmetic;
-
 
 final class NamespaceLibrary {
     static synchronized String findLibraryName(String componentName) {
@@ -548,7 +540,6 @@ final class NamespaceLibrary {
 // === FILE: uniffi/arithmetic/NoHandle.java ===
 package uniffi.arithmetic;
 
-
 public class NoHandle {
     // Private constructor to prevent instantiation
     private NoHandle() {}
@@ -560,7 +551,6 @@ public class NoHandle {
 
 // === FILE: uniffi/arithmetic/RustBuffer.java ===
 package uniffi.arithmetic;
-
 
 /**
  * This is a helper for safely working with byte buffers returned from the Rust code.
@@ -648,7 +638,6 @@ public final class RustBuffer {
 // === FILE: uniffi/arithmetic/UniffiCallbackInterfaceClone.java ===
 package uniffi.arithmetic;
 
-
 public final class UniffiCallbackInterfaceClone {
     public static final java.lang.foreign.FunctionDescriptor DESCRIPTOR = java.lang.foreign.FunctionDescriptor.of(java.lang.foreign.ValueLayout.JAVA_LONG, java.lang.foreign.ValueLayout.JAVA_LONG);
 
@@ -675,7 +664,6 @@ public final class UniffiCallbackInterfaceClone {
 // === FILE: uniffi/arithmetic/UniffiCallbackInterfaceFree.java ===
 package uniffi.arithmetic;
 
-
 public final class UniffiCallbackInterfaceFree {
     public static final java.lang.foreign.FunctionDescriptor DESCRIPTOR = java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG);
 
@@ -701,7 +689,6 @@ public final class UniffiCallbackInterfaceFree {
 
 // === FILE: uniffi/arithmetic/UniffiForeignFutureCompleteF32.java ===
 package uniffi.arithmetic;
-
 
 public final class UniffiForeignFutureCompleteF32 {
     public static final java.lang.foreign.FunctionDescriptor DESCRIPTOR = java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, UniffiForeignFutureResultF32.LAYOUT);
@@ -730,7 +717,6 @@ public final class UniffiForeignFutureCompleteF32 {
 // === FILE: uniffi/arithmetic/UniffiForeignFutureCompleteF64.java ===
 package uniffi.arithmetic;
 
-
 public final class UniffiForeignFutureCompleteF64 {
     public static final java.lang.foreign.FunctionDescriptor DESCRIPTOR = java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, UniffiForeignFutureResultF64.LAYOUT);
 
@@ -757,7 +743,6 @@ public final class UniffiForeignFutureCompleteF64 {
 
 // === FILE: uniffi/arithmetic/UniffiForeignFutureCompleteI16.java ===
 package uniffi.arithmetic;
-
 
 public final class UniffiForeignFutureCompleteI16 {
     public static final java.lang.foreign.FunctionDescriptor DESCRIPTOR = java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, UniffiForeignFutureResultI16.LAYOUT);
@@ -786,7 +771,6 @@ public final class UniffiForeignFutureCompleteI16 {
 // === FILE: uniffi/arithmetic/UniffiForeignFutureCompleteI32.java ===
 package uniffi.arithmetic;
 
-
 public final class UniffiForeignFutureCompleteI32 {
     public static final java.lang.foreign.FunctionDescriptor DESCRIPTOR = java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, UniffiForeignFutureResultI32.LAYOUT);
 
@@ -813,7 +797,6 @@ public final class UniffiForeignFutureCompleteI32 {
 
 // === FILE: uniffi/arithmetic/UniffiForeignFutureCompleteI64.java ===
 package uniffi.arithmetic;
-
 
 public final class UniffiForeignFutureCompleteI64 {
     public static final java.lang.foreign.FunctionDescriptor DESCRIPTOR = java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, UniffiForeignFutureResultI64.LAYOUT);
@@ -842,7 +825,6 @@ public final class UniffiForeignFutureCompleteI64 {
 // === FILE: uniffi/arithmetic/UniffiForeignFutureCompleteI8.java ===
 package uniffi.arithmetic;
 
-
 public final class UniffiForeignFutureCompleteI8 {
     public static final java.lang.foreign.FunctionDescriptor DESCRIPTOR = java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, UniffiForeignFutureResultI8.LAYOUT);
 
@@ -869,7 +851,6 @@ public final class UniffiForeignFutureCompleteI8 {
 
 // === FILE: uniffi/arithmetic/UniffiForeignFutureCompleteRustBuffer.java ===
 package uniffi.arithmetic;
-
 
 public final class UniffiForeignFutureCompleteRustBuffer {
     public static final java.lang.foreign.FunctionDescriptor DESCRIPTOR = java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, UniffiForeignFutureResultRustBuffer.LAYOUT);
@@ -898,7 +879,6 @@ public final class UniffiForeignFutureCompleteRustBuffer {
 // === FILE: uniffi/arithmetic/UniffiForeignFutureCompleteU16.java ===
 package uniffi.arithmetic;
 
-
 public final class UniffiForeignFutureCompleteU16 {
     public static final java.lang.foreign.FunctionDescriptor DESCRIPTOR = java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, UniffiForeignFutureResultU16.LAYOUT);
 
@@ -925,7 +905,6 @@ public final class UniffiForeignFutureCompleteU16 {
 
 // === FILE: uniffi/arithmetic/UniffiForeignFutureCompleteU32.java ===
 package uniffi.arithmetic;
-
 
 public final class UniffiForeignFutureCompleteU32 {
     public static final java.lang.foreign.FunctionDescriptor DESCRIPTOR = java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, UniffiForeignFutureResultU32.LAYOUT);
@@ -954,7 +933,6 @@ public final class UniffiForeignFutureCompleteU32 {
 // === FILE: uniffi/arithmetic/UniffiForeignFutureCompleteU64.java ===
 package uniffi.arithmetic;
 
-
 public final class UniffiForeignFutureCompleteU64 {
     public static final java.lang.foreign.FunctionDescriptor DESCRIPTOR = java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, UniffiForeignFutureResultU64.LAYOUT);
 
@@ -982,7 +960,6 @@ public final class UniffiForeignFutureCompleteU64 {
 // === FILE: uniffi/arithmetic/UniffiForeignFutureCompleteU8.java ===
 package uniffi.arithmetic;
 
-
 public final class UniffiForeignFutureCompleteU8 {
     public static final java.lang.foreign.FunctionDescriptor DESCRIPTOR = java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, UniffiForeignFutureResultU8.LAYOUT);
 
@@ -1009,7 +986,6 @@ public final class UniffiForeignFutureCompleteU8 {
 
 // === FILE: uniffi/arithmetic/UniffiForeignFutureCompleteVoid.java ===
 package uniffi.arithmetic;
-
 
 public final class UniffiForeignFutureCompleteVoid {
     public static final java.lang.foreign.FunctionDescriptor DESCRIPTOR = java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, UniffiForeignFutureResultVoid.LAYOUT);
@@ -1039,7 +1015,6 @@ public final class UniffiForeignFutureCompleteVoid {
 // === FILE: uniffi/arithmetic/UniffiForeignFutureDroppedCallback.java ===
 package uniffi.arithmetic;
 
-
 public final class UniffiForeignFutureDroppedCallback {
     public static final java.lang.foreign.FunctionDescriptor DESCRIPTOR = java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG);
 
@@ -1065,7 +1040,6 @@ public final class UniffiForeignFutureDroppedCallback {
 
 // === FILE: uniffi/arithmetic/UniffiForeignFutureDroppedCallbackStruct.java ===
 package uniffi.arithmetic;
-
 
 public final class UniffiForeignFutureDroppedCallbackStruct {
     public static final java.lang.foreign.StructLayout LAYOUT = java.lang.foreign.MemoryLayout.structLayout(
@@ -1105,7 +1079,6 @@ public final class UniffiForeignFutureDroppedCallbackStruct {
 
 // === FILE: uniffi/arithmetic/UniffiForeignFutureResultF32.java ===
 package uniffi.arithmetic;
-
 
 public final class UniffiForeignFutureResultF32 {
     public static final java.lang.foreign.StructLayout LAYOUT = java.lang.foreign.MemoryLayout.structLayout(
@@ -1147,7 +1120,6 @@ public final class UniffiForeignFutureResultF32 {
 // === FILE: uniffi/arithmetic/UniffiForeignFutureResultF64.java ===
 package uniffi.arithmetic;
 
-
 public final class UniffiForeignFutureResultF64 {
     public static final java.lang.foreign.StructLayout LAYOUT = java.lang.foreign.MemoryLayout.structLayout(
         java.lang.foreign.ValueLayout.JAVA_DOUBLE.withName("returnValue"),
@@ -1186,7 +1158,6 @@ public final class UniffiForeignFutureResultF64 {
 
 // === FILE: uniffi/arithmetic/UniffiForeignFutureResultI16.java ===
 package uniffi.arithmetic;
-
 
 public final class UniffiForeignFutureResultI16 {
     public static final java.lang.foreign.StructLayout LAYOUT = java.lang.foreign.MemoryLayout.structLayout(
@@ -1228,7 +1199,6 @@ public final class UniffiForeignFutureResultI16 {
 // === FILE: uniffi/arithmetic/UniffiForeignFutureResultI32.java ===
 package uniffi.arithmetic;
 
-
 public final class UniffiForeignFutureResultI32 {
     public static final java.lang.foreign.StructLayout LAYOUT = java.lang.foreign.MemoryLayout.structLayout(
         java.lang.foreign.ValueLayout.JAVA_INT.withName("returnValue"),
@@ -1269,7 +1239,6 @@ public final class UniffiForeignFutureResultI32 {
 // === FILE: uniffi/arithmetic/UniffiForeignFutureResultI64.java ===
 package uniffi.arithmetic;
 
-
 public final class UniffiForeignFutureResultI64 {
     public static final java.lang.foreign.StructLayout LAYOUT = java.lang.foreign.MemoryLayout.structLayout(
         java.lang.foreign.ValueLayout.JAVA_LONG.withName("returnValue"),
@@ -1308,7 +1277,6 @@ public final class UniffiForeignFutureResultI64 {
 
 // === FILE: uniffi/arithmetic/UniffiForeignFutureResultI8.java ===
 package uniffi.arithmetic;
-
 
 public final class UniffiForeignFutureResultI8 {
     public static final java.lang.foreign.StructLayout LAYOUT = java.lang.foreign.MemoryLayout.structLayout(
@@ -1350,7 +1318,6 @@ public final class UniffiForeignFutureResultI8 {
 // === FILE: uniffi/arithmetic/UniffiForeignFutureResultRustBuffer.java ===
 package uniffi.arithmetic;
 
-
 public final class UniffiForeignFutureResultRustBuffer {
     public static final java.lang.foreign.StructLayout LAYOUT = java.lang.foreign.MemoryLayout.structLayout(
         RustBuffer.LAYOUT.withName("returnValue"),
@@ -1389,7 +1356,6 @@ public final class UniffiForeignFutureResultRustBuffer {
 
 // === FILE: uniffi/arithmetic/UniffiForeignFutureResultU16.java ===
 package uniffi.arithmetic;
-
 
 public final class UniffiForeignFutureResultU16 {
     public static final java.lang.foreign.StructLayout LAYOUT = java.lang.foreign.MemoryLayout.structLayout(
@@ -1431,7 +1397,6 @@ public final class UniffiForeignFutureResultU16 {
 // === FILE: uniffi/arithmetic/UniffiForeignFutureResultU32.java ===
 package uniffi.arithmetic;
 
-
 public final class UniffiForeignFutureResultU32 {
     public static final java.lang.foreign.StructLayout LAYOUT = java.lang.foreign.MemoryLayout.structLayout(
         java.lang.foreign.ValueLayout.JAVA_INT.withName("returnValue"),
@@ -1472,7 +1437,6 @@ public final class UniffiForeignFutureResultU32 {
 // === FILE: uniffi/arithmetic/UniffiForeignFutureResultU64.java ===
 package uniffi.arithmetic;
 
-
 public final class UniffiForeignFutureResultU64 {
     public static final java.lang.foreign.StructLayout LAYOUT = java.lang.foreign.MemoryLayout.structLayout(
         java.lang.foreign.ValueLayout.JAVA_LONG.withName("returnValue"),
@@ -1511,7 +1475,6 @@ public final class UniffiForeignFutureResultU64 {
 
 // === FILE: uniffi/arithmetic/UniffiForeignFutureResultU8.java ===
 package uniffi.arithmetic;
-
 
 public final class UniffiForeignFutureResultU8 {
     public static final java.lang.foreign.StructLayout LAYOUT = java.lang.foreign.MemoryLayout.structLayout(
@@ -1553,7 +1516,6 @@ public final class UniffiForeignFutureResultU8 {
 // === FILE: uniffi/arithmetic/UniffiForeignFutureResultVoid.java ===
 package uniffi.arithmetic;
 
-
 public final class UniffiForeignFutureResultVoid {
     public static final java.lang.foreign.StructLayout LAYOUT = java.lang.foreign.MemoryLayout.structLayout(
         UniffiRustCallStatus.LAYOUT.withName("callStatus")
@@ -1582,7 +1544,6 @@ public final class UniffiForeignFutureResultVoid {
 
 // === FILE: uniffi/arithmetic/UniffiHandleMap.java ===
 package uniffi.arithmetic;
-
 
 // This is used pass an opaque 64-bit handle representing a foreign object to the Rust code.
 // Handles are always odd numbers (LSB = 1) to distinguish them from Rust handles (which are even).
@@ -1633,9 +1594,9 @@ class UniffiHandleMap<T extends java.lang.Object> {
 // Contains loading, initialization code,
 // and the FFI Function declarations using Java FFM (Foreign Function & Memory API).
 
+
 // === FILE: uniffi/arithmetic/UniffiHelpers.java ===
 package uniffi.arithmetic;
-
 
 // Helpers for calling Rust
 // In practice we usually need to be synchronized to call this safely, so it doesn't
@@ -1895,9 +1856,9 @@ public final class UniffiHelpers {
     }
 }
 
+
 // === FILE: uniffi/arithmetic/UniffiInitializer.java ===
 package uniffi.arithmetic;
-
 
 /**
  * Ensures the native library is initialized.
@@ -1921,7 +1882,6 @@ public final class UniffiInitializer {
 
 // === FILE: uniffi/arithmetic/UniffiLib.java ===
 package uniffi.arithmetic;
-
 
 // FFM-based library binding. Each FFI function gets a MethodHandle and a wrapper method.
 final class UniffiLib {
@@ -2504,7 +2464,6 @@ final class UniffiLib {
 // === FILE: uniffi/arithmetic/UniffiNullRustCallStatusErrorHandler.java ===
 package uniffi.arithmetic;
 
-
 // UniffiRustCallStatusErrorHandler implementation for times when we don't expect a CALL_ERROR
 class UniffiNullRustCallStatusErrorHandler implements UniffiRustCallStatusErrorHandler<InternalException> {
     @Override
@@ -2517,7 +2476,6 @@ class UniffiNullRustCallStatusErrorHandler implements UniffiRustCallStatusErrorH
 
 // === FILE: uniffi/arithmetic/UniffiRustCallStatus.java ===
 package uniffi.arithmetic;
-
 
 public final class UniffiRustCallStatus {
     public static final java.lang.foreign.StructLayout LAYOUT = java.lang.foreign.MemoryLayout.structLayout(
@@ -2593,7 +2551,6 @@ public final class UniffiRustCallStatus {
 // === FILE: uniffi/arithmetic/UniffiRustCallStatusErrorHandler.java ===
 package uniffi.arithmetic;
 
-
 public interface UniffiRustCallStatusErrorHandler<E extends java.lang.Exception> {
     E lift(java.lang.foreign.MemorySegment errorBuf);
 }
@@ -2601,7 +2558,6 @@ public interface UniffiRustCallStatusErrorHandler<E extends java.lang.Exception>
 
 // === FILE: uniffi/arithmetic/UniffiRustFutureContinuationCallback.java ===
 package uniffi.arithmetic;
-
 
 public final class UniffiRustFutureContinuationCallback {
     public static final java.lang.foreign.FunctionDescriptor DESCRIPTOR = java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, java.lang.foreign.ValueLayout.JAVA_BYTE);
@@ -2629,7 +2585,6 @@ public final class UniffiRustFutureContinuationCallback {
 
 // === FILE: uniffi/arithmetic/UniffiSlabAllocator.java ===
 package uniffi.arithmetic;
-
 
 // Thread-local slab allocator for short-lived native memory segments.
 //
@@ -2684,7 +2639,6 @@ class UniffiSlabAllocator implements java.lang.foreign.SegmentAllocator {
 
 // === FILE: uniffi/arithmetic/UniffiWithHandle.java ===
 package uniffi.arithmetic;
-
 
 // Marker class for constructors that accept a raw handle.
 // This disambiguates constructor signatures when an interface has both

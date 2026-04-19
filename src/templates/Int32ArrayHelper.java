@@ -1,3 +1,5 @@
+
+// UNIFFI:FILE FfiConverterInt32Array.java
 package {{ config.package_name() }};
 
 public enum FfiConverterInt32Array implements FfiConverterRustBuffer<int[]> {

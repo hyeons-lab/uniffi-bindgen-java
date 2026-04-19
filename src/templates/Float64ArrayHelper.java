@@ -1,3 +1,5 @@
+
+// UNIFFI:FILE FfiConverterFloat64Array.java
 package {{ config.package_name() }};
 
 public enum FfiConverterFloat64Array implements FfiConverterRustBuffer<double[]> {

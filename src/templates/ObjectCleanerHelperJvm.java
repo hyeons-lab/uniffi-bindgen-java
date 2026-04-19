@@ -1,3 +1,5 @@
+
+// UNIFFI:FILE JavaLangRefCleaner.java
 package {{ config.package_name() }};
 
 class JavaLangRefCleaner implements UniffiCleaner {
@@ -13,6 +15,7 @@ class JavaLangRefCleaner implements UniffiCleaner {
     }
 }
 
+// UNIFFI:FILE JavaLangRefCleanable.java
 package {{ config.package_name() }};
 
 class JavaLangRefCleanable implements UniffiCleaner.Cleanable {

@@ -1,3 +1,4 @@
+
 // This template implements a class for working with a Rust struct via a handle
 // to the live Rust struct on the other side of the FFI.
 //
@@ -109,6 +110,7 @@
 
 {%- include "Interface.java" %}
 
+// UNIFFI:FILE {{ impl_class_name }}.java
 package {{ config.package_name() }};
 
 {%- call java::docstring(obj, 0) %}
@@ -244,6 +246,7 @@ public class {{ impl_class_name }} implements AutoCloseable, {{ interface_name }
 }
 
 {% if is_error %}
+// UNIFFI:FILE {{ impl_class_name }}ErrorHandler.java
 package {{ config.package_name() }};
 
 public class {{ impl_class_name }}ErrorHandler implements UniffiRustCallStatusErrorHandler<{{ impl_class_name }}> {
@@ -262,6 +265,7 @@ public class {{ impl_class_name }}ErrorHandler implements UniffiRustCallStatusEr
 {%- if !obj.has_callback_interface() %}
 {#- Simple case: the interface can only be implemented in Rust -#}
 
+// UNIFFI:FILE {{ ffi_converter_name }}.java
 package {{ config.package_name() }};
 
 public enum {{ ffi_converter_name }} implements FfiConverter<{{ type_name }}, java.lang.Long> {
@@ -307,6 +311,7 @@ public enum {{ ffi_converter_name }} implements FfiConverter<{{ type_name }}, ja
 {%- let ffi_init_callback = obj.ffi_init_callback() %}
 {% include "CallbackInterfaceImpl.java" %}
 
+// UNIFFI:FILE {{ ffi_converter_name }}.java
 package {{ config.package_name() }};
 
 public enum {{ ffi_converter_name }} implements FfiConverter<{{ type_name }}, java.lang.Long> {

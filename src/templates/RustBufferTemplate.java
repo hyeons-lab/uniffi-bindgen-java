@@ -1,3 +1,5 @@
+
+// UNIFFI:FILE RustBuffer.java
 package {{ config.package_name() }};
 
 /**
@@ -82,6 +84,7 @@ public final class RustBuffer {
     }
 }
 
+// UNIFFI:FILE ForeignBytes.java
 package {{ config.package_name() }};
 
 // This is a helper for safely passing byte references into the rust code.

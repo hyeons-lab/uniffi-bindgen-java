@@ -1,4 +1,6 @@
+
 {%- let inner_type_name = inner_type|type_name(ci, config) %}
+// UNIFFI:FILE {{ ffi_converter_name }}.java
 package {{ config.package_name() }};
 
 {#-

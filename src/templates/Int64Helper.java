@@ -1,3 +1,5 @@
+
+// UNIFFI:FILE FfiConverterLong.java
 package {{ config.package_name() }};
 
 public enum FfiConverterLong implements FfiConverter<java.lang.Long, java.lang.Long> {

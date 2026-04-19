@@ -1,3 +1,5 @@
+
+// UNIFFI:FILE FfiConverterBooleanArray.java
 package {{ config.package_name() }};
 
 public enum FfiConverterBooleanArray implements FfiConverterRustBuffer<boolean[]> {

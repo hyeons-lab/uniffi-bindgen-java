@@ -1,3 +1,5 @@
+
+// UNIFFI:FILE FfiConverterFloat.java
 package {{ config.package_name() }};
 
 public enum FfiConverterFloat implements FfiConverter<java.lang.Float, java.lang.Float>{

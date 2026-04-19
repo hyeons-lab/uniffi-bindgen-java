@@ -1,5 +1,7 @@
+
 {%- let key_type_name = key_type|type_name(ci, config) %}
 {%- let value_type_name = value_type|type_name(ci, config) %}
+// UNIFFI:FILE {{ ffi_converter_name }}.java
 package {{ config.package_name() }};
 
 public enum {{ ffi_converter_name }} implements FfiConverterRustBuffer<java.util.Map<{{ key_type_name }}, {{ value_type_name }}>> {

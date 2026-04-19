@@ -1,3 +1,5 @@
+
+// UNIFFI:FILE FfiConverterCallbackInterface.java
 package {{ config.package_name() }};
 
 public abstract class FfiConverterCallbackInterface<CallbackInterface extends java.lang.Object> implements FfiConverter<CallbackInterface, java.lang.Long> {

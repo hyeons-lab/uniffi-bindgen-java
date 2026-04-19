@@ -1,3 +1,5 @@
+
+// UNIFFI:FILE UniffiHandleMap.java
 package {{ config.package_name() }};
 
 // This is used pass an opaque 64-bit handle representing a foreign object to the Rust code.
