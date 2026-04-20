@@ -15,7 +15,7 @@ use paste::paste;
 use uniffi_bindgen::interface::ComponentInterface;
 
 macro_rules! impl_code_type_for_primitive {
-    ($T:ty, $type_label:literal, $canonical_name:literal, $primitive_label:literal) => {
+    ($T:ident, $type_label:literal, $canonical_name:literal, $primitive_label:literal) => {
         paste! {
             #[derive(Debug)]
             pub struct $T;
