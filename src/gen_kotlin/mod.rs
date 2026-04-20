@@ -2,28 +2,41 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-//! Kotlin backend. P2 wired up the CLI dispatch and emitted a hand-written
-//! namespace stub; P3a upgrades that to Askama template rendering so
-//! subsequent phases can add real type converters, the FFM runtime, etc.
-//! without rewriting the pipeline.
+//! Kotlin backend. P3e wires up user-facing namespace function rendering:
+//! `func_decl` macro + `lift_fn`/`lower_fn`/`type_name`/
+//! `primitive_call_suffix`/`has_primitive_ffi_type` filters, plus a
+//! `CodeType` / `AsCodeType` trait pair for primitives + String + bytes.
+//! Result: `cargo run -- generate --language kotlin` against the
+//! arithmetic fixture emits an `Arithmetical.kt` whose `add`/`sub`/`div`/
+//! `equal` are callable from Kotlin user code.
 //!
-//! Still bounded for P3a: the `wrapper.kt` template emits the same P2
-//! skeleton (an `object <Namespace>`). P3b introduces the FFM runtime +
-//! primitive FfiConverters; P3c records; P3d flat enums; P3e reserved-
-//! word handling.
+//! Still bounded: only primitive + `String`/`ByteArray` types route
+//! through `AsCodeType`; non-primitive types (records, enums, objects,
+//! callbacks, optionals, sequences, maps, custom) panic at codegen time
+//! with a clear error message — by design, matching the P3d
+//! `FfiType::Struct` panic. Subsequent phases (P3f records, P3g
+//! enums+errors, …) will replace those panics with real `CodeType`
+//! impls.
 
 use std::borrow::Borrow;
 use std::collections::HashMap;
+use std::fmt::Debug;
 
 use anyhow::{Context, Result};
 use askama::Template;
 use heck::ToLowerCamelCase;
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
-use uniffi_bindgen::{ComponentInterface, interface::FfiType};
+use uniffi_bindgen::{
+    ComponentInterface,
+    interface::{Argument, FfiType},
+};
+use uniffi_meta::{AsType, Type};
 
 pub use crate::gen_lang::CustomTypeConfig;
 use crate::gen_lang::ExternalPackageResolver;
+
+mod primitives;
 
 /// Kotlin reserved words that need backtick-escaping or rename when used as
 /// identifiers. Includes hard keywords (always reserved) and modifiers /
@@ -137,10 +150,6 @@ impl KotlinCodeOracle {
         nm.to_lower_camel_case()
     }
 
-    // Used by the `fn_name` filter; the filter itself isn't yet referenced
-    // from any template (P3e will hook it into the namespace function
-    // rendering). Keep the implementation in place to avoid churn.
-    #[allow(dead_code)]
     pub fn fn_name(&self, nm: &str) -> String {
         fixup_keyword(nm.to_lower_camel_case())
     }
@@ -247,6 +256,99 @@ impl KotlinCodeOracle {
 // the same phase that ports `FfiDefinition::Struct` from the Java
 // `NamespaceLibraryTemplate`).
 
+/// Per-type code generation hooks. Mirrors `gen_java::CodeType`.
+///
+/// Implementors live in `gen_kotlin::primitives` (and, in later phases,
+/// per-category modules for records/enums/objects). The trait is kept
+/// inside `gen_kotlin` rather than hoisted to `gen_lang/` because the
+/// FFI-converter naming convention currently differs between backends —
+/// Java emits `FfiConverterX.INSTANCE.lift(...)` (enum-singleton pattern),
+/// while Kotlin emits `FfiConverterX.lift(...)` (object-singleton).
+/// Hoisting now would force one backend or the other to grow a wrapper.
+trait CodeType: Debug {
+    /// The language-specific label used to reference this type — appears
+    /// in method signatures, property declarations, etc.
+    fn type_label(&self, ci: &ComponentInterface, config: &Config) -> String;
+
+    /// The Kotlin primitive name if this type maps directly to a JVM
+    /// primitive (`Long`, `Int`, …). `None` for boxed / non-primitive
+    /// types. Used by `primitive_call_suffix` and `has_primitive_ffi_type`
+    /// to decide whether a function call can bypass `FfiConverter*` and
+    /// hit the primitive-specialized `uniffiRustCall<Type>` helper
+    /// directly.
+    fn type_label_primitive(&self) -> Option<String> {
+        None
+    }
+
+    /// A representation of the type label that can be used as part of
+    /// another identifier — e.g. `FfiConverterLong`, `readFoo`.
+    fn canonical_name(&self) -> String;
+
+    /// `FfiConverter` object name. Kotlin converters are `object`s, so
+    /// callers can address `lift` / `lower` / `read` / `write` directly
+    /// (no `.INSTANCE` indirection like the Java backend).
+    fn ffi_converter_name(&self) -> String {
+        format!("FfiConverter{}", self.canonical_name())
+    }
+}
+
+/// Bridge from any `Type`-like value (the high-level UDL type, an
+/// argument, a record field, …) to the corresponding `CodeType` impl.
+/// The `Type` arm is the source of truth; every other impl forwards.
+trait AsCodeType {
+    fn as_codetype(&self) -> Box<dyn CodeType>;
+}
+
+impl AsCodeType for Type {
+    fn as_codetype(&self) -> Box<dyn CodeType> {
+        match self.as_type() {
+            Type::Boolean => Box::new(primitives::BooleanCodeType),
+            Type::UInt8 | Type::Int8 => Box::new(primitives::Int8CodeType),
+            Type::UInt16 | Type::Int16 => Box::new(primitives::Int16CodeType),
+            Type::UInt32 | Type::Int32 => Box::new(primitives::Int32CodeType),
+            Type::UInt64 | Type::Int64 => Box::new(primitives::Int64CodeType),
+            Type::Float32 => Box::new(primitives::Float32CodeType),
+            Type::Float64 => Box::new(primitives::Float64CodeType),
+            Type::String => Box::new(primitives::StringCodeType),
+            Type::Bytes => Box::new(primitives::BytesCodeType),
+
+            // Non-primitive types land in later phases. Panicking with a
+            // clear message at codegen time matches the P3d
+            // `FfiType::Struct` strategy: a fixture that exercises one of
+            // these surfaces the gap loudly rather than producing
+            // kotlinc-uncompilable output. Update each arm as the
+            // corresponding template support lands.
+            other => panic!(
+                "Kotlin CodeType not implemented for `{:?}` yet \
+                 (P3f+ adds records, enums, objects, callbacks, custom, \
+                 optionals, sequences, maps). See gen_kotlin/mod.rs.",
+                other
+            ),
+        }
+    }
+}
+
+impl AsCodeType for &'_ Type {
+    fn as_codetype(&self) -> Box<dyn CodeType> {
+        (*self).as_codetype()
+    }
+}
+
+// Askama auto-borrows template variables, so a `Some(return_type)` arm
+// hands the macro a `&&Type` rather than a `&Type`. Without this impl
+// the `Template` derive fails with "AsCodeType not implemented for &&Type".
+impl AsCodeType for &&'_ Type {
+    fn as_codetype(&self) -> Box<dyn CodeType> {
+        (**self).as_codetype()
+    }
+}
+
+impl AsCodeType for &'_ Argument {
+    fn as_codetype(&self) -> Box<dyn CodeType> {
+        self.as_type().as_codetype()
+    }
+}
+
 /// Kotlin-specific config. Field set mirrors the language-neutral subset of
 /// `gen_java::Config` plus Kotlin-only knobs (none yet in P2; `android`
 /// plumbed through so P4+ cleaner code can pick it up without another
@@ -308,10 +410,9 @@ impl ExternalPackageResolver for Config {
 
 /// Askama-rendered root template. Mirrors `gen_java::JavaWrapper` at the
 /// structural level but points at Kotlin templates (`syntax = "kotlin"`,
-/// `path = "wrapper.kt"`). The template body is intentionally thin for
-/// P3a — it renders the same namespace-object skeleton as the P2
-/// hand-written output. P3b+ adds `{% include %}` directives for the
-/// FFM runtime + per-type converter templates.
+/// `path = "wrapper.kt"`). The wrapper template `{% include %}`s the
+/// runtime + primitive-converter templates and emits the namespace
+/// `object` populated with `func_decl` macro calls.
 #[derive(Template)]
 #[template(syntax = "kotlin", escape = "none", path = "wrapper.kt")]
 pub struct KotlinWrapper<'a> {
@@ -351,39 +452,122 @@ pub fn generate_bindings(config: &Config, ci: &ComponentInterface) -> Result<Str
 // `filters::<name>` path on the template's owning module, so they live
 // here rather than in a separate file. Mirror the subset of `gen_java`
 // filters needed by the Kotlin runtime + namespace-function rendering.
-pub mod filters {
+mod filters {
     use askama::Values;
     use uniffi_bindgen::interface::FfiType;
+    use uniffi_meta::AsType;
 
-    use super::KotlinCodeOracle;
+    use super::{AsCodeType, Config, KotlinCodeOracle};
+    use uniffi_bindgen::ComponentInterface;
+
+    // Filter functions are `pub(super)` to match the visibility of the
+    // private `AsCodeType` / `CodeType` traits they reference. Mirrors
+    // the gen_java filter module's strategy.
 
     /// Kotlin-idiomatic variable name (lowerCamelCase, backtick-escaped if reserved).
-    pub fn var_name<S: AsRef<str>>(nm: S, _v: &dyn Values) -> Result<String, askama::Error> {
+    pub(super) fn var_name<S: AsRef<str>>(nm: S, _v: &dyn Values) -> Result<String, askama::Error> {
         Ok(KotlinCodeOracle.var_name(nm.as_ref()))
     }
 
-    /// Kotlin-idiomatic function name. Same casing rules as `var_name` for now.
-    /// Defined ahead of its first template reference so P3e doesn't have to
-    /// reshuffle the filter module when it adds the namespace function loop.
-    #[allow(dead_code)]
-    pub fn fn_name<S: AsRef<str>>(nm: S, _v: &dyn Values) -> Result<String, askama::Error> {
+    /// Kotlin-idiomatic function name. Same casing rules as `var_name`.
+    pub(super) fn fn_name<S: AsRef<str>>(nm: S, _v: &dyn Values) -> Result<String, askama::Error> {
         Ok(KotlinCodeOracle.fn_name(nm.as_ref()))
     }
 
+    /// User-facing Kotlin type label — `Long`, `Boolean`, `String`,
+    /// `ByteArray`, etc. Routes through `CodeType::type_label`, which
+    /// dispatches by `Type` arm. Panics for non-primitive types until
+    /// the corresponding `CodeType` impl lands (records in P3f, enums in
+    /// P3g, …).
+    pub(super) fn type_name(
+        as_ct: &impl AsCodeType,
+        _v: &dyn Values,
+        ci: &ComponentInterface,
+        config: &Config,
+    ) -> Result<String, askama::Error> {
+        Ok(as_ct.as_codetype().type_label(ci, config))
+    }
+
+    /// `FfiConverter<Name>.lift` expression. Used at call sites to
+    /// convert FFI return values back to Kotlin types. Kotlin
+    /// `FfiConverter`s are `object`s — no `.INSTANCE` indirection.
+    pub(super) fn lift_fn(
+        as_ct: &impl AsCodeType,
+        _v: &dyn Values,
+    ) -> Result<String, askama::Error> {
+        Ok(format!("{}.lift", as_ct.as_codetype().ffi_converter_name()))
+    }
+
+    /// `FfiConverter<Name>.lower` expression. Used at call sites to
+    /// convert Kotlin values to their FFI representation before passing
+    /// to a `UniffiLib` MethodHandle wrapper.
+    pub(super) fn lower_fn(
+        as_ct: &impl AsCodeType,
+        _v: &dyn Values,
+    ) -> Result<String, askama::Error> {
+        Ok(format!(
+            "{}.lower",
+            as_ct.as_codetype().ffi_converter_name()
+        ))
+    }
+
+    /// Returns the primitive call suffix (e.g. `"Long"`, `"Int"`) for the
+    /// primitive-specialized `uniffiRustCall<T>` / `uniffiRustCallWithError<T>`
+    /// helpers. Empty string for types where the Kotlin user type doesn't
+    /// match the FFI primitive (Boolean ↔ Byte) or for non-primitive
+    /// types — those go through `FfiConverter<Name>.lift` instead.
+    pub(super) fn primitive_call_suffix(
+        as_ct: &impl AsCodeType,
+        _v: &dyn Values,
+    ) -> Result<String, askama::Error> {
+        Ok(
+            match as_ct.as_codetype().type_label_primitive().as_deref() {
+                Some(s @ ("Byte" | "Short" | "Int" | "Long" | "Float" | "Double")) => s.to_string(),
+                _ => String::new(),
+            },
+        )
+    }
+
+    /// True when the high-level Kotlin type matches the FFI primitive
+    /// directly (no FfiConverter conversion needed). Used by the
+    /// `func_decl` macro to decide whether an argument can be passed
+    /// straight through to `UniffiLib.<fn>(...)` or needs `lower_fn`.
+    /// Boolean is excluded — Kotlin `Boolean` ↔ FFI `Byte` requires
+    /// conversion.
+    pub(super) fn has_primitive_ffi_type(
+        as_ct: &impl AsCodeType,
+        _v: &dyn Values,
+    ) -> Result<bool, askama::Error> {
+        Ok(matches!(
+            as_ct.as_codetype().type_label_primitive().as_deref(),
+            Some("Byte" | "Short" | "Int" | "Long" | "Float" | "Double")
+        ))
+    }
+
+    /// Convert any `AsType` to its underlying `FfiType`. Lets templates
+    /// chain `{{ type_|ffi_type|ffi_value_layout }}` etc. without an
+    /// intermediate let-binding.
+    pub(super) fn ffi_type(type_: &impl AsType, _v: &dyn Values) -> Result<FfiType, askama::Error> {
+        Ok(type_.as_type().into())
+    }
+
     /// FFI type name (Kotlin primitive for scalars, `MemorySegment` for everything else).
-    pub fn ffi_type_name(type_: &FfiType, _v: &dyn Values) -> Result<String, askama::Error> {
+    pub(super) fn ffi_type_name(type_: &FfiType, _v: &dyn Values) -> Result<String, askama::Error> {
         Ok(KotlinCodeOracle.ffi_type_label(type_))
     }
 
     /// `ValueLayout` constant for `FunctionDescriptor` construction.
-    pub fn ffi_value_layout(type_: &FfiType, _v: &dyn Values) -> Result<String, askama::Error> {
+    pub(super) fn ffi_value_layout(
+        type_: &FfiType,
+        _v: &dyn Values,
+    ) -> Result<String, askama::Error> {
         Ok(KotlinCodeOracle.ffi_value_layout(type_))
     }
 
     /// Cast suffix (`" as Long"`, `" as java.lang.foreign.MemorySegment"`, …)
     /// for `MethodHandle.invokeExact()` return values in Kotlin. Includes the
     /// leading space so the template can append it directly to the call site.
-    pub fn ffi_invoke_exact_cast(
+    pub(super) fn ffi_invoke_exact_cast(
         type_: &FfiType,
         _v: &dyn Values,
     ) -> Result<String, askama::Error> {
@@ -392,7 +576,10 @@ pub mod filters {
 
     /// Whether the FFI type is a struct that needs a `SegmentAllocator`
     /// as the first argument to `invokeExact()`.
-    pub fn ffi_type_is_struct(type_: &FfiType, _v: &dyn Values) -> Result<bool, askama::Error> {
+    pub(super) fn ffi_type_is_struct(
+        type_: &FfiType,
+        _v: &dyn Values,
+    ) -> Result<bool, askama::Error> {
         Ok(KotlinCodeOracle.ffi_type_is_struct(type_))
     }
 }
