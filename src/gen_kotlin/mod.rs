@@ -29,7 +29,7 @@ use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use uniffi_bindgen::{
     ComponentInterface,
-    interface::{Argument, Field, FfiType},
+    interface::{Argument, FfiType, Field},
 };
 use uniffi_meta::{AsType, Type};
 
