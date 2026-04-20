@@ -24,19 +24,21 @@ use std::fmt::Debug;
 
 use anyhow::{Context, Result};
 use askama::Template;
-use heck::ToLowerCamelCase;
+use heck::{ToLowerCamelCase, ToUpperCamelCase};
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use uniffi_bindgen::{
     ComponentInterface,
-    interface::{Argument, FfiType},
+    interface::{Argument, Field, FfiType},
 };
 use uniffi_meta::{AsType, Type};
 
 pub use crate::gen_lang::CustomTypeConfig;
 use crate::gen_lang::ExternalPackageResolver;
 
+mod compounds;
 mod primitives;
+mod record;
 
 /// Kotlin reserved words that need backtick-escaping or rename when used as
 /// identifiers. Includes hard keywords (always reserved) and modifiers /
@@ -152,6 +154,13 @@ impl KotlinCodeOracle {
 
     pub fn fn_name(&self, nm: &str) -> String {
         fixup_keyword(nm.to_lower_camel_case())
+    }
+
+    /// Kotlin class / data class / object name. UpperCamelCase + reserved-word
+    /// fixup. Mirrors `JavaCodeOracle::class_name` minus the error-suffix
+    /// rewrite, which lands with P3g (typed errors).
+    pub fn class_name(&self, _ci: &ComponentInterface, nm: &str) -> String {
+        fixup_keyword(nm.to_string().to_upper_camel_case())
     }
 
     /// FFI type label for use in Kotlin method signatures + MethodHandle
@@ -312,6 +321,11 @@ impl AsCodeType for Type {
             Type::String => Box::new(primitives::StringCodeType),
             Type::Bytes => Box::new(primitives::BytesCodeType),
 
+            Type::Record { name, .. } => Box::new(record::RecordCodeType::new(name)),
+            Type::Optional { inner_type } => {
+                Box::new(compounds::OptionalCodeType::new(*inner_type))
+            }
+
             // Non-primitive types land in later phases. Panicking with a
             // clear message at codegen time matches the P3d
             // `FfiType::Struct` strategy: a fixture that exercises one of
@@ -320,8 +334,8 @@ impl AsCodeType for Type {
             // corresponding template support lands.
             other => panic!(
                 "Kotlin CodeType not implemented for `{:?}` yet \
-                 (P3f+ adds records, enums, objects, callbacks, custom, \
-                 optionals, sequences, maps). See gen_kotlin/mod.rs.",
+                 (P3g+ adds enums, objects, callbacks, custom, \
+                 sequences, maps). See gen_kotlin/mod.rs.",
                 other
             ),
         }
@@ -344,6 +358,18 @@ impl AsCodeType for &&'_ Type {
 }
 
 impl AsCodeType for &'_ Argument {
+    fn as_codetype(&self) -> Box<dyn CodeType> {
+        self.as_type().as_codetype()
+    }
+}
+
+impl AsCodeType for &'_ Field {
+    fn as_codetype(&self) -> Box<dyn CodeType> {
+        self.as_type().as_codetype()
+    }
+}
+
+impl AsCodeType for &'_ Box<Type> {
     fn as_codetype(&self) -> Box<dyn CodeType> {
         self.as_type().as_codetype()
     }
@@ -507,6 +533,49 @@ mod filters {
     ) -> Result<String, askama::Error> {
         Ok(format!(
             "{}.lower",
+            as_ct.as_codetype().ffi_converter_name()
+        ))
+    }
+
+    /// `FfiConverter<Name>` object name. Used by templates that need to
+    /// stamp the converter's identifier (e.g. the `object FfiConverterX`
+    /// declaration that opens RecordTemplate.kt / OptionalTemplate.kt).
+    pub(super) fn ffi_converter_name(
+        as_ct: &impl AsCodeType,
+        _v: &dyn Values,
+    ) -> Result<String, askama::Error> {
+        Ok(as_ct.as_codetype().ffi_converter_name())
+    }
+
+    /// `FfiConverter<Name>.read` expression. Used by record / optional
+    /// templates that read fields out of a `ByteBuffer`.
+    pub(super) fn read_fn(
+        as_ct: &impl AsCodeType,
+        _v: &dyn Values,
+    ) -> Result<String, askama::Error> {
+        Ok(format!("{}.read", as_ct.as_codetype().ffi_converter_name()))
+    }
+
+    /// `FfiConverter<Name>.write` expression — symmetric counterpart to
+    /// `read_fn` for serialization back into a `ByteBuffer`.
+    pub(super) fn write_fn(
+        as_ct: &impl AsCodeType,
+        _v: &dyn Values,
+    ) -> Result<String, askama::Error> {
+        Ok(format!(
+            "{}.write",
+            as_ct.as_codetype().ffi_converter_name()
+        ))
+    }
+
+    /// `FfiConverter<Name>.allocationSize` expression. Used by record /
+    /// optional templates to size the destination `RustBuffer`.
+    pub(super) fn allocation_size_fn(
+        as_ct: &impl AsCodeType,
+        _v: &dyn Values,
+    ) -> Result<String, askama::Error> {
+        Ok(format!(
+            "{}.allocationSize",
             as_ct.as_codetype().ffi_converter_name()
         ))
     }
