@@ -10,7 +10,7 @@ data class {{ type_name }}(
     {%- endfor %}
 )
 {%- else -%}
-class {{ type_name }}
+object {{ type_name }}
 {%- endif %}
 
 // UNIFFI:FILE {{ ffi_converter_name }}.kt
@@ -25,7 +25,7 @@ object {{ ffi_converter_name }} : FfiConverterRustBuffer<{{ type_name }}> {
             {%- endfor %}
         )
         {%- else %}
-        return {{ type_name }}()
+        return {{ type_name }}
         {%- endif %}
     }
 
