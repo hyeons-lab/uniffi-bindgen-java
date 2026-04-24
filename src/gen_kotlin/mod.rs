@@ -29,7 +29,7 @@ use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use uniffi_bindgen::{
     ComponentInterface,
-    interface::{Argument, FfiType, Field},
+    interface::{Argument, Callable, FfiType, Field},
 };
 use uniffi_meta::{AsType, Type};
 
@@ -38,6 +38,7 @@ use crate::gen_lang::ExternalPackageResolver;
 
 mod compounds;
 mod enum_;
+mod object;
 mod primitives;
 mod record;
 
@@ -387,6 +388,7 @@ impl AsCodeType for Type {
                 key_type,
                 value_type,
             } => Box::new(compounds::MapCodeType::new(*key_type, *value_type)),
+            Type::Object { name, imp, .. } => Box::new(object::ObjectCodeType::new(name, imp)),
 
             // Non-primitive types land in later phases. Panicking with a
             // clear message at codegen time matches the P3d
@@ -396,7 +398,7 @@ impl AsCodeType for Type {
             // corresponding template support lands.
             other => panic!(
                 "Kotlin CodeType not implemented for `{:?}` yet \
-                 (P3i+ adds objects, callbacks, custom). \
+                 (P3j+ adds callbacks, custom). \
                  See gen_kotlin/mod.rs.",
                 other
             ),

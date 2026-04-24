@@ -214,3 +214,22 @@ fn snapshot_string_map_kotlin() -> Result<()> {
         "kt",
     )
 }
+
+/// Kotlin-side snapshot for the sprites fixture. P3i adds
+/// `Type::Object` codegen — handle-based wrapper classes with
+/// `AutoCloseable` + `UniffiCleaner` finalization, `callWithHandle`
+/// routing for instance methods, and companion-object factories for
+/// named constructors. Sprites is a clean isolation: records (Point,
+/// Vector) + one interface (Sprite) with a primary constructor, a
+/// named constructor (`new_relative_to`), and several methods —
+/// nothing unsupported at P3i scope (no callbacks, no async, no
+/// trait interfaces, no error-as-object).
+#[test]
+fn snapshot_sprites_kotlin() -> Result<()> {
+    snapshot_fixture_for(
+        "uniffi-example-sprites",
+        "sprites_kotlin",
+        Language::Kotlin,
+        "kt",
+    )
+}
