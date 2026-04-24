@@ -276,24 +276,24 @@ internal object {{ ffi_struct.name()|ffi_struct_name }} {
         {{ ffi_struct|ffi_struct_layout_body }}
     )
     {%- for field in ffi_struct.fields() %}
-    private val OFFSET_{{ field.name()|fn_name }}: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("{{ field.name() }}"))
+    private val OFFSET_{{ field.name()|var_name_raw }}: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("{{ field.name()|var_name_raw }}"))
     {%- endfor %}
     {%- for field in ffi_struct.fields() %}
     {%- if field.type_().borrow()|ffi_type_is_embedded_struct %}
 
-    fun get{{ field.name() }}(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
-        seg.asSlice(OFFSET_{{ field.name()|fn_name }}, {{ field.type_().borrow()|ffi_struct_type_name }}.LAYOUT.byteSize())
+    fun get{{ field.name()|var_name_raw }}(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
+        seg.asSlice(OFFSET_{{ field.name()|var_name_raw }}, {{ field.type_().borrow()|ffi_struct_type_name }}.LAYOUT.byteSize())
 
-    fun set{{ field.name() }}(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
-        java.lang.foreign.MemorySegment.copy(value, 0L, seg, OFFSET_{{ field.name()|fn_name }}, {{ field.type_().borrow()|ffi_struct_type_name }}.LAYOUT.byteSize())
+    fun set{{ field.name()|var_name_raw }}(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
+        java.lang.foreign.MemorySegment.copy(value, 0L, seg, OFFSET_{{ field.name()|var_name_raw }}, {{ field.type_().borrow()|ffi_struct_type_name }}.LAYOUT.byteSize())
     }
     {%- else %}
 
-    fun get{{ field.name() }}(seg: java.lang.foreign.MemorySegment): {{ field.type_().borrow()|ffi_type_name }} =
-        seg.get({{ field.type_().borrow()|ffi_value_layout_unaligned }}, OFFSET_{{ field.name()|fn_name }}){{ field.type_().borrow()|ffi_invoke_exact_cast }}
+    fun get{{ field.name()|var_name_raw }}(seg: java.lang.foreign.MemorySegment): {{ field.type_().borrow()|ffi_type_name }} =
+        seg.get({{ field.type_().borrow()|ffi_value_layout_unaligned }}, OFFSET_{{ field.name()|var_name_raw }}){{ field.type_().borrow()|ffi_invoke_exact_cast }}
 
-    fun set{{ field.name() }}(seg: java.lang.foreign.MemorySegment, value: {{ field.type_().borrow()|ffi_type_name }}) {
-        seg.set({{ field.type_().borrow()|ffi_value_layout_unaligned }}, OFFSET_{{ field.name()|fn_name }}, value)
+    fun set{{ field.name()|var_name_raw }}(seg: java.lang.foreign.MemorySegment, value: {{ field.type_().borrow()|ffi_type_name }}) {
+        seg.set({{ field.type_().borrow()|ffi_value_layout_unaligned }}, OFFSET_{{ field.name()|var_name_raw }}, value)
     }
     {%- endif %}
     {%- endfor %}

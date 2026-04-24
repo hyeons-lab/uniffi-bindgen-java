@@ -683,6 +683,18 @@ mod filters {
         Ok(KotlinCodeOracle.var_name(nm.as_ref()))
     }
 
+    /// lowerCamelCase variable name without the reserved-word fixup.
+    /// Used for FFI struct field names where the string needs to match
+    /// exactly between `MemoryLayout.*.withName(...)` in the struct
+    /// layout and `PathElement.groupElement(...)` when resolving byte
+    /// offsets — otherwise `byteOffset()` throws at class-init.
+    pub(super) fn var_name_raw<S: AsRef<str>>(
+        nm: S,
+        _v: &dyn Values,
+    ) -> Result<String, askama::Error> {
+        Ok(KotlinCodeOracle.var_name_raw(nm.as_ref()))
+    }
+
     /// Kotlin-idiomatic function name. Same casing rules as `var_name`.
     pub(super) fn fn_name<S: AsRef<str>>(nm: S, _v: &dyn Values) -> Result<String, askama::Error> {
         Ok(KotlinCodeOracle.fn_name(nm.as_ref()))

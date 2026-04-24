@@ -1162,20 +1162,20 @@ internal object UniffiForeignFutureResultF32 {
         java.lang.foreign.MemoryLayout.paddingLayout(4),
         UniffiRustCallStatus.LAYOUT.withName("callStatus")
     )
-    private val OFFSET_returnValue: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("return_value"))
-    private val OFFSET_callStatus: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("call_status"))
+    private val OFFSET_returnValue: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("returnValue"))
+    private val OFFSET_callStatus: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("callStatus"))
 
-    fun getreturn_value(seg: java.lang.foreign.MemorySegment): Float =
+    fun getreturnValue(seg: java.lang.foreign.MemorySegment): Float =
         seg.get(java.lang.foreign.ValueLayout.JAVA_FLOAT_UNALIGNED, OFFSET_returnValue) as Float
 
-    fun setreturn_value(seg: java.lang.foreign.MemorySegment, value: Float) {
+    fun setreturnValue(seg: java.lang.foreign.MemorySegment, value: Float) {
         seg.set(java.lang.foreign.ValueLayout.JAVA_FLOAT_UNALIGNED, OFFSET_returnValue, value)
     }
 
-    fun getcall_status(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
+    fun getcallStatus(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
         seg.asSlice(OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
 
-    fun setcall_status(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
+    fun setcallStatus(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
         java.lang.foreign.MemorySegment.copy(value, 0L, seg, OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
     }
 
@@ -1195,20 +1195,20 @@ internal object UniffiForeignFutureResultF64 {
         java.lang.foreign.ValueLayout.JAVA_DOUBLE.withName("returnValue"),
         UniffiRustCallStatus.LAYOUT.withName("callStatus")
     )
-    private val OFFSET_returnValue: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("return_value"))
-    private val OFFSET_callStatus: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("call_status"))
+    private val OFFSET_returnValue: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("returnValue"))
+    private val OFFSET_callStatus: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("callStatus"))
 
-    fun getreturn_value(seg: java.lang.foreign.MemorySegment): Double =
+    fun getreturnValue(seg: java.lang.foreign.MemorySegment): Double =
         seg.get(java.lang.foreign.ValueLayout.JAVA_DOUBLE_UNALIGNED, OFFSET_returnValue) as Double
 
-    fun setreturn_value(seg: java.lang.foreign.MemorySegment, value: Double) {
+    fun setreturnValue(seg: java.lang.foreign.MemorySegment, value: Double) {
         seg.set(java.lang.foreign.ValueLayout.JAVA_DOUBLE_UNALIGNED, OFFSET_returnValue, value)
     }
 
-    fun getcall_status(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
+    fun getcallStatus(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
         seg.asSlice(OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
 
-    fun setcall_status(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
+    fun setcallStatus(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
         java.lang.foreign.MemorySegment.copy(value, 0L, seg, OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
     }
 
@@ -1229,20 +1229,20 @@ internal object UniffiForeignFutureResultI16 {
         java.lang.foreign.MemoryLayout.paddingLayout(6),
         UniffiRustCallStatus.LAYOUT.withName("callStatus")
     )
-    private val OFFSET_returnValue: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("return_value"))
-    private val OFFSET_callStatus: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("call_status"))
+    private val OFFSET_returnValue: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("returnValue"))
+    private val OFFSET_callStatus: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("callStatus"))
 
-    fun getreturn_value(seg: java.lang.foreign.MemorySegment): Short =
+    fun getreturnValue(seg: java.lang.foreign.MemorySegment): Short =
         seg.get(java.lang.foreign.ValueLayout.JAVA_SHORT_UNALIGNED, OFFSET_returnValue) as Short
 
-    fun setreturn_value(seg: java.lang.foreign.MemorySegment, value: Short) {
+    fun setreturnValue(seg: java.lang.foreign.MemorySegment, value: Short) {
         seg.set(java.lang.foreign.ValueLayout.JAVA_SHORT_UNALIGNED, OFFSET_returnValue, value)
     }
 
-    fun getcall_status(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
+    fun getcallStatus(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
         seg.asSlice(OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
 
-    fun setcall_status(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
+    fun setcallStatus(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
         java.lang.foreign.MemorySegment.copy(value, 0L, seg, OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
     }
 
@@ -1263,20 +1263,20 @@ internal object UniffiForeignFutureResultI32 {
         java.lang.foreign.MemoryLayout.paddingLayout(4),
         UniffiRustCallStatus.LAYOUT.withName("callStatus")
     )
-    private val OFFSET_returnValue: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("return_value"))
-    private val OFFSET_callStatus: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("call_status"))
+    private val OFFSET_returnValue: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("returnValue"))
+    private val OFFSET_callStatus: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("callStatus"))
 
-    fun getreturn_value(seg: java.lang.foreign.MemorySegment): Int =
+    fun getreturnValue(seg: java.lang.foreign.MemorySegment): Int =
         seg.get(java.lang.foreign.ValueLayout.JAVA_INT_UNALIGNED, OFFSET_returnValue) as Int
 
-    fun setreturn_value(seg: java.lang.foreign.MemorySegment, value: Int) {
+    fun setreturnValue(seg: java.lang.foreign.MemorySegment, value: Int) {
         seg.set(java.lang.foreign.ValueLayout.JAVA_INT_UNALIGNED, OFFSET_returnValue, value)
     }
 
-    fun getcall_status(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
+    fun getcallStatus(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
         seg.asSlice(OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
 
-    fun setcall_status(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
+    fun setcallStatus(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
         java.lang.foreign.MemorySegment.copy(value, 0L, seg, OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
     }
 
@@ -1296,20 +1296,20 @@ internal object UniffiForeignFutureResultI64 {
         java.lang.foreign.ValueLayout.JAVA_LONG.withName("returnValue"),
         UniffiRustCallStatus.LAYOUT.withName("callStatus")
     )
-    private val OFFSET_returnValue: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("return_value"))
-    private val OFFSET_callStatus: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("call_status"))
+    private val OFFSET_returnValue: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("returnValue"))
+    private val OFFSET_callStatus: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("callStatus"))
 
-    fun getreturn_value(seg: java.lang.foreign.MemorySegment): Long =
+    fun getreturnValue(seg: java.lang.foreign.MemorySegment): Long =
         seg.get(java.lang.foreign.ValueLayout.JAVA_LONG_UNALIGNED, OFFSET_returnValue) as Long
 
-    fun setreturn_value(seg: java.lang.foreign.MemorySegment, value: Long) {
+    fun setreturnValue(seg: java.lang.foreign.MemorySegment, value: Long) {
         seg.set(java.lang.foreign.ValueLayout.JAVA_LONG_UNALIGNED, OFFSET_returnValue, value)
     }
 
-    fun getcall_status(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
+    fun getcallStatus(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
         seg.asSlice(OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
 
-    fun setcall_status(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
+    fun setcallStatus(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
         java.lang.foreign.MemorySegment.copy(value, 0L, seg, OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
     }
 
@@ -1330,20 +1330,20 @@ internal object UniffiForeignFutureResultI8 {
         java.lang.foreign.MemoryLayout.paddingLayout(7),
         UniffiRustCallStatus.LAYOUT.withName("callStatus")
     )
-    private val OFFSET_returnValue: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("return_value"))
-    private val OFFSET_callStatus: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("call_status"))
+    private val OFFSET_returnValue: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("returnValue"))
+    private val OFFSET_callStatus: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("callStatus"))
 
-    fun getreturn_value(seg: java.lang.foreign.MemorySegment): Byte =
+    fun getreturnValue(seg: java.lang.foreign.MemorySegment): Byte =
         seg.get(java.lang.foreign.ValueLayout.JAVA_BYTE, OFFSET_returnValue) as Byte
 
-    fun setreturn_value(seg: java.lang.foreign.MemorySegment, value: Byte) {
+    fun setreturnValue(seg: java.lang.foreign.MemorySegment, value: Byte) {
         seg.set(java.lang.foreign.ValueLayout.JAVA_BYTE, OFFSET_returnValue, value)
     }
 
-    fun getcall_status(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
+    fun getcallStatus(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
         seg.asSlice(OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
 
-    fun setcall_status(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
+    fun setcallStatus(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
         java.lang.foreign.MemorySegment.copy(value, 0L, seg, OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
     }
 
@@ -1363,20 +1363,20 @@ internal object UniffiForeignFutureResultRustBuffer {
         RustBuffer.LAYOUT.withName("returnValue"),
         UniffiRustCallStatus.LAYOUT.withName("callStatus")
     )
-    private val OFFSET_returnValue: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("return_value"))
-    private val OFFSET_callStatus: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("call_status"))
+    private val OFFSET_returnValue: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("returnValue"))
+    private val OFFSET_callStatus: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("callStatus"))
 
-    fun getreturn_value(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
+    fun getreturnValue(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
         seg.asSlice(OFFSET_returnValue, RustBuffer.LAYOUT.byteSize())
 
-    fun setreturn_value(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
+    fun setreturnValue(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
         java.lang.foreign.MemorySegment.copy(value, 0L, seg, OFFSET_returnValue, RustBuffer.LAYOUT.byteSize())
     }
 
-    fun getcall_status(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
+    fun getcallStatus(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
         seg.asSlice(OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
 
-    fun setcall_status(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
+    fun setcallStatus(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
         java.lang.foreign.MemorySegment.copy(value, 0L, seg, OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
     }
 
@@ -1397,20 +1397,20 @@ internal object UniffiForeignFutureResultU16 {
         java.lang.foreign.MemoryLayout.paddingLayout(6),
         UniffiRustCallStatus.LAYOUT.withName("callStatus")
     )
-    private val OFFSET_returnValue: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("return_value"))
-    private val OFFSET_callStatus: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("call_status"))
+    private val OFFSET_returnValue: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("returnValue"))
+    private val OFFSET_callStatus: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("callStatus"))
 
-    fun getreturn_value(seg: java.lang.foreign.MemorySegment): Short =
+    fun getreturnValue(seg: java.lang.foreign.MemorySegment): Short =
         seg.get(java.lang.foreign.ValueLayout.JAVA_SHORT_UNALIGNED, OFFSET_returnValue) as Short
 
-    fun setreturn_value(seg: java.lang.foreign.MemorySegment, value: Short) {
+    fun setreturnValue(seg: java.lang.foreign.MemorySegment, value: Short) {
         seg.set(java.lang.foreign.ValueLayout.JAVA_SHORT_UNALIGNED, OFFSET_returnValue, value)
     }
 
-    fun getcall_status(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
+    fun getcallStatus(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
         seg.asSlice(OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
 
-    fun setcall_status(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
+    fun setcallStatus(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
         java.lang.foreign.MemorySegment.copy(value, 0L, seg, OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
     }
 
@@ -1431,20 +1431,20 @@ internal object UniffiForeignFutureResultU32 {
         java.lang.foreign.MemoryLayout.paddingLayout(4),
         UniffiRustCallStatus.LAYOUT.withName("callStatus")
     )
-    private val OFFSET_returnValue: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("return_value"))
-    private val OFFSET_callStatus: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("call_status"))
+    private val OFFSET_returnValue: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("returnValue"))
+    private val OFFSET_callStatus: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("callStatus"))
 
-    fun getreturn_value(seg: java.lang.foreign.MemorySegment): Int =
+    fun getreturnValue(seg: java.lang.foreign.MemorySegment): Int =
         seg.get(java.lang.foreign.ValueLayout.JAVA_INT_UNALIGNED, OFFSET_returnValue) as Int
 
-    fun setreturn_value(seg: java.lang.foreign.MemorySegment, value: Int) {
+    fun setreturnValue(seg: java.lang.foreign.MemorySegment, value: Int) {
         seg.set(java.lang.foreign.ValueLayout.JAVA_INT_UNALIGNED, OFFSET_returnValue, value)
     }
 
-    fun getcall_status(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
+    fun getcallStatus(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
         seg.asSlice(OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
 
-    fun setcall_status(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
+    fun setcallStatus(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
         java.lang.foreign.MemorySegment.copy(value, 0L, seg, OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
     }
 
@@ -1464,20 +1464,20 @@ internal object UniffiForeignFutureResultU64 {
         java.lang.foreign.ValueLayout.JAVA_LONG.withName("returnValue"),
         UniffiRustCallStatus.LAYOUT.withName("callStatus")
     )
-    private val OFFSET_returnValue: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("return_value"))
-    private val OFFSET_callStatus: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("call_status"))
+    private val OFFSET_returnValue: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("returnValue"))
+    private val OFFSET_callStatus: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("callStatus"))
 
-    fun getreturn_value(seg: java.lang.foreign.MemorySegment): Long =
+    fun getreturnValue(seg: java.lang.foreign.MemorySegment): Long =
         seg.get(java.lang.foreign.ValueLayout.JAVA_LONG_UNALIGNED, OFFSET_returnValue) as Long
 
-    fun setreturn_value(seg: java.lang.foreign.MemorySegment, value: Long) {
+    fun setreturnValue(seg: java.lang.foreign.MemorySegment, value: Long) {
         seg.set(java.lang.foreign.ValueLayout.JAVA_LONG_UNALIGNED, OFFSET_returnValue, value)
     }
 
-    fun getcall_status(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
+    fun getcallStatus(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
         seg.asSlice(OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
 
-    fun setcall_status(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
+    fun setcallStatus(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
         java.lang.foreign.MemorySegment.copy(value, 0L, seg, OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
     }
 
@@ -1498,20 +1498,20 @@ internal object UniffiForeignFutureResultU8 {
         java.lang.foreign.MemoryLayout.paddingLayout(7),
         UniffiRustCallStatus.LAYOUT.withName("callStatus")
     )
-    private val OFFSET_returnValue: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("return_value"))
-    private val OFFSET_callStatus: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("call_status"))
+    private val OFFSET_returnValue: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("returnValue"))
+    private val OFFSET_callStatus: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("callStatus"))
 
-    fun getreturn_value(seg: java.lang.foreign.MemorySegment): Byte =
+    fun getreturnValue(seg: java.lang.foreign.MemorySegment): Byte =
         seg.get(java.lang.foreign.ValueLayout.JAVA_BYTE, OFFSET_returnValue) as Byte
 
-    fun setreturn_value(seg: java.lang.foreign.MemorySegment, value: Byte) {
+    fun setreturnValue(seg: java.lang.foreign.MemorySegment, value: Byte) {
         seg.set(java.lang.foreign.ValueLayout.JAVA_BYTE, OFFSET_returnValue, value)
     }
 
-    fun getcall_status(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
+    fun getcallStatus(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
         seg.asSlice(OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
 
-    fun setcall_status(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
+    fun setcallStatus(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
         java.lang.foreign.MemorySegment.copy(value, 0L, seg, OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
     }
 
@@ -1530,12 +1530,12 @@ internal object UniffiForeignFutureResultVoid {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
         UniffiRustCallStatus.LAYOUT.withName("callStatus")
     )
-    private val OFFSET_callStatus: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("call_status"))
+    private val OFFSET_callStatus: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("callStatus"))
 
-    fun getcall_status(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
+    fun getcallStatus(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
         seg.asSlice(OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
 
-    fun setcall_status(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
+    fun setcallStatus(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
         java.lang.foreign.MemorySegment.copy(value, 0L, seg, OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
     }
 
