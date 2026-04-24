@@ -363,9 +363,19 @@ impl AsCodeType for Type {
             Type::Optional { inner_type } => {
                 Box::new(compounds::OptionalCodeType::new(*inner_type))
             }
-            Type::Sequence { inner_type } => {
-                Box::new(compounds::SequenceCodeType::new(*inner_type))
-            }
+            Type::Sequence { inner_type } => match inner_type.as_ref() {
+                Type::Int16 | Type::UInt16 => Box::new(compounds::Int16ArrayCodeType),
+                Type::Int32 | Type::UInt32 => Box::new(compounds::Int32ArrayCodeType),
+                Type::Int64 | Type::UInt64 => Box::new(compounds::Int64ArrayCodeType),
+                Type::Float32 => Box::new(compounds::Float32ArrayCodeType),
+                Type::Float64 => Box::new(compounds::Float64ArrayCodeType),
+                Type::Boolean => Box::new(compounds::BooleanArrayCodeType),
+                // Int8/UInt8 fall through to the generic path — byte-
+                // array sequences come in via the separate
+                // `Type::Bytes` → `ByteArray` route. Mirrors the Java
+                // backend's shape.
+                _ => Box::new(compounds::SequenceCodeType::new(*inner_type)),
+            },
             Type::Map {
                 key_type,
                 value_type,
@@ -675,6 +685,41 @@ mod filters {
         Ok(matches!(
             as_ct.as_codetype().type_label_primitive().as_deref(),
             Some("Byte" | "Short" | "Int" | "Long" | "Float" | "Double")
+        ))
+    }
+
+    /// True when `type_` is a `Sequence<T>` whose element is a JVM
+    /// primitive we've specialized into an unboxed array CodeType
+    /// (`Int16Array`, `Int32Array`, `Int64Array`, `Float32Array`,
+    /// `Float64Array`, `BooleanArray`). Used by the `wrapper.kt`
+    /// per-type dispatch to *skip* emitting a generic `SequenceTemplate`
+    /// for these — their `FfiConverter<Name>Array` definition already
+    /// ships in the unconditional runtime helper block, and emitting
+    /// `SequenceTemplate.kt` on top would produce a second `object`
+    /// with the same name but `List<T>` instead of the unboxed array
+    /// type (both writing to the same `FfiConverter<Name>Array.kt`
+    /// filename, causing the file splitter's last-writer-wins to
+    /// silently swap in the wrong definition).
+    ///
+    /// `Int8`/`UInt8` sequences fall through to the generic path since
+    /// byte-array sequences come in via the separate `Bytes → ByteArray`
+    /// route — matches the dispatch logic in `AsCodeType for
+    /// Type::Sequence`.
+    pub(super) fn is_primitive_array_sequence(
+        type_: &uniffi_meta::Type,
+        _v: &dyn Values,
+    ) -> Result<bool, askama::Error> {
+        use uniffi_meta::Type;
+        Ok(matches!(
+            type_,
+            Type::Sequence { inner_type } if matches!(
+                inner_type.as_ref(),
+                Type::Int16 | Type::UInt16
+                    | Type::Int32 | Type::UInt32
+                    | Type::Int64 | Type::UInt64
+                    | Type::Float32 | Type::Float64
+                    | Type::Boolean,
+            )
         ))
     }
 
