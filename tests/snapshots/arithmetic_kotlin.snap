@@ -131,6 +131,31 @@ object FfiConverterBoolean : FfiConverter<Boolean, Byte> {
 }
 
 
+// === FILE: org/mozilla/uniffi/example/arithmetic/FfiConverterBooleanArray.kt ===
+package org.mozilla.uniffi.example.arithmetic
+
+object FfiConverterBooleanArray : FfiConverterRustBuffer<BooleanArray> {
+    override fun read(buf: java.nio.ByteBuffer): BooleanArray {
+        val len = buf.getInt()
+        val arr = BooleanArray(len)
+        for (i in 0 until len) {
+            arr[i] = buf.get() != 0.toByte()
+        }
+        return arr
+    }
+
+    override fun allocationSize(value: BooleanArray): Long = 4L + value.size.toLong()
+
+    override fun write(value: BooleanArray, buf: java.nio.ByteBuffer) {
+        buf.putInt(value.size)
+        for (b in value) {
+            buf.put(if (b) 1.toByte() else 0.toByte())
+        }
+    }
+}
+
+
+
 // === FILE: org/mozilla/uniffi/example/arithmetic/FfiConverterByte.kt ===
 package org.mozilla.uniffi.example.arithmetic
 
@@ -165,7 +190,6 @@ object FfiConverterByteArray : FfiConverterRustBuffer<ByteArray> {
 }
 
 
-
 // === FILE: org/mozilla/uniffi/example/arithmetic/FfiConverterDouble.kt ===
 package org.mozilla.uniffi.example.arithmetic
 
@@ -194,6 +218,50 @@ object FfiConverterFloat : FfiConverter<Float, Float> {
 }
 
 
+// === FILE: org/mozilla/uniffi/example/arithmetic/FfiConverterFloat32Array.kt ===
+package org.mozilla.uniffi.example.arithmetic
+
+object FfiConverterFloat32Array : FfiConverterRustBuffer<FloatArray> {
+    override fun read(buf: java.nio.ByteBuffer): FloatArray {
+        val len = buf.getInt()
+        val arr = FloatArray(len)
+        buf.asFloatBuffer().get(arr)
+        buf.position(buf.position() + len * 4)
+        return arr
+    }
+
+    override fun allocationSize(value: FloatArray): Long = 4L + value.size.toLong() * 4L
+
+    override fun write(value: FloatArray, buf: java.nio.ByteBuffer) {
+        buf.putInt(value.size)
+        buf.asFloatBuffer().put(value)
+        buf.position(buf.position() + value.size * 4)
+    }
+}
+
+
+// === FILE: org/mozilla/uniffi/example/arithmetic/FfiConverterFloat64Array.kt ===
+package org.mozilla.uniffi.example.arithmetic
+
+object FfiConverterFloat64Array : FfiConverterRustBuffer<DoubleArray> {
+    override fun read(buf: java.nio.ByteBuffer): DoubleArray {
+        val len = buf.getInt()
+        val arr = DoubleArray(len)
+        buf.asDoubleBuffer().get(arr)
+        buf.position(buf.position() + len * 8)
+        return arr
+    }
+
+    override fun allocationSize(value: DoubleArray): Long = 4L + value.size.toLong() * 8L
+
+    override fun write(value: DoubleArray, buf: java.nio.ByteBuffer) {
+        buf.putInt(value.size)
+        buf.asDoubleBuffer().put(value)
+        buf.position(buf.position() + value.size * 8)
+    }
+}
+
+
 // === FILE: org/mozilla/uniffi/example/arithmetic/FfiConverterInt.kt ===
 package org.mozilla.uniffi.example.arithmetic
 
@@ -204,6 +272,72 @@ object FfiConverterInt : FfiConverter<Int, Int> {
     override fun allocationSize(value: Int): Long = 4L
     override fun write(value: Int, buf: java.nio.ByteBuffer) {
         buf.putInt(value)
+    }
+}
+
+
+// === FILE: org/mozilla/uniffi/example/arithmetic/FfiConverterInt16Array.kt ===
+package org.mozilla.uniffi.example.arithmetic
+
+object FfiConverterInt16Array : FfiConverterRustBuffer<ShortArray> {
+    override fun read(buf: java.nio.ByteBuffer): ShortArray {
+        val len = buf.getInt()
+        val arr = ShortArray(len)
+        buf.asShortBuffer().get(arr)
+        buf.position(buf.position() + len * 2)
+        return arr
+    }
+
+    override fun allocationSize(value: ShortArray): Long = 4L + value.size.toLong() * 2L
+
+    override fun write(value: ShortArray, buf: java.nio.ByteBuffer) {
+        buf.putInt(value.size)
+        buf.asShortBuffer().put(value)
+        buf.position(buf.position() + value.size * 2)
+    }
+}
+
+
+// === FILE: org/mozilla/uniffi/example/arithmetic/FfiConverterInt32Array.kt ===
+package org.mozilla.uniffi.example.arithmetic
+
+object FfiConverterInt32Array : FfiConverterRustBuffer<IntArray> {
+    override fun read(buf: java.nio.ByteBuffer): IntArray {
+        val len = buf.getInt()
+        val arr = IntArray(len)
+        buf.asIntBuffer().get(arr)
+        buf.position(buf.position() + len * 4)
+        return arr
+    }
+
+    override fun allocationSize(value: IntArray): Long = 4L + value.size.toLong() * 4L
+
+    override fun write(value: IntArray, buf: java.nio.ByteBuffer) {
+        buf.putInt(value.size)
+        buf.asIntBuffer().put(value)
+        buf.position(buf.position() + value.size * 4)
+    }
+}
+
+
+// === FILE: org/mozilla/uniffi/example/arithmetic/FfiConverterInt64Array.kt ===
+package org.mozilla.uniffi.example.arithmetic
+
+object FfiConverterInt64Array : FfiConverterRustBuffer<LongArray> {
+    override fun read(buf: java.nio.ByteBuffer): LongArray {
+        val len = buf.getInt()
+        val arr = LongArray(len)
+        buf.asLongBuffer().get(arr)
+        buf.position(buf.position() + len * 8)
+        return arr
+    }
+
+    override fun allocationSize(value: LongArray): Long = 4L + value.size.toLong() * 8L
+
+    override fun write(value: LongArray, buf: java.nio.ByteBuffer) {
+        buf.putInt(value.size)
+        buf.asLongBuffer().put(value)
+        buf.position(buf.position() + value.size * 8)
     }
 }
 

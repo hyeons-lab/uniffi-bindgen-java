@@ -36,6 +36,12 @@
 {% include "BooleanHelper.kt" %}
 {% include "StringHelper.kt" %}
 {% include "ByteArrayHelper.kt" %}
+{% include "Int16ArrayHelper.kt" %}
+{% include "Int32ArrayHelper.kt" %}
+{% include "Int64ArrayHelper.kt" %}
+{% include "Float32ArrayHelper.kt" %}
+{% include "Float64ArrayHelper.kt" %}
+{% include "BooleanArrayHelper.kt" %}
 
 {# Per-type templates. Iterates `iter_local_types()` and includes the
    matching template for each Type variant, mirroring the Java backend's
@@ -63,8 +69,16 @@
 {%- let ffi_converter_name = type_|ffi_converter_name -%}
 {% include "OptionalTemplate.kt" %}
 {%- when Type::Sequence { inner_type } -%}
+{#- Primitive-typed sequences (Vec<i16/i32/i64/f32/f64/bool> and
+   unsigned variants) have a dedicated unboxed-array FfiConverter
+   shipped unconditionally via `<Type>ArrayHelper.kt`. Skipping the
+   generic SequenceTemplate here avoids emitting a colliding
+   `FfiConverter<Name>Array.kt` with the boxed `List<T>` body. -#}
+{%- if type_|is_primitive_array_sequence -%}
+{%- else -%}
 {%- let ffi_converter_name = type_|ffi_converter_name -%}
 {% include "SequenceTemplate.kt" %}
+{%- endif -%}
 {%- when Type::Map { key_type, value_type } -%}
 {%- let ffi_converter_name = type_|ffi_converter_name -%}
 {% include "MapTemplate.kt" %}
