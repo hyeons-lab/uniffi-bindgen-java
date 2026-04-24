@@ -153,10 +153,10 @@ object FfiConverterFloat : FfiConverter<Float, Float> {
 }
 
 
-// === FILE: uniffi/flat_enum/FfiConverterInteger.kt ===
+// === FILE: uniffi/flat_enum/FfiConverterInt.kt ===
 package uniffi.flat_enum
 
-object FfiConverterInteger : FfiConverter<Int, Int> {
+object FfiConverterInt : FfiConverter<Int, Int> {
     override fun lift(value: Int): Int = value
     override fun read(buf: java.nio.ByteBuffer): Int = buf.int
     override fun lower(value: Int): Int = value

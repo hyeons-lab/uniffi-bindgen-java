@@ -1,8 +1,8 @@
 
-// UNIFFI:FILE FfiConverterInteger.kt
+// UNIFFI:FILE FfiConverterInt.kt
 package {{ config.package_name() }}
 
-object FfiConverterInteger : FfiConverter<Int, Int> {
+object FfiConverterInt : FfiConverter<Int, Int> {
     override fun lift(value: Int): Int = value
     override fun read(buf: java.nio.ByteBuffer): Int = buf.int
     override fun lower(value: Int): Int = value

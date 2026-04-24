@@ -194,10 +194,10 @@ object FfiConverterFloat : FfiConverter<Float, Float> {
 }
 
 
-// === FILE: org/mozilla/uniffi/example/arithmetic/FfiConverterInteger.kt ===
+// === FILE: org/mozilla/uniffi/example/arithmetic/FfiConverterInt.kt ===
 package org.mozilla.uniffi.example.arithmetic
 
-object FfiConverterInteger : FfiConverter<Int, Int> {
+object FfiConverterInt : FfiConverter<Int, Int> {
     override fun lift(value: Int): Int = value
     override fun read(buf: java.nio.ByteBuffer): Int = buf.int
     override fun lower(value: Int): Int = value
