@@ -187,13 +187,15 @@ impl KotlinCodeOracle {
         fixup_keyword(nm.to_string().to_shouty_snake_case())
     }
 
-    /// Error-variant class name. Errors nest their variants as
-    /// `<Name>Exception.<Variant>Exception`, so the variant rendering
-    /// mirrors `class_name` (UpperCamelCase + error-suffix rewrite).
-    /// Example: `IntegerOverflow` → `IntegerOverflowException`.
-    /// Variants whose Rust name doesn't end in `Error` stay unchanged
-    /// and read as a plain nested class — `convert_error_suffix` is a
-    /// no-op in that case.
+    /// Error-variant nested-class name. UpperCamelCase'd, then routed
+    /// through `convert_error_suffix` — so a trailing `Error` becomes
+    /// `Exception`, and any other name passes through unchanged. The
+    /// parent `sealed class` already carries the `Exception` suffix;
+    /// variants don't get it added automatically.
+    ///
+    /// Examples: `FooError` → `FooException`, `IntegerOverflow` →
+    /// `IntegerOverflow` (arithmetic's typed error nests as
+    /// `ArithmeticException.IntegerOverflow`, not `...Exception`).
     pub fn error_variant_name(&self, nm: &str) -> String {
         fixup_keyword(self.convert_error_suffix(&nm.to_string().to_upper_camel_case()))
     }
