@@ -18,6 +18,15 @@
 {% include "FfiConverterTemplate.kt" %}
 {% include "Helpers.kt" %}
 
+{%- if ci.contains_object_types() %}
+{#- UniffiCleaner + NoHandle / UniffiWithHandle markers. Only needed
+    when the interface exposes at least one object type. Gating here
+    mirrors `NamespaceLibraryTemplate.java`'s `contains_object_types()`
+    check; cuts ~135 lines of runtime out of fixtures that don't need
+    it. -#}
+{% include "UniffiCleaner.kt" %}
+{%- endif %}
+
 // Contains loading, initialization code, and the FFI Function declarations
 // using Java FFM (Foreign Function & Memory API).
 {% include "NamespaceLibraryTemplate.kt" %}
@@ -82,6 +91,10 @@
 {%- when Type::Map { key_type, value_type } -%}
 {%- let ffi_converter_name = type_|ffi_converter_name -%}
 {% include "MapTemplate.kt" %}
+{%- when Type::Object { name, module_path, imp } -%}
+{%- let type_name = type_|type_name(ci, config) -%}
+{%- let ffi_converter_name = type_|ffi_converter_name -%}
+{% include "ObjectTemplate.kt" %}
 {%- else -%}
 {%- endmatch -%}
 {%- endfor -%}
