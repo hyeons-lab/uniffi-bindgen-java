@@ -363,6 +363,13 @@ impl AsCodeType for Type {
             Type::Optional { inner_type } => {
                 Box::new(compounds::OptionalCodeType::new(*inner_type))
             }
+            Type::Sequence { inner_type } => {
+                Box::new(compounds::SequenceCodeType::new(*inner_type))
+            }
+            Type::Map {
+                key_type,
+                value_type,
+            } => Box::new(compounds::MapCodeType::new(*key_type, *value_type)),
 
             // Non-primitive types land in later phases. Panicking with a
             // clear message at codegen time matches the P3d
@@ -372,7 +379,7 @@ impl AsCodeType for Type {
             // corresponding template support lands.
             other => panic!(
                 "Kotlin CodeType not implemented for `{:?}` yet \
-                 (P3h+ adds sequences, maps, objects, callbacks, custom). \
+                 (P3i+ adds objects, callbacks, custom). \
                  See gen_kotlin/mod.rs.",
                 other
             ),
