@@ -22,23 +22,22 @@ package {{ config.package_name() }}
 //     factory functions rather than Java static methods.
 class {{ type_name }} internal constructor(
     @Suppress("UNUSED_PARAMETER") phantom: UniffiWithHandle,
-    internal var handle: Long,
+    internal val handle: Long,
 ) : AutoCloseable {
     private val wasDestroyed = java.util.concurrent.atomic.AtomicBoolean(false)
     private val callCounter = java.util.concurrent.atomic.AtomicLong(1L)
+    // NoHandle wrappers (handle == 0) don't register a cleaner: there's
+    // no Rust peer to free, and registering would just queue a dead
+    // Cleanable. Real wrappers register; `cleanable` is nullable so
+    // `close()` can tolerate either shape.
     private val cleanable: UniffiCleaner.Cleanable? =
-        UniffiLib.CLEANER.register(this, UniffiCleanAction(handle))
+        if (handle != 0L) UniffiLib.CLEANER.register(this, UniffiCleanAction(handle)) else null
 
     /**
      * Test-only constructor for instantiating a fake wrapper with no
      * connected Rust peer. Any method call on a fake object will fail.
      */
-    constructor(@Suppress("UNUSED_PARAMETER") noHandle: NoHandle) : this(UniffiWithHandle, 0L) {
-        // The `this(...)` call above registered a cleaner pointing at
-        // handle=0; null out that registration since there's nothing to
-        // free. The UniffiCleanAction also guards on handle==0, so this
-        // is belt-and-suspenders.
-    }
+    constructor(@Suppress("UNUSED_PARAMETER") noHandle: NoHandle) : this(UniffiWithHandle, 0L)
 
     {%- match obj.primary_constructor() %}
     {%- when Some(cons) %}
@@ -104,10 +103,21 @@ class {{ type_name }} internal constructor(
             UniffiLib.{{ obj.ffi_object_clone().name() }}(handle, _status)
         }
 
-    private inner class UniffiCleanAction(private val handle: Long) : Runnable {
+    // IMPORTANT: NOT `inner class`. A Kotlin `inner class` would capture
+    // an implicit reference to the outer wrapper, which would keep the
+    // wrapper strongly reachable as long as the Cleaner holds the
+    // `Runnable` alive — meaning the wrapper could never become
+    // phantom-reachable, the cleaner would never fire, and every
+    // forgotten `close()` would leak the Rust handle. Keeping this as a
+    // nested class means the Runnable only references the primitive
+    // `handle` Long it was constructed with, which is exactly what the
+    // Cleaner contract requires.
+    private class UniffiCleanAction(private val handle: Long) : Runnable {
         override fun run() {
-            // handle == 0 indicates a fake (NoHandle) wrapper; nothing
-            // to free.
+            // handle == 0 is defense-in-depth: `cleanable` is only
+            // registered when handle != 0, so this branch shouldn't
+            // be reachable in practice. Leaving the guard in case the
+            // class is ever instantiated directly (e.g. by tests).
             if (handle != 0L) {
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
                     UniffiLib.{{ obj.ffi_object_free().name() }}(handle, _status)
