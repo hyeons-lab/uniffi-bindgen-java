@@ -56,6 +56,13 @@ internal object UniffiLib {
     private val LINKER: java.lang.foreign.Linker = java.lang.foreign.Linker.nativeLinker()
     private val SYMBOLS: java.lang.foreign.SymbolLookup
 
+    {%- if ci.contains_object_types() %}
+    // Library-wide cleaner for object finalization. Instantiated lazily
+    // at class-init; every object wrapper registers a
+    // `UniffiCleanAction` with this shared cleaner on construction.
+    @JvmField internal val CLEANER: UniffiCleaner = UniffiCleaner.create()
+    {%- endif %}
+
     init {
         SYMBOLS = NamespaceLibrary.loadLibrary()
     }
