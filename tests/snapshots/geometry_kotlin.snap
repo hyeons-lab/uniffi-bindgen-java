@@ -144,10 +144,10 @@ object FfiConverterFloat : FfiConverter<Float, Float> {
 }
 
 
-// === FILE: uniffi/geometry/FfiConverterInteger.kt ===
+// === FILE: uniffi/geometry/FfiConverterInt.kt ===
 package uniffi.geometry
 
-object FfiConverterInteger : FfiConverter<Int, Int> {
+object FfiConverterInt : FfiConverter<Int, Int> {
     override fun lift(value: Int): Int = value
     override fun read(buf: java.nio.ByteBuffer): Int = buf.int
     override fun lower(value: Int): Int = value

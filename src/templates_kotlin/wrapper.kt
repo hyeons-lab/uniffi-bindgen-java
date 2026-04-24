@@ -62,6 +62,12 @@
 {%- when Type::Optional { inner_type } -%}
 {%- let ffi_converter_name = type_|ffi_converter_name -%}
 {% include "OptionalTemplate.kt" %}
+{%- when Type::Sequence { inner_type } -%}
+{%- let ffi_converter_name = type_|ffi_converter_name -%}
+{% include "SequenceTemplate.kt" %}
+{%- when Type::Map { key_type, value_type } -%}
+{%- let ffi_converter_name = type_|ffi_converter_name -%}
+{% include "MapTemplate.kt" %}
 {%- else -%}
 {%- endmatch -%}
 {%- endfor -%}
