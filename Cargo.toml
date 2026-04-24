@@ -61,6 +61,7 @@ uniffi-fixture-futures = { git = "https://github.com/mozilla/uniffi-rs.git", tag
 uniffi-fixture-primitive-arrays = { path = "fixtures/primitive-arrays" }
 uniffi-fixture-proc-macro = { git = "https://github.com/mozilla/uniffi-rs.git", tag = "v0.31.0" }
 uniffi-fixture-rename = { git = "https://github.com/mozilla/uniffi-rs.git", tag = "v0.31.0" }
+uniffi-fixture-string-map = { path = "fixtures/string-map" }
 uniffi-fixture-time = { git = "https://github.com/mozilla/uniffi-rs.git", tag = "v0.31.0" }
 uniffi-fixture-trait-methods = { git = "https://github.com/mozilla/uniffi-rs.git", tag = "v0.31.0" }
 uniffi_testing = { git = "https://github.com/mozilla/uniffi-rs.git", tag = "v0.31.0" }

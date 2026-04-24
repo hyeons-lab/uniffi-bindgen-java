@@ -180,3 +180,37 @@ fn snapshot_flat_enum_kotlin() -> Result<()> {
         "kt",
     )
 }
+
+/// Kotlin-side snapshot for the `primitive-arrays` fixture. P3h adds
+/// generic `Sequence<T>` codegen; the fixture exercises `Vec<i16>`,
+/// `Vec<i32>`, `Vec<i64>`, `Vec<f32>`, `Vec<f64>`, `Vec<bool>`, and
+/// the unsigned variants. On the Java side these route to primitive
+/// arrays (`int[]`, `double[]`, ...); on the Kotlin side P3h uses the
+/// generic `List<T>` path for all of them (boxed `List<Int>`,
+/// `List<Double>`, ...). Unboxed primitive arrays (`IntArray`,
+/// `DoubleArray`, ...) are tracked as P3h-primitive.
+#[test]
+fn snapshot_primitive_arrays_kotlin() -> Result<()> {
+    snapshot_fixture_for(
+        "uniffi-fixture-primitive-arrays",
+        "primitive_arrays_kotlin",
+        Language::Kotlin,
+        "kt",
+    )
+}
+
+/// Kotlin-side snapshot for the in-repo `string-map` fixture. P3h
+/// adds generic `Map<K, V>` codegen; this fixture is a deliberately
+/// tiny `HashMap<String, i32>` round-trip, isolating the map codegen
+/// path with zero other unsupported types. Coverall would exercise
+/// maps too but also pulls in objects and callbacks that still panic
+/// until P3i+.
+#[test]
+fn snapshot_string_map_kotlin() -> Result<()> {
+    snapshot_fixture_for(
+        "uniffi-fixture-string-map",
+        "string_map_kotlin",
+        Language::Kotlin,
+        "kt",
+    )
+}

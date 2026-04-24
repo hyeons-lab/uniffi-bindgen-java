@@ -2,58 +2,8 @@
 source: tests/snapshots.rs
 expression: combined
 ---
-// === FILE: org/mozilla/uniffi/example/arithmetic/Arithmetic.kt ===
-package org.mozilla.uniffi.example.arithmetic
-
-object Arithmetic {
-
-
-    @Throws(ArithmeticException::class)
-    fun add(a: Long, b: Long): Long =
-        UniffiHelpers.uniffiRustCallWithErrorLong(ArithmeticExceptionErrorHandler()) { _, _status ->
-            UniffiLib.uniffi_arithmetical_fn_func_add(a, b, _status)
-        }
-
-
-    fun div(dividend: Long, divisor: Long): Long =
-        UniffiHelpers.uniffiRustCallLong { _, _status ->
-            UniffiLib.uniffi_arithmetical_fn_func_div(dividend, divisor, _status)
-        }
-
-
-    fun equal(a: Long, b: Long): Boolean =
-        FfiConverterBoolean.lift(
-            UniffiHelpers.uniffiRustCall { _allocator, _status ->
-                UniffiLib.uniffi_arithmetical_fn_func_equal(a, b, _status)
-            }
-        )
-
-
-    @Throws(ArithmeticException::class)
-    fun sub(a: Long, b: Long): Long =
-        UniffiHelpers.uniffiRustCallWithErrorLong(ArithmeticExceptionErrorHandler()) { _, _status ->
-            UniffiLib.uniffi_arithmetical_fn_func_sub(a, b, _status)
-        }
-}
-// === FILE: org/mozilla/uniffi/example/arithmetic/ArithmeticException.kt ===
-package org.mozilla.uniffi.example.arithmetic
-
-sealed class ArithmeticException(message: String) : kotlin.Exception(message) {
-    class IntegerOverflow(message: String) : ArithmeticException(message)
-}
-
-
-// === FILE: org/mozilla/uniffi/example/arithmetic/ArithmeticExceptionErrorHandler.kt ===
-package org.mozilla.uniffi.example.arithmetic
-
-class ArithmeticExceptionErrorHandler : UniffiRustCallStatusErrorHandler<ArithmeticException> {
-    override fun lift(errorBuf: java.lang.foreign.MemorySegment): ArithmeticException =
-        FfiConverterTypeArithmeticError.lift(errorBuf)
-}
-
-
-// === FILE: org/mozilla/uniffi/example/arithmetic/FfiConverter.kt ===
-package org.mozilla.uniffi.example.arithmetic
+// === FILE: uniffi/primitive_arrays/FfiConverter.kt ===
+package uniffi.primitive_arrays
 
 // The FfiConverter interface handles converter types to and from the FFI.
 //
@@ -117,8 +67,8 @@ interface FfiConverter<T, FfiType> {
 }
 
 
-// === FILE: org/mozilla/uniffi/example/arithmetic/FfiConverterBoolean.kt ===
-package org.mozilla.uniffi.example.arithmetic
+// === FILE: uniffi/primitive_arrays/FfiConverterBoolean.kt ===
+package uniffi.primitive_arrays
 
 object FfiConverterBoolean : FfiConverter<Boolean, Byte> {
     override fun lift(value: Byte): Boolean = value.toInt() != 0
@@ -131,8 +81,8 @@ object FfiConverterBoolean : FfiConverter<Boolean, Byte> {
 }
 
 
-// === FILE: org/mozilla/uniffi/example/arithmetic/FfiConverterByte.kt ===
-package org.mozilla.uniffi.example.arithmetic
+// === FILE: uniffi/primitive_arrays/FfiConverterByte.kt ===
+package uniffi.primitive_arrays
 
 object FfiConverterByte : FfiConverter<Byte, Byte> {
     override fun lift(value: Byte): Byte = value
@@ -145,8 +95,8 @@ object FfiConverterByte : FfiConverter<Byte, Byte> {
 }
 
 
-// === FILE: org/mozilla/uniffi/example/arithmetic/FfiConverterByteArray.kt ===
-package org.mozilla.uniffi.example.arithmetic
+// === FILE: uniffi/primitive_arrays/FfiConverterByteArray.kt ===
+package uniffi.primitive_arrays
 
 object FfiConverterByteArray : FfiConverterRustBuffer<ByteArray> {
     override fun read(buf: java.nio.ByteBuffer): ByteArray {
@@ -166,8 +116,8 @@ object FfiConverterByteArray : FfiConverterRustBuffer<ByteArray> {
 
 
 
-// === FILE: org/mozilla/uniffi/example/arithmetic/FfiConverterDouble.kt ===
-package org.mozilla.uniffi.example.arithmetic
+// === FILE: uniffi/primitive_arrays/FfiConverterDouble.kt ===
+package uniffi.primitive_arrays
 
 object FfiConverterDouble : FfiConverter<Double, Double> {
     override fun lift(value: Double): Double = value
@@ -180,8 +130,8 @@ object FfiConverterDouble : FfiConverter<Double, Double> {
 }
 
 
-// === FILE: org/mozilla/uniffi/example/arithmetic/FfiConverterFloat.kt ===
-package org.mozilla.uniffi.example.arithmetic
+// === FILE: uniffi/primitive_arrays/FfiConverterFloat.kt ===
+package uniffi.primitive_arrays
 
 object FfiConverterFloat : FfiConverter<Float, Float> {
     override fun lift(value: Float): Float = value
@@ -194,8 +144,8 @@ object FfiConverterFloat : FfiConverter<Float, Float> {
 }
 
 
-// === FILE: org/mozilla/uniffi/example/arithmetic/FfiConverterInt.kt ===
-package org.mozilla.uniffi.example.arithmetic
+// === FILE: uniffi/primitive_arrays/FfiConverterInt.kt ===
+package uniffi.primitive_arrays
 
 object FfiConverterInt : FfiConverter<Int, Int> {
     override fun lift(value: Int): Int = value
@@ -208,8 +158,8 @@ object FfiConverterInt : FfiConverter<Int, Int> {
 }
 
 
-// === FILE: org/mozilla/uniffi/example/arithmetic/FfiConverterLong.kt ===
-package org.mozilla.uniffi.example.arithmetic
+// === FILE: uniffi/primitive_arrays/FfiConverterLong.kt ===
+package uniffi.primitive_arrays
 
 object FfiConverterLong : FfiConverter<Long, Long> {
     override fun lift(value: Long): Long = value
@@ -222,8 +172,8 @@ object FfiConverterLong : FfiConverter<Long, Long> {
 }
 
 
-// === FILE: org/mozilla/uniffi/example/arithmetic/FfiConverterRustBuffer.kt ===
-package org.mozilla.uniffi.example.arithmetic
+// === FILE: uniffi/primitive_arrays/FfiConverterRustBuffer.kt ===
+package uniffi.primitive_arrays
 
 // FfiConverter that uses `RustBuffer` as the FfiType.
 interface FfiConverterRustBuffer<T> : FfiConverter<T, java.lang.foreign.MemorySegment> {
@@ -232,8 +182,134 @@ interface FfiConverterRustBuffer<T> : FfiConverter<T, java.lang.foreign.MemorySe
 }
 
 
-// === FILE: org/mozilla/uniffi/example/arithmetic/FfiConverterShort.kt ===
-package org.mozilla.uniffi.example.arithmetic
+// === FILE: uniffi/primitive_arrays/FfiConverterSequenceBoolean.kt ===
+package uniffi.primitive_arrays
+
+object FfiConverterSequenceBoolean : FfiConverterRustBuffer<List<Boolean>> {
+    override fun read(buf: java.nio.ByteBuffer): List<Boolean> {
+        val len = buf.getInt()
+        val list = ArrayList<Boolean>(len)
+        repeat(len) { list.add(FfiConverterBoolean.read(buf)) }
+        return list
+    }
+
+    override fun allocationSize(value: List<Boolean>): Long {
+        return 4L + value.sumOf { FfiConverterBoolean.allocationSize(it) }
+    }
+
+    override fun write(value: List<Boolean>, buf: java.nio.ByteBuffer) {
+        buf.putInt(value.size)
+        value.forEach { FfiConverterBoolean.write(it, buf) }
+    }
+}
+
+// === FILE: uniffi/primitive_arrays/FfiConverterSequenceDouble.kt ===
+package uniffi.primitive_arrays
+
+object FfiConverterSequenceDouble : FfiConverterRustBuffer<List<Double>> {
+    override fun read(buf: java.nio.ByteBuffer): List<Double> {
+        val len = buf.getInt()
+        val list = ArrayList<Double>(len)
+        repeat(len) { list.add(FfiConverterDouble.read(buf)) }
+        return list
+    }
+
+    override fun allocationSize(value: List<Double>): Long {
+        return 4L + value.sumOf { FfiConverterDouble.allocationSize(it) }
+    }
+
+    override fun write(value: List<Double>, buf: java.nio.ByteBuffer) {
+        buf.putInt(value.size)
+        value.forEach { FfiConverterDouble.write(it, buf) }
+    }
+}
+
+// === FILE: uniffi/primitive_arrays/FfiConverterSequenceFloat.kt ===
+package uniffi.primitive_arrays
+
+object FfiConverterSequenceFloat : FfiConverterRustBuffer<List<Float>> {
+    override fun read(buf: java.nio.ByteBuffer): List<Float> {
+        val len = buf.getInt()
+        val list = ArrayList<Float>(len)
+        repeat(len) { list.add(FfiConverterFloat.read(buf)) }
+        return list
+    }
+
+    override fun allocationSize(value: List<Float>): Long {
+        return 4L + value.sumOf { FfiConverterFloat.allocationSize(it) }
+    }
+
+    override fun write(value: List<Float>, buf: java.nio.ByteBuffer) {
+        buf.putInt(value.size)
+        value.forEach { FfiConverterFloat.write(it, buf) }
+    }
+}
+
+// === FILE: uniffi/primitive_arrays/FfiConverterSequenceInt.kt ===
+package uniffi.primitive_arrays
+
+object FfiConverterSequenceInt : FfiConverterRustBuffer<List<Int>> {
+    override fun read(buf: java.nio.ByteBuffer): List<Int> {
+        val len = buf.getInt()
+        val list = ArrayList<Int>(len)
+        repeat(len) { list.add(FfiConverterInt.read(buf)) }
+        return list
+    }
+
+    override fun allocationSize(value: List<Int>): Long {
+        return 4L + value.sumOf { FfiConverterInt.allocationSize(it) }
+    }
+
+    override fun write(value: List<Int>, buf: java.nio.ByteBuffer) {
+        buf.putInt(value.size)
+        value.forEach { FfiConverterInt.write(it, buf) }
+    }
+}
+
+// === FILE: uniffi/primitive_arrays/FfiConverterSequenceLong.kt ===
+package uniffi.primitive_arrays
+
+object FfiConverterSequenceLong : FfiConverterRustBuffer<List<Long>> {
+    override fun read(buf: java.nio.ByteBuffer): List<Long> {
+        val len = buf.getInt()
+        val list = ArrayList<Long>(len)
+        repeat(len) { list.add(FfiConverterLong.read(buf)) }
+        return list
+    }
+
+    override fun allocationSize(value: List<Long>): Long {
+        return 4L + value.sumOf { FfiConverterLong.allocationSize(it) }
+    }
+
+    override fun write(value: List<Long>, buf: java.nio.ByteBuffer) {
+        buf.putInt(value.size)
+        value.forEach { FfiConverterLong.write(it, buf) }
+    }
+}
+
+// === FILE: uniffi/primitive_arrays/FfiConverterSequenceShort.kt ===
+package uniffi.primitive_arrays
+
+object FfiConverterSequenceShort : FfiConverterRustBuffer<List<Short>> {
+    override fun read(buf: java.nio.ByteBuffer): List<Short> {
+        val len = buf.getInt()
+        val list = ArrayList<Short>(len)
+        repeat(len) { list.add(FfiConverterShort.read(buf)) }
+        return list
+    }
+
+    override fun allocationSize(value: List<Short>): Long {
+        return 4L + value.sumOf { FfiConverterShort.allocationSize(it) }
+    }
+
+    override fun write(value: List<Short>, buf: java.nio.ByteBuffer) {
+        buf.putInt(value.size)
+        value.forEach { FfiConverterShort.write(it, buf) }
+    }
+}
+
+// === FILE: uniffi/primitive_arrays/FfiConverterShort.kt ===
+package uniffi.primitive_arrays
 
 object FfiConverterShort : FfiConverter<Short, Short> {
     override fun lift(value: Short): Short = value
@@ -246,8 +322,8 @@ object FfiConverterShort : FfiConverter<Short, Short> {
 }
 
 
-// === FILE: org/mozilla/uniffi/example/arithmetic/FfiConverterString.kt ===
-package org.mozilla.uniffi.example.arithmetic
+// === FILE: uniffi/primitive_arrays/FfiConverterString.kt ===
+package uniffi.primitive_arrays
 
 object FfiConverterString : FfiConverter<String, java.lang.foreign.MemorySegment> {
     // Note: we don't inherit from FfiConverterRustBuffer because we use a
@@ -306,30 +382,8 @@ object FfiConverterString : FfiConverter<String, java.lang.foreign.MemorySegment
 }
 
 
-// === FILE: org/mozilla/uniffi/example/arithmetic/FfiConverterTypeArithmeticError.kt ===
-package org.mozilla.uniffi.example.arithmetic
-
-object FfiConverterTypeArithmeticError : FfiConverterRustBuffer<ArithmeticException> {
-    override fun read(buf: java.nio.ByteBuffer): ArithmeticException {
-        return when (buf.getInt()) {
-            1 -> ArithmeticException.IntegerOverflow(FfiConverterString.read(buf))
-            else -> throw RuntimeException("invalid error enum value, something is very wrong!!")
-        }
-    }
-
-    override fun allocationSize(value: ArithmeticException): Long = 4L
-
-    override fun write(value: ArithmeticException, buf: java.nio.ByteBuffer) {
-        when (value) {
-            is ArithmeticException.IntegerOverflow -> {
-                buf.putInt(1)
-            }
-        }
-    }
-}
-
-// === FILE: org/mozilla/uniffi/example/arithmetic/ForeignBytes.kt ===
-package org.mozilla.uniffi.example.arithmetic
+// === FILE: uniffi/primitive_arrays/ForeignBytes.kt ===
+package uniffi.primitive_arrays
 
 // Helper for safely passing byte references into the rust code.
 //
@@ -364,14 +418,14 @@ object ForeignBytes {
 }
 
 
-// === FILE: org/mozilla/uniffi/example/arithmetic/InternalException.kt ===
-package org.mozilla.uniffi.example.arithmetic
+// === FILE: uniffi/primitive_arrays/InternalException.kt ===
+package uniffi.primitive_arrays
 
 open class InternalException(message: String) : RuntimeException(message)
 
 
-// === FILE: org/mozilla/uniffi/example/arithmetic/NamespaceLibrary.kt ===
-package org.mozilla.uniffi.example.arithmetic
+// === FILE: uniffi/primitive_arrays/NamespaceLibrary.kt ===
+package uniffi.primitive_arrays
 
 internal object NamespaceLibrary {
     @Synchronized
@@ -380,11 +434,11 @@ internal object NamespaceLibrary {
         if (libOverride != null) {
             return libOverride
         }
-        return "arithmetical-CARGO_BUILD_HASH"
+        return "uniffi_fixture_primitive_arrays"
     }
 
     fun loadLibrary(): java.lang.foreign.SymbolLookup {
-        val name = findLibraryName("arithmetic")
+        val name = findLibraryName("primitive_arrays")
         if (name.startsWith("/") || // Unix absolute path
             name.startsWith("\\\\") || // Windows UNC path
             (name.length > 2 && name[1] == ':') // Windows drive path (e.g. C:\)
@@ -398,7 +452,7 @@ internal object NamespaceLibrary {
 
     fun uniffiCheckContractApiVersion() {
         val bindingsContractVersion = 30
-        val scaffoldingContractVersion = UniffiLib.ffi_arithmetical_uniffi_contract_version()
+        val scaffoldingContractVersion = UniffiLib.ffi_uniffi_fixture_primitive_arrays_uniffi_contract_version()
         if (bindingsContractVersion != scaffoldingContractVersion) {
             throw RuntimeException("UniFFI contract version mismatch: try cleaning and rebuilding your project")
         }
@@ -417,8 +471,121 @@ internal object NamespaceLibrary {
 }
 
 
-// === FILE: org/mozilla/uniffi/example/arithmetic/RustBuffer.kt ===
-package org.mozilla.uniffi.example.arithmetic
+// === FILE: uniffi/primitive_arrays/Primitive_arrays.kt ===
+package uniffi.primitive_arrays
+
+object Primitive_arrays {
+
+
+    fun countTrue(`data`: List<Boolean>): Int =
+        UniffiHelpers.uniffiRustCallInt { _, _status ->
+            UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_count_true(FfiConverterSequenceBoolean.lower(`data`), _status)
+        }
+
+
+    fun roundtripBool(`data`: List<Boolean>): List<Boolean> =
+        FfiConverterSequenceBoolean.lift(
+            UniffiHelpers.uniffiRustCall { _allocator, _status ->
+                UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_bool(_allocator, FfiConverterSequenceBoolean.lower(`data`), _status)
+            }
+        )
+
+
+    fun roundtripFloat32(`data`: List<Float>): List<Float> =
+        FfiConverterSequenceFloat.lift(
+            UniffiHelpers.uniffiRustCall { _allocator, _status ->
+                UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_float32(_allocator, FfiConverterSequenceFloat.lower(`data`), _status)
+            }
+        )
+
+
+    fun roundtripFloat64(`data`: List<Double>): List<Double> =
+        FfiConverterSequenceDouble.lift(
+            UniffiHelpers.uniffiRustCall { _allocator, _status ->
+                UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_float64(_allocator, FfiConverterSequenceDouble.lower(`data`), _status)
+            }
+        )
+
+
+    fun roundtripInt16(`data`: List<Short>): List<Short> =
+        FfiConverterSequenceShort.lift(
+            UniffiHelpers.uniffiRustCall { _allocator, _status ->
+                UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_int16(_allocator, FfiConverterSequenceShort.lower(`data`), _status)
+            }
+        )
+
+
+    fun roundtripInt32(`data`: List<Int>): List<Int> =
+        FfiConverterSequenceInt.lift(
+            UniffiHelpers.uniffiRustCall { _allocator, _status ->
+                UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_int32(_allocator, FfiConverterSequenceInt.lower(`data`), _status)
+            }
+        )
+
+
+    fun roundtripInt64(`data`: List<Long>): List<Long> =
+        FfiConverterSequenceLong.lift(
+            UniffiHelpers.uniffiRustCall { _allocator, _status ->
+                UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_int64(_allocator, FfiConverterSequenceLong.lower(`data`), _status)
+            }
+        )
+
+
+    fun roundtripUint16(`data`: List<Short>): List<Short> =
+        FfiConverterSequenceShort.lift(
+            UniffiHelpers.uniffiRustCall { _allocator, _status ->
+                UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_uint16(_allocator, FfiConverterSequenceShort.lower(`data`), _status)
+            }
+        )
+
+
+    fun roundtripUint32(`data`: List<Int>): List<Int> =
+        FfiConverterSequenceInt.lift(
+            UniffiHelpers.uniffiRustCall { _allocator, _status ->
+                UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_uint32(_allocator, FfiConverterSequenceInt.lower(`data`), _status)
+            }
+        )
+
+
+    fun roundtripUint64(`data`: List<Long>): List<Long> =
+        FfiConverterSequenceLong.lift(
+            UniffiHelpers.uniffiRustCall { _allocator, _status ->
+                UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_uint64(_allocator, FfiConverterSequenceLong.lower(`data`), _status)
+            }
+        )
+
+
+    fun sumFloat32(`data`: List<Float>): Float =
+        UniffiHelpers.uniffiRustCallFloat { _, _status ->
+            UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_sum_float32(FfiConverterSequenceFloat.lower(`data`), _status)
+        }
+
+
+    fun sumFloat64(`data`: List<Double>): Double =
+        UniffiHelpers.uniffiRustCallDouble { _, _status ->
+            UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_sum_float64(FfiConverterSequenceDouble.lower(`data`), _status)
+        }
+
+
+    fun sumInt16(`data`: List<Short>): Short =
+        UniffiHelpers.uniffiRustCallShort { _, _status ->
+            UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_sum_int16(FfiConverterSequenceShort.lower(`data`), _status)
+        }
+
+
+    fun sumInt32(`data`: List<Int>): Int =
+        UniffiHelpers.uniffiRustCallInt { _, _status ->
+            UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_sum_int32(FfiConverterSequenceInt.lower(`data`), _status)
+        }
+
+
+    fun sumInt64(`data`: List<Long>): Long =
+        UniffiHelpers.uniffiRustCallLong { _, _status ->
+            UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_sum_int64(FfiConverterSequenceLong.lower(`data`), _status)
+        }
+}
+// === FILE: uniffi/primitive_arrays/RustBuffer.kt ===
+package uniffi.primitive_arrays
 
 /**
  * Helper for safely working with byte buffers returned from the Rust code.
@@ -462,7 +629,7 @@ object RustBuffer {
 
     fun alloc(size: Long): java.lang.foreign.MemorySegment {
         val buffer = UniffiHelpers.uniffiRustCall { allocator, status ->
-            UniffiLib.ffi_arithmetical_rustbuffer_alloc(allocator, size, status)
+            UniffiLib.ffi_uniffi_fixture_primitive_arrays_rustbuffer_alloc(allocator, size, status)
         }
         if (getData(buffer) == java.lang.foreign.MemorySegment.NULL && size > 0) {
             throw RuntimeException("RustBuffer.alloc() returned null data pointer (size=$size)")
@@ -472,7 +639,7 @@ object RustBuffer {
 
     fun free(buffer: java.lang.foreign.MemorySegment) {
         UniffiHelpers.uniffiRustCallVoid { _, status ->
-            UniffiLib.ffi_arithmetical_rustbuffer_free(buffer, status)
+            UniffiLib.ffi_uniffi_fixture_primitive_arrays_rustbuffer_free(buffer, status)
         }
     }
 
@@ -496,8 +663,8 @@ object RustBuffer {
 }
 
 
-// === FILE: org/mozilla/uniffi/example/arithmetic/UniffiHelpers.kt ===
-package org.mozilla.uniffi.example.arithmetic
+// === FILE: uniffi/primitive_arrays/UniffiHelpers.kt ===
+package uniffi.primitive_arrays
 
 // Helpers for calling Rust.
 //
@@ -775,8 +942,8 @@ object UniffiHelpers {
 // using Java FFM (Foreign Function & Memory API).
 
 
-// === FILE: org/mozilla/uniffi/example/arithmetic/UniffiInitializer.kt ===
-package org.mozilla.uniffi.example.arithmetic
+// === FILE: uniffi/primitive_arrays/UniffiInitializer.kt ===
+package uniffi.primitive_arrays
 
 /**
  * Ensures the native library is initialized.
@@ -798,8 +965,8 @@ object UniffiInitializer {
 // doesn't exist yet).
 
 
-// === FILE: org/mozilla/uniffi/example/arithmetic/UniffiLib.kt ===
-package org.mozilla.uniffi.example.arithmetic
+// === FILE: uniffi/primitive_arrays/UniffiLib.kt ===
+package uniffi.primitive_arrays
 
 // FFM-based library binding. Each FFI function gets a `MethodHandle` field
 // + a wrapper function that performs the `invokeExact` call. The loop
@@ -821,113 +988,372 @@ internal object UniffiLib {
             .map { s -> LINKER.downcallHandle(s, descriptor) }
             .orElseThrow { RuntimeException("Missing FFI symbol: $name") }
 
-    // uniffi_arithmetical_fn_func_add
-    private val MH_uniffi_arithmetical_fn_func_add: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "uniffi_arithmetical_fn_func_add",
+    // uniffi_uniffi_fixture_primitive_arrays_fn_func_count_true
+    private val MH_uniffi_uniffi_fixture_primitive_arrays_fn_func_count_true: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_fixture_primitive_arrays_fn_func_count_true",
         java.lang.foreign.FunctionDescriptor.of(
-            java.lang.foreign.ValueLayout.JAVA_LONG,
-            java.lang.foreign.ValueLayout.JAVA_LONG,
-            java.lang.foreign.ValueLayout.JAVA_LONG,
+            java.lang.foreign.ValueLayout.JAVA_INT,
+            RustBuffer.LAYOUT,
             java.lang.foreign.ValueLayout.ADDRESS,
         ),
     )
 
-    fun uniffi_arithmetical_fn_func_add(
-        a: Long,
-        b: Long,
+    fun uniffi_uniffi_fixture_primitive_arrays_fn_func_count_true(
+        `data`: java.lang.foreign.MemorySegment,
+        uniffiOutErr: java.lang.foreign.MemorySegment,
+    ): Int =
+        try {
+            MH_uniffi_uniffi_fixture_primitive_arrays_fn_func_count_true.invokeExact(
+                `data`,
+                uniffiOutErr,
+            ) as Int
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_bool
+    private val MH_uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_bool: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_bool",
+        java.lang.foreign.FunctionDescriptor.of(
+            RustBuffer.LAYOUT,
+            RustBuffer.LAYOUT,
+            java.lang.foreign.ValueLayout.ADDRESS,
+        ),
+    )
+
+    fun uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_bool(
+        allocator: java.lang.foreign.SegmentAllocator,
+        `data`: java.lang.foreign.MemorySegment,
+        uniffiOutErr: java.lang.foreign.MemorySegment,
+    ): java.lang.foreign.MemorySegment =
+        try {
+            MH_uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_bool.invokeExact(
+                allocator,
+                `data`,
+                uniffiOutErr,
+            ) as java.lang.foreign.MemorySegment
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_float32
+    private val MH_uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_float32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_float32",
+        java.lang.foreign.FunctionDescriptor.of(
+            RustBuffer.LAYOUT,
+            RustBuffer.LAYOUT,
+            java.lang.foreign.ValueLayout.ADDRESS,
+        ),
+    )
+
+    fun uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_float32(
+        allocator: java.lang.foreign.SegmentAllocator,
+        `data`: java.lang.foreign.MemorySegment,
+        uniffiOutErr: java.lang.foreign.MemorySegment,
+    ): java.lang.foreign.MemorySegment =
+        try {
+            MH_uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_float32.invokeExact(
+                allocator,
+                `data`,
+                uniffiOutErr,
+            ) as java.lang.foreign.MemorySegment
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_float64
+    private val MH_uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_float64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_float64",
+        java.lang.foreign.FunctionDescriptor.of(
+            RustBuffer.LAYOUT,
+            RustBuffer.LAYOUT,
+            java.lang.foreign.ValueLayout.ADDRESS,
+        ),
+    )
+
+    fun uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_float64(
+        allocator: java.lang.foreign.SegmentAllocator,
+        `data`: java.lang.foreign.MemorySegment,
+        uniffiOutErr: java.lang.foreign.MemorySegment,
+    ): java.lang.foreign.MemorySegment =
+        try {
+            MH_uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_float64.invokeExact(
+                allocator,
+                `data`,
+                uniffiOutErr,
+            ) as java.lang.foreign.MemorySegment
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_int16
+    private val MH_uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_int16: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_int16",
+        java.lang.foreign.FunctionDescriptor.of(
+            RustBuffer.LAYOUT,
+            RustBuffer.LAYOUT,
+            java.lang.foreign.ValueLayout.ADDRESS,
+        ),
+    )
+
+    fun uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_int16(
+        allocator: java.lang.foreign.SegmentAllocator,
+        `data`: java.lang.foreign.MemorySegment,
+        uniffiOutErr: java.lang.foreign.MemorySegment,
+    ): java.lang.foreign.MemorySegment =
+        try {
+            MH_uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_int16.invokeExact(
+                allocator,
+                `data`,
+                uniffiOutErr,
+            ) as java.lang.foreign.MemorySegment
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_int32
+    private val MH_uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_int32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_int32",
+        java.lang.foreign.FunctionDescriptor.of(
+            RustBuffer.LAYOUT,
+            RustBuffer.LAYOUT,
+            java.lang.foreign.ValueLayout.ADDRESS,
+        ),
+    )
+
+    fun uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_int32(
+        allocator: java.lang.foreign.SegmentAllocator,
+        `data`: java.lang.foreign.MemorySegment,
+        uniffiOutErr: java.lang.foreign.MemorySegment,
+    ): java.lang.foreign.MemorySegment =
+        try {
+            MH_uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_int32.invokeExact(
+                allocator,
+                `data`,
+                uniffiOutErr,
+            ) as java.lang.foreign.MemorySegment
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_int64
+    private val MH_uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_int64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_int64",
+        java.lang.foreign.FunctionDescriptor.of(
+            RustBuffer.LAYOUT,
+            RustBuffer.LAYOUT,
+            java.lang.foreign.ValueLayout.ADDRESS,
+        ),
+    )
+
+    fun uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_int64(
+        allocator: java.lang.foreign.SegmentAllocator,
+        `data`: java.lang.foreign.MemorySegment,
+        uniffiOutErr: java.lang.foreign.MemorySegment,
+    ): java.lang.foreign.MemorySegment =
+        try {
+            MH_uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_int64.invokeExact(
+                allocator,
+                `data`,
+                uniffiOutErr,
+            ) as java.lang.foreign.MemorySegment
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_uint16
+    private val MH_uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_uint16: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_uint16",
+        java.lang.foreign.FunctionDescriptor.of(
+            RustBuffer.LAYOUT,
+            RustBuffer.LAYOUT,
+            java.lang.foreign.ValueLayout.ADDRESS,
+        ),
+    )
+
+    fun uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_uint16(
+        allocator: java.lang.foreign.SegmentAllocator,
+        `data`: java.lang.foreign.MemorySegment,
+        uniffiOutErr: java.lang.foreign.MemorySegment,
+    ): java.lang.foreign.MemorySegment =
+        try {
+            MH_uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_uint16.invokeExact(
+                allocator,
+                `data`,
+                uniffiOutErr,
+            ) as java.lang.foreign.MemorySegment
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_uint32
+    private val MH_uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_uint32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_uint32",
+        java.lang.foreign.FunctionDescriptor.of(
+            RustBuffer.LAYOUT,
+            RustBuffer.LAYOUT,
+            java.lang.foreign.ValueLayout.ADDRESS,
+        ),
+    )
+
+    fun uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_uint32(
+        allocator: java.lang.foreign.SegmentAllocator,
+        `data`: java.lang.foreign.MemorySegment,
+        uniffiOutErr: java.lang.foreign.MemorySegment,
+    ): java.lang.foreign.MemorySegment =
+        try {
+            MH_uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_uint32.invokeExact(
+                allocator,
+                `data`,
+                uniffiOutErr,
+            ) as java.lang.foreign.MemorySegment
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_uint64
+    private val MH_uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_uint64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_uint64",
+        java.lang.foreign.FunctionDescriptor.of(
+            RustBuffer.LAYOUT,
+            RustBuffer.LAYOUT,
+            java.lang.foreign.ValueLayout.ADDRESS,
+        ),
+    )
+
+    fun uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_uint64(
+        allocator: java.lang.foreign.SegmentAllocator,
+        `data`: java.lang.foreign.MemorySegment,
+        uniffiOutErr: java.lang.foreign.MemorySegment,
+    ): java.lang.foreign.MemorySegment =
+        try {
+            MH_uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_uint64.invokeExact(
+                allocator,
+                `data`,
+                uniffiOutErr,
+            ) as java.lang.foreign.MemorySegment
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // uniffi_uniffi_fixture_primitive_arrays_fn_func_sum_float32
+    private val MH_uniffi_uniffi_fixture_primitive_arrays_fn_func_sum_float32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_fixture_primitive_arrays_fn_func_sum_float32",
+        java.lang.foreign.FunctionDescriptor.of(
+            java.lang.foreign.ValueLayout.JAVA_FLOAT,
+            RustBuffer.LAYOUT,
+            java.lang.foreign.ValueLayout.ADDRESS,
+        ),
+    )
+
+    fun uniffi_uniffi_fixture_primitive_arrays_fn_func_sum_float32(
+        `data`: java.lang.foreign.MemorySegment,
+        uniffiOutErr: java.lang.foreign.MemorySegment,
+    ): Float =
+        try {
+            MH_uniffi_uniffi_fixture_primitive_arrays_fn_func_sum_float32.invokeExact(
+                `data`,
+                uniffiOutErr,
+            ) as Float
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // uniffi_uniffi_fixture_primitive_arrays_fn_func_sum_float64
+    private val MH_uniffi_uniffi_fixture_primitive_arrays_fn_func_sum_float64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_fixture_primitive_arrays_fn_func_sum_float64",
+        java.lang.foreign.FunctionDescriptor.of(
+            java.lang.foreign.ValueLayout.JAVA_DOUBLE,
+            RustBuffer.LAYOUT,
+            java.lang.foreign.ValueLayout.ADDRESS,
+        ),
+    )
+
+    fun uniffi_uniffi_fixture_primitive_arrays_fn_func_sum_float64(
+        `data`: java.lang.foreign.MemorySegment,
+        uniffiOutErr: java.lang.foreign.MemorySegment,
+    ): Double =
+        try {
+            MH_uniffi_uniffi_fixture_primitive_arrays_fn_func_sum_float64.invokeExact(
+                `data`,
+                uniffiOutErr,
+            ) as Double
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // uniffi_uniffi_fixture_primitive_arrays_fn_func_sum_int16
+    private val MH_uniffi_uniffi_fixture_primitive_arrays_fn_func_sum_int16: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_fixture_primitive_arrays_fn_func_sum_int16",
+        java.lang.foreign.FunctionDescriptor.of(
+            java.lang.foreign.ValueLayout.JAVA_SHORT,
+            RustBuffer.LAYOUT,
+            java.lang.foreign.ValueLayout.ADDRESS,
+        ),
+    )
+
+    fun uniffi_uniffi_fixture_primitive_arrays_fn_func_sum_int16(
+        `data`: java.lang.foreign.MemorySegment,
+        uniffiOutErr: java.lang.foreign.MemorySegment,
+    ): Short =
+        try {
+            MH_uniffi_uniffi_fixture_primitive_arrays_fn_func_sum_int16.invokeExact(
+                `data`,
+                uniffiOutErr,
+            ) as Short
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // uniffi_uniffi_fixture_primitive_arrays_fn_func_sum_int32
+    private val MH_uniffi_uniffi_fixture_primitive_arrays_fn_func_sum_int32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_fixture_primitive_arrays_fn_func_sum_int32",
+        java.lang.foreign.FunctionDescriptor.of(
+            java.lang.foreign.ValueLayout.JAVA_INT,
+            RustBuffer.LAYOUT,
+            java.lang.foreign.ValueLayout.ADDRESS,
+        ),
+    )
+
+    fun uniffi_uniffi_fixture_primitive_arrays_fn_func_sum_int32(
+        `data`: java.lang.foreign.MemorySegment,
+        uniffiOutErr: java.lang.foreign.MemorySegment,
+    ): Int =
+        try {
+            MH_uniffi_uniffi_fixture_primitive_arrays_fn_func_sum_int32.invokeExact(
+                `data`,
+                uniffiOutErr,
+            ) as Int
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // uniffi_uniffi_fixture_primitive_arrays_fn_func_sum_int64
+    private val MH_uniffi_uniffi_fixture_primitive_arrays_fn_func_sum_int64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_fixture_primitive_arrays_fn_func_sum_int64",
+        java.lang.foreign.FunctionDescriptor.of(
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+            RustBuffer.LAYOUT,
+            java.lang.foreign.ValueLayout.ADDRESS,
+        ),
+    )
+
+    fun uniffi_uniffi_fixture_primitive_arrays_fn_func_sum_int64(
+        `data`: java.lang.foreign.MemorySegment,
         uniffiOutErr: java.lang.foreign.MemorySegment,
     ): Long =
         try {
-            MH_uniffi_arithmetical_fn_func_add.invokeExact(
-                a,
-                b,
+            MH_uniffi_uniffi_fixture_primitive_arrays_fn_func_sum_int64.invokeExact(
+                `data`,
                 uniffiOutErr,
             ) as Long
         } catch (ex: Throwable) {
             throw AssertionError("invokeExact failed", ex)
         }
 
-    // uniffi_arithmetical_fn_func_div
-    private val MH_uniffi_arithmetical_fn_func_div: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "uniffi_arithmetical_fn_func_div",
-        java.lang.foreign.FunctionDescriptor.of(
-            java.lang.foreign.ValueLayout.JAVA_LONG,
-            java.lang.foreign.ValueLayout.JAVA_LONG,
-            java.lang.foreign.ValueLayout.JAVA_LONG,
-            java.lang.foreign.ValueLayout.ADDRESS,
-        ),
-    )
-
-    fun uniffi_arithmetical_fn_func_div(
-        dividend: Long,
-        divisor: Long,
-        uniffiOutErr: java.lang.foreign.MemorySegment,
-    ): Long =
-        try {
-            MH_uniffi_arithmetical_fn_func_div.invokeExact(
-                dividend,
-                divisor,
-                uniffiOutErr,
-            ) as Long
-        } catch (ex: Throwable) {
-            throw AssertionError("invokeExact failed", ex)
-        }
-
-    // uniffi_arithmetical_fn_func_equal
-    private val MH_uniffi_arithmetical_fn_func_equal: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "uniffi_arithmetical_fn_func_equal",
-        java.lang.foreign.FunctionDescriptor.of(
-            java.lang.foreign.ValueLayout.JAVA_BYTE,
-            java.lang.foreign.ValueLayout.JAVA_LONG,
-            java.lang.foreign.ValueLayout.JAVA_LONG,
-            java.lang.foreign.ValueLayout.ADDRESS,
-        ),
-    )
-
-    fun uniffi_arithmetical_fn_func_equal(
-        a: Long,
-        b: Long,
-        uniffiOutErr: java.lang.foreign.MemorySegment,
-    ): Byte =
-        try {
-            MH_uniffi_arithmetical_fn_func_equal.invokeExact(
-                a,
-                b,
-                uniffiOutErr,
-            ) as Byte
-        } catch (ex: Throwable) {
-            throw AssertionError("invokeExact failed", ex)
-        }
-
-    // uniffi_arithmetical_fn_func_sub
-    private val MH_uniffi_arithmetical_fn_func_sub: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "uniffi_arithmetical_fn_func_sub",
-        java.lang.foreign.FunctionDescriptor.of(
-            java.lang.foreign.ValueLayout.JAVA_LONG,
-            java.lang.foreign.ValueLayout.JAVA_LONG,
-            java.lang.foreign.ValueLayout.JAVA_LONG,
-            java.lang.foreign.ValueLayout.ADDRESS,
-        ),
-    )
-
-    fun uniffi_arithmetical_fn_func_sub(
-        a: Long,
-        b: Long,
-        uniffiOutErr: java.lang.foreign.MemorySegment,
-    ): Long =
-        try {
-            MH_uniffi_arithmetical_fn_func_sub.invokeExact(
-                a,
-                b,
-                uniffiOutErr,
-            ) as Long
-        } catch (ex: Throwable) {
-            throw AssertionError("invokeExact failed", ex)
-        }
-
-    // ffi_arithmetical_rustbuffer_alloc
-    private val MH_ffi_arithmetical_rustbuffer_alloc: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rustbuffer_alloc",
+    // ffi_uniffi_fixture_primitive_arrays_rustbuffer_alloc
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rustbuffer_alloc: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rustbuffer_alloc",
         java.lang.foreign.FunctionDescriptor.of(
             RustBuffer.LAYOUT,
             java.lang.foreign.ValueLayout.JAVA_LONG,
@@ -935,13 +1361,13 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_arithmetical_rustbuffer_alloc(
+    fun ffi_uniffi_fixture_primitive_arrays_rustbuffer_alloc(
         allocator: java.lang.foreign.SegmentAllocator,
         size: Long,
         uniffiOutErr: java.lang.foreign.MemorySegment,
     ): java.lang.foreign.MemorySegment =
         try {
-            MH_ffi_arithmetical_rustbuffer_alloc.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rustbuffer_alloc.invokeExact(
                 allocator,
                 size,
                 uniffiOutErr,
@@ -950,9 +1376,9 @@ internal object UniffiLib {
             throw AssertionError("invokeExact failed", ex)
         }
 
-    // ffi_arithmetical_rustbuffer_from_bytes
-    private val MH_ffi_arithmetical_rustbuffer_from_bytes: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rustbuffer_from_bytes",
+    // ffi_uniffi_fixture_primitive_arrays_rustbuffer_from_bytes
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rustbuffer_from_bytes: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rustbuffer_from_bytes",
         java.lang.foreign.FunctionDescriptor.of(
             RustBuffer.LAYOUT,
             ForeignBytes.LAYOUT,
@@ -960,13 +1386,13 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_arithmetical_rustbuffer_from_bytes(
+    fun ffi_uniffi_fixture_primitive_arrays_rustbuffer_from_bytes(
         allocator: java.lang.foreign.SegmentAllocator,
         bytes: java.lang.foreign.MemorySegment,
         uniffiOutErr: java.lang.foreign.MemorySegment,
     ): java.lang.foreign.MemorySegment =
         try {
-            MH_ffi_arithmetical_rustbuffer_from_bytes.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rustbuffer_from_bytes.invokeExact(
                 allocator,
                 bytes,
                 uniffiOutErr,
@@ -975,21 +1401,21 @@ internal object UniffiLib {
             throw AssertionError("invokeExact failed", ex)
         }
 
-    // ffi_arithmetical_rustbuffer_free
-    private val MH_ffi_arithmetical_rustbuffer_free: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rustbuffer_free",
+    // ffi_uniffi_fixture_primitive_arrays_rustbuffer_free
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rustbuffer_free: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rustbuffer_free",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             RustBuffer.LAYOUT,
             java.lang.foreign.ValueLayout.ADDRESS,
         ),
     )
 
-    fun ffi_arithmetical_rustbuffer_free(
+    fun ffi_uniffi_fixture_primitive_arrays_rustbuffer_free(
         buf: java.lang.foreign.MemorySegment,
         uniffiOutErr: java.lang.foreign.MemorySegment,
     ) {
         try {
-            MH_ffi_arithmetical_rustbuffer_free.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rustbuffer_free.invokeExact(
                 buf,
                 uniffiOutErr,
             )
@@ -998,9 +1424,9 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_arithmetical_rustbuffer_reserve
-    private val MH_ffi_arithmetical_rustbuffer_reserve: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rustbuffer_reserve",
+    // ffi_uniffi_fixture_primitive_arrays_rustbuffer_reserve
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rustbuffer_reserve: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rustbuffer_reserve",
         java.lang.foreign.FunctionDescriptor.of(
             RustBuffer.LAYOUT,
             RustBuffer.LAYOUT,
@@ -1009,14 +1435,14 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_arithmetical_rustbuffer_reserve(
+    fun ffi_uniffi_fixture_primitive_arrays_rustbuffer_reserve(
         allocator: java.lang.foreign.SegmentAllocator,
         buf: java.lang.foreign.MemorySegment,
         additional: Long,
         uniffiOutErr: java.lang.foreign.MemorySegment,
     ): java.lang.foreign.MemorySegment =
         try {
-            MH_ffi_arithmetical_rustbuffer_reserve.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rustbuffer_reserve.invokeExact(
                 allocator,
                 buf,
                 additional,
@@ -1026,9 +1452,9 @@ internal object UniffiLib {
             throw AssertionError("invokeExact failed", ex)
         }
 
-    // ffi_arithmetical_rust_future_poll_u8
-    private val MH_ffi_arithmetical_rust_future_poll_u8: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_poll_u8",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_poll_u8
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_poll_u8: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_poll_u8",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
             java.lang.foreign.ValueLayout.ADDRESS,
@@ -1036,13 +1462,13 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_arithmetical_rust_future_poll_u8(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_poll_u8(
         handle: Long,
         callback: java.lang.foreign.MemorySegment,
         callbackData: Long,
     ) {
         try {
-            MH_ffi_arithmetical_rust_future_poll_u8.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_poll_u8.invokeExact(
                 handle,
                 callback,
                 callbackData,
@@ -1052,19 +1478,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_arithmetical_rust_future_cancel_u8
-    private val MH_ffi_arithmetical_rust_future_cancel_u8: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_cancel_u8",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_u8
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_u8: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_u8",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_arithmetical_rust_future_cancel_u8(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_u8(
         handle: Long,
     ) {
         try {
-            MH_ffi_arithmetical_rust_future_cancel_u8.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_u8.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -1072,19 +1498,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_arithmetical_rust_future_free_u8
-    private val MH_ffi_arithmetical_rust_future_free_u8: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_free_u8",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_free_u8
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_free_u8: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_free_u8",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_arithmetical_rust_future_free_u8(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_free_u8(
         handle: Long,
     ) {
         try {
-            MH_ffi_arithmetical_rust_future_free_u8.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_free_u8.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -1092,9 +1518,9 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_arithmetical_rust_future_complete_u8
-    private val MH_ffi_arithmetical_rust_future_complete_u8: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_complete_u8",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_complete_u8
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_complete_u8: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_complete_u8",
         java.lang.foreign.FunctionDescriptor.of(
             java.lang.foreign.ValueLayout.JAVA_BYTE,
             java.lang.foreign.ValueLayout.JAVA_LONG,
@@ -1102,12 +1528,12 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_arithmetical_rust_future_complete_u8(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_complete_u8(
         handle: Long,
         uniffiOutErr: java.lang.foreign.MemorySegment,
     ): Byte =
         try {
-            MH_ffi_arithmetical_rust_future_complete_u8.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_complete_u8.invokeExact(
                 handle,
                 uniffiOutErr,
             ) as Byte
@@ -1115,9 +1541,9 @@ internal object UniffiLib {
             throw AssertionError("invokeExact failed", ex)
         }
 
-    // ffi_arithmetical_rust_future_poll_i8
-    private val MH_ffi_arithmetical_rust_future_poll_i8: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_poll_i8",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_poll_i8
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_poll_i8: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_poll_i8",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
             java.lang.foreign.ValueLayout.ADDRESS,
@@ -1125,13 +1551,13 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_arithmetical_rust_future_poll_i8(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_poll_i8(
         handle: Long,
         callback: java.lang.foreign.MemorySegment,
         callbackData: Long,
     ) {
         try {
-            MH_ffi_arithmetical_rust_future_poll_i8.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_poll_i8.invokeExact(
                 handle,
                 callback,
                 callbackData,
@@ -1141,19 +1567,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_arithmetical_rust_future_cancel_i8
-    private val MH_ffi_arithmetical_rust_future_cancel_i8: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_cancel_i8",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_i8
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_i8: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_i8",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_arithmetical_rust_future_cancel_i8(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_i8(
         handle: Long,
     ) {
         try {
-            MH_ffi_arithmetical_rust_future_cancel_i8.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_i8.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -1161,19 +1587,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_arithmetical_rust_future_free_i8
-    private val MH_ffi_arithmetical_rust_future_free_i8: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_free_i8",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_free_i8
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_free_i8: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_free_i8",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_arithmetical_rust_future_free_i8(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_free_i8(
         handle: Long,
     ) {
         try {
-            MH_ffi_arithmetical_rust_future_free_i8.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_free_i8.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -1181,9 +1607,9 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_arithmetical_rust_future_complete_i8
-    private val MH_ffi_arithmetical_rust_future_complete_i8: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_complete_i8",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_complete_i8
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_complete_i8: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_complete_i8",
         java.lang.foreign.FunctionDescriptor.of(
             java.lang.foreign.ValueLayout.JAVA_BYTE,
             java.lang.foreign.ValueLayout.JAVA_LONG,
@@ -1191,12 +1617,12 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_arithmetical_rust_future_complete_i8(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_complete_i8(
         handle: Long,
         uniffiOutErr: java.lang.foreign.MemorySegment,
     ): Byte =
         try {
-            MH_ffi_arithmetical_rust_future_complete_i8.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_complete_i8.invokeExact(
                 handle,
                 uniffiOutErr,
             ) as Byte
@@ -1204,9 +1630,9 @@ internal object UniffiLib {
             throw AssertionError("invokeExact failed", ex)
         }
 
-    // ffi_arithmetical_rust_future_poll_u16
-    private val MH_ffi_arithmetical_rust_future_poll_u16: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_poll_u16",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_poll_u16
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_poll_u16: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_poll_u16",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
             java.lang.foreign.ValueLayout.ADDRESS,
@@ -1214,13 +1640,13 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_arithmetical_rust_future_poll_u16(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_poll_u16(
         handle: Long,
         callback: java.lang.foreign.MemorySegment,
         callbackData: Long,
     ) {
         try {
-            MH_ffi_arithmetical_rust_future_poll_u16.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_poll_u16.invokeExact(
                 handle,
                 callback,
                 callbackData,
@@ -1230,19 +1656,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_arithmetical_rust_future_cancel_u16
-    private val MH_ffi_arithmetical_rust_future_cancel_u16: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_cancel_u16",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_u16
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_u16: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_u16",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_arithmetical_rust_future_cancel_u16(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_u16(
         handle: Long,
     ) {
         try {
-            MH_ffi_arithmetical_rust_future_cancel_u16.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_u16.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -1250,19 +1676,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_arithmetical_rust_future_free_u16
-    private val MH_ffi_arithmetical_rust_future_free_u16: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_free_u16",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_free_u16
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_free_u16: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_free_u16",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_arithmetical_rust_future_free_u16(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_free_u16(
         handle: Long,
     ) {
         try {
-            MH_ffi_arithmetical_rust_future_free_u16.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_free_u16.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -1270,9 +1696,9 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_arithmetical_rust_future_complete_u16
-    private val MH_ffi_arithmetical_rust_future_complete_u16: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_complete_u16",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_complete_u16
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_complete_u16: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_complete_u16",
         java.lang.foreign.FunctionDescriptor.of(
             java.lang.foreign.ValueLayout.JAVA_SHORT,
             java.lang.foreign.ValueLayout.JAVA_LONG,
@@ -1280,12 +1706,12 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_arithmetical_rust_future_complete_u16(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_complete_u16(
         handle: Long,
         uniffiOutErr: java.lang.foreign.MemorySegment,
     ): Short =
         try {
-            MH_ffi_arithmetical_rust_future_complete_u16.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_complete_u16.invokeExact(
                 handle,
                 uniffiOutErr,
             ) as Short
@@ -1293,9 +1719,9 @@ internal object UniffiLib {
             throw AssertionError("invokeExact failed", ex)
         }
 
-    // ffi_arithmetical_rust_future_poll_i16
-    private val MH_ffi_arithmetical_rust_future_poll_i16: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_poll_i16",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_poll_i16
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_poll_i16: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_poll_i16",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
             java.lang.foreign.ValueLayout.ADDRESS,
@@ -1303,13 +1729,13 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_arithmetical_rust_future_poll_i16(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_poll_i16(
         handle: Long,
         callback: java.lang.foreign.MemorySegment,
         callbackData: Long,
     ) {
         try {
-            MH_ffi_arithmetical_rust_future_poll_i16.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_poll_i16.invokeExact(
                 handle,
                 callback,
                 callbackData,
@@ -1319,19 +1745,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_arithmetical_rust_future_cancel_i16
-    private val MH_ffi_arithmetical_rust_future_cancel_i16: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_cancel_i16",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_i16
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_i16: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_i16",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_arithmetical_rust_future_cancel_i16(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_i16(
         handle: Long,
     ) {
         try {
-            MH_ffi_arithmetical_rust_future_cancel_i16.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_i16.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -1339,19 +1765,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_arithmetical_rust_future_free_i16
-    private val MH_ffi_arithmetical_rust_future_free_i16: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_free_i16",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_free_i16
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_free_i16: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_free_i16",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_arithmetical_rust_future_free_i16(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_free_i16(
         handle: Long,
     ) {
         try {
-            MH_ffi_arithmetical_rust_future_free_i16.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_free_i16.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -1359,9 +1785,9 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_arithmetical_rust_future_complete_i16
-    private val MH_ffi_arithmetical_rust_future_complete_i16: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_complete_i16",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_complete_i16
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_complete_i16: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_complete_i16",
         java.lang.foreign.FunctionDescriptor.of(
             java.lang.foreign.ValueLayout.JAVA_SHORT,
             java.lang.foreign.ValueLayout.JAVA_LONG,
@@ -1369,12 +1795,12 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_arithmetical_rust_future_complete_i16(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_complete_i16(
         handle: Long,
         uniffiOutErr: java.lang.foreign.MemorySegment,
     ): Short =
         try {
-            MH_ffi_arithmetical_rust_future_complete_i16.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_complete_i16.invokeExact(
                 handle,
                 uniffiOutErr,
             ) as Short
@@ -1382,9 +1808,9 @@ internal object UniffiLib {
             throw AssertionError("invokeExact failed", ex)
         }
 
-    // ffi_arithmetical_rust_future_poll_u32
-    private val MH_ffi_arithmetical_rust_future_poll_u32: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_poll_u32",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_poll_u32
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_poll_u32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_poll_u32",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
             java.lang.foreign.ValueLayout.ADDRESS,
@@ -1392,13 +1818,13 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_arithmetical_rust_future_poll_u32(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_poll_u32(
         handle: Long,
         callback: java.lang.foreign.MemorySegment,
         callbackData: Long,
     ) {
         try {
-            MH_ffi_arithmetical_rust_future_poll_u32.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_poll_u32.invokeExact(
                 handle,
                 callback,
                 callbackData,
@@ -1408,19 +1834,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_arithmetical_rust_future_cancel_u32
-    private val MH_ffi_arithmetical_rust_future_cancel_u32: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_cancel_u32",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_u32
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_u32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_u32",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_arithmetical_rust_future_cancel_u32(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_u32(
         handle: Long,
     ) {
         try {
-            MH_ffi_arithmetical_rust_future_cancel_u32.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_u32.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -1428,19 +1854,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_arithmetical_rust_future_free_u32
-    private val MH_ffi_arithmetical_rust_future_free_u32: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_free_u32",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_free_u32
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_free_u32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_free_u32",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_arithmetical_rust_future_free_u32(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_free_u32(
         handle: Long,
     ) {
         try {
-            MH_ffi_arithmetical_rust_future_free_u32.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_free_u32.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -1448,9 +1874,9 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_arithmetical_rust_future_complete_u32
-    private val MH_ffi_arithmetical_rust_future_complete_u32: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_complete_u32",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_complete_u32
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_complete_u32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_complete_u32",
         java.lang.foreign.FunctionDescriptor.of(
             java.lang.foreign.ValueLayout.JAVA_INT,
             java.lang.foreign.ValueLayout.JAVA_LONG,
@@ -1458,12 +1884,12 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_arithmetical_rust_future_complete_u32(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_complete_u32(
         handle: Long,
         uniffiOutErr: java.lang.foreign.MemorySegment,
     ): Int =
         try {
-            MH_ffi_arithmetical_rust_future_complete_u32.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_complete_u32.invokeExact(
                 handle,
                 uniffiOutErr,
             ) as Int
@@ -1471,9 +1897,9 @@ internal object UniffiLib {
             throw AssertionError("invokeExact failed", ex)
         }
 
-    // ffi_arithmetical_rust_future_poll_i32
-    private val MH_ffi_arithmetical_rust_future_poll_i32: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_poll_i32",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_poll_i32
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_poll_i32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_poll_i32",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
             java.lang.foreign.ValueLayout.ADDRESS,
@@ -1481,13 +1907,13 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_arithmetical_rust_future_poll_i32(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_poll_i32(
         handle: Long,
         callback: java.lang.foreign.MemorySegment,
         callbackData: Long,
     ) {
         try {
-            MH_ffi_arithmetical_rust_future_poll_i32.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_poll_i32.invokeExact(
                 handle,
                 callback,
                 callbackData,
@@ -1497,19 +1923,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_arithmetical_rust_future_cancel_i32
-    private val MH_ffi_arithmetical_rust_future_cancel_i32: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_cancel_i32",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_i32
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_i32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_i32",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_arithmetical_rust_future_cancel_i32(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_i32(
         handle: Long,
     ) {
         try {
-            MH_ffi_arithmetical_rust_future_cancel_i32.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_i32.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -1517,19 +1943,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_arithmetical_rust_future_free_i32
-    private val MH_ffi_arithmetical_rust_future_free_i32: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_free_i32",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_free_i32
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_free_i32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_free_i32",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_arithmetical_rust_future_free_i32(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_free_i32(
         handle: Long,
     ) {
         try {
-            MH_ffi_arithmetical_rust_future_free_i32.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_free_i32.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -1537,9 +1963,9 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_arithmetical_rust_future_complete_i32
-    private val MH_ffi_arithmetical_rust_future_complete_i32: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_complete_i32",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_complete_i32
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_complete_i32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_complete_i32",
         java.lang.foreign.FunctionDescriptor.of(
             java.lang.foreign.ValueLayout.JAVA_INT,
             java.lang.foreign.ValueLayout.JAVA_LONG,
@@ -1547,12 +1973,12 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_arithmetical_rust_future_complete_i32(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_complete_i32(
         handle: Long,
         uniffiOutErr: java.lang.foreign.MemorySegment,
     ): Int =
         try {
-            MH_ffi_arithmetical_rust_future_complete_i32.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_complete_i32.invokeExact(
                 handle,
                 uniffiOutErr,
             ) as Int
@@ -1560,9 +1986,9 @@ internal object UniffiLib {
             throw AssertionError("invokeExact failed", ex)
         }
 
-    // ffi_arithmetical_rust_future_poll_u64
-    private val MH_ffi_arithmetical_rust_future_poll_u64: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_poll_u64",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_poll_u64
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_poll_u64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_poll_u64",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
             java.lang.foreign.ValueLayout.ADDRESS,
@@ -1570,13 +1996,13 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_arithmetical_rust_future_poll_u64(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_poll_u64(
         handle: Long,
         callback: java.lang.foreign.MemorySegment,
         callbackData: Long,
     ) {
         try {
-            MH_ffi_arithmetical_rust_future_poll_u64.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_poll_u64.invokeExact(
                 handle,
                 callback,
                 callbackData,
@@ -1586,19 +2012,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_arithmetical_rust_future_cancel_u64
-    private val MH_ffi_arithmetical_rust_future_cancel_u64: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_cancel_u64",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_u64
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_u64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_u64",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_arithmetical_rust_future_cancel_u64(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_u64(
         handle: Long,
     ) {
         try {
-            MH_ffi_arithmetical_rust_future_cancel_u64.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_u64.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -1606,19 +2032,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_arithmetical_rust_future_free_u64
-    private val MH_ffi_arithmetical_rust_future_free_u64: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_free_u64",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_free_u64
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_free_u64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_free_u64",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_arithmetical_rust_future_free_u64(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_free_u64(
         handle: Long,
     ) {
         try {
-            MH_ffi_arithmetical_rust_future_free_u64.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_free_u64.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -1626,9 +2052,9 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_arithmetical_rust_future_complete_u64
-    private val MH_ffi_arithmetical_rust_future_complete_u64: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_complete_u64",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_complete_u64
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_complete_u64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_complete_u64",
         java.lang.foreign.FunctionDescriptor.of(
             java.lang.foreign.ValueLayout.JAVA_LONG,
             java.lang.foreign.ValueLayout.JAVA_LONG,
@@ -1636,12 +2062,12 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_arithmetical_rust_future_complete_u64(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_complete_u64(
         handle: Long,
         uniffiOutErr: java.lang.foreign.MemorySegment,
     ): Long =
         try {
-            MH_ffi_arithmetical_rust_future_complete_u64.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_complete_u64.invokeExact(
                 handle,
                 uniffiOutErr,
             ) as Long
@@ -1649,9 +2075,9 @@ internal object UniffiLib {
             throw AssertionError("invokeExact failed", ex)
         }
 
-    // ffi_arithmetical_rust_future_poll_i64
-    private val MH_ffi_arithmetical_rust_future_poll_i64: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_poll_i64",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_poll_i64
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_poll_i64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_poll_i64",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
             java.lang.foreign.ValueLayout.ADDRESS,
@@ -1659,13 +2085,13 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_arithmetical_rust_future_poll_i64(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_poll_i64(
         handle: Long,
         callback: java.lang.foreign.MemorySegment,
         callbackData: Long,
     ) {
         try {
-            MH_ffi_arithmetical_rust_future_poll_i64.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_poll_i64.invokeExact(
                 handle,
                 callback,
                 callbackData,
@@ -1675,19 +2101,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_arithmetical_rust_future_cancel_i64
-    private val MH_ffi_arithmetical_rust_future_cancel_i64: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_cancel_i64",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_i64
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_i64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_i64",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_arithmetical_rust_future_cancel_i64(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_i64(
         handle: Long,
     ) {
         try {
-            MH_ffi_arithmetical_rust_future_cancel_i64.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_i64.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -1695,19 +2121,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_arithmetical_rust_future_free_i64
-    private val MH_ffi_arithmetical_rust_future_free_i64: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_free_i64",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_free_i64
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_free_i64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_free_i64",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_arithmetical_rust_future_free_i64(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_free_i64(
         handle: Long,
     ) {
         try {
-            MH_ffi_arithmetical_rust_future_free_i64.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_free_i64.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -1715,9 +2141,9 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_arithmetical_rust_future_complete_i64
-    private val MH_ffi_arithmetical_rust_future_complete_i64: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_complete_i64",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_complete_i64
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_complete_i64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_complete_i64",
         java.lang.foreign.FunctionDescriptor.of(
             java.lang.foreign.ValueLayout.JAVA_LONG,
             java.lang.foreign.ValueLayout.JAVA_LONG,
@@ -1725,12 +2151,12 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_arithmetical_rust_future_complete_i64(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_complete_i64(
         handle: Long,
         uniffiOutErr: java.lang.foreign.MemorySegment,
     ): Long =
         try {
-            MH_ffi_arithmetical_rust_future_complete_i64.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_complete_i64.invokeExact(
                 handle,
                 uniffiOutErr,
             ) as Long
@@ -1738,9 +2164,9 @@ internal object UniffiLib {
             throw AssertionError("invokeExact failed", ex)
         }
 
-    // ffi_arithmetical_rust_future_poll_f32
-    private val MH_ffi_arithmetical_rust_future_poll_f32: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_poll_f32",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_poll_f32
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_poll_f32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_poll_f32",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
             java.lang.foreign.ValueLayout.ADDRESS,
@@ -1748,13 +2174,13 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_arithmetical_rust_future_poll_f32(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_poll_f32(
         handle: Long,
         callback: java.lang.foreign.MemorySegment,
         callbackData: Long,
     ) {
         try {
-            MH_ffi_arithmetical_rust_future_poll_f32.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_poll_f32.invokeExact(
                 handle,
                 callback,
                 callbackData,
@@ -1764,19 +2190,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_arithmetical_rust_future_cancel_f32
-    private val MH_ffi_arithmetical_rust_future_cancel_f32: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_cancel_f32",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_f32
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_f32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_f32",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_arithmetical_rust_future_cancel_f32(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_f32(
         handle: Long,
     ) {
         try {
-            MH_ffi_arithmetical_rust_future_cancel_f32.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_f32.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -1784,19 +2210,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_arithmetical_rust_future_free_f32
-    private val MH_ffi_arithmetical_rust_future_free_f32: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_free_f32",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_free_f32
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_free_f32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_free_f32",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_arithmetical_rust_future_free_f32(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_free_f32(
         handle: Long,
     ) {
         try {
-            MH_ffi_arithmetical_rust_future_free_f32.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_free_f32.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -1804,9 +2230,9 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_arithmetical_rust_future_complete_f32
-    private val MH_ffi_arithmetical_rust_future_complete_f32: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_complete_f32",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_complete_f32
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_complete_f32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_complete_f32",
         java.lang.foreign.FunctionDescriptor.of(
             java.lang.foreign.ValueLayout.JAVA_FLOAT,
             java.lang.foreign.ValueLayout.JAVA_LONG,
@@ -1814,12 +2240,12 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_arithmetical_rust_future_complete_f32(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_complete_f32(
         handle: Long,
         uniffiOutErr: java.lang.foreign.MemorySegment,
     ): Float =
         try {
-            MH_ffi_arithmetical_rust_future_complete_f32.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_complete_f32.invokeExact(
                 handle,
                 uniffiOutErr,
             ) as Float
@@ -1827,9 +2253,9 @@ internal object UniffiLib {
             throw AssertionError("invokeExact failed", ex)
         }
 
-    // ffi_arithmetical_rust_future_poll_f64
-    private val MH_ffi_arithmetical_rust_future_poll_f64: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_poll_f64",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_poll_f64
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_poll_f64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_poll_f64",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
             java.lang.foreign.ValueLayout.ADDRESS,
@@ -1837,13 +2263,13 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_arithmetical_rust_future_poll_f64(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_poll_f64(
         handle: Long,
         callback: java.lang.foreign.MemorySegment,
         callbackData: Long,
     ) {
         try {
-            MH_ffi_arithmetical_rust_future_poll_f64.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_poll_f64.invokeExact(
                 handle,
                 callback,
                 callbackData,
@@ -1853,19 +2279,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_arithmetical_rust_future_cancel_f64
-    private val MH_ffi_arithmetical_rust_future_cancel_f64: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_cancel_f64",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_f64
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_f64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_f64",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_arithmetical_rust_future_cancel_f64(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_f64(
         handle: Long,
     ) {
         try {
-            MH_ffi_arithmetical_rust_future_cancel_f64.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_f64.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -1873,19 +2299,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_arithmetical_rust_future_free_f64
-    private val MH_ffi_arithmetical_rust_future_free_f64: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_free_f64",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_free_f64
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_free_f64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_free_f64",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_arithmetical_rust_future_free_f64(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_free_f64(
         handle: Long,
     ) {
         try {
-            MH_ffi_arithmetical_rust_future_free_f64.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_free_f64.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -1893,9 +2319,9 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_arithmetical_rust_future_complete_f64
-    private val MH_ffi_arithmetical_rust_future_complete_f64: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_complete_f64",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_complete_f64
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_complete_f64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_complete_f64",
         java.lang.foreign.FunctionDescriptor.of(
             java.lang.foreign.ValueLayout.JAVA_DOUBLE,
             java.lang.foreign.ValueLayout.JAVA_LONG,
@@ -1903,12 +2329,12 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_arithmetical_rust_future_complete_f64(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_complete_f64(
         handle: Long,
         uniffiOutErr: java.lang.foreign.MemorySegment,
     ): Double =
         try {
-            MH_ffi_arithmetical_rust_future_complete_f64.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_complete_f64.invokeExact(
                 handle,
                 uniffiOutErr,
             ) as Double
@@ -1916,9 +2342,9 @@ internal object UniffiLib {
             throw AssertionError("invokeExact failed", ex)
         }
 
-    // ffi_arithmetical_rust_future_poll_rust_buffer
-    private val MH_ffi_arithmetical_rust_future_poll_rust_buffer: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_poll_rust_buffer",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_poll_rust_buffer
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_poll_rust_buffer: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_poll_rust_buffer",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
             java.lang.foreign.ValueLayout.ADDRESS,
@@ -1926,13 +2352,13 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_arithmetical_rust_future_poll_rust_buffer(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_poll_rust_buffer(
         handle: Long,
         callback: java.lang.foreign.MemorySegment,
         callbackData: Long,
     ) {
         try {
-            MH_ffi_arithmetical_rust_future_poll_rust_buffer.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_poll_rust_buffer.invokeExact(
                 handle,
                 callback,
                 callbackData,
@@ -1942,19 +2368,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_arithmetical_rust_future_cancel_rust_buffer
-    private val MH_ffi_arithmetical_rust_future_cancel_rust_buffer: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_cancel_rust_buffer",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_rust_buffer
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_rust_buffer: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_rust_buffer",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_arithmetical_rust_future_cancel_rust_buffer(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_rust_buffer(
         handle: Long,
     ) {
         try {
-            MH_ffi_arithmetical_rust_future_cancel_rust_buffer.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_rust_buffer.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -1962,19 +2388,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_arithmetical_rust_future_free_rust_buffer
-    private val MH_ffi_arithmetical_rust_future_free_rust_buffer: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_free_rust_buffer",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_free_rust_buffer
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_free_rust_buffer: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_free_rust_buffer",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_arithmetical_rust_future_free_rust_buffer(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_free_rust_buffer(
         handle: Long,
     ) {
         try {
-            MH_ffi_arithmetical_rust_future_free_rust_buffer.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_free_rust_buffer.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -1982,9 +2408,9 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_arithmetical_rust_future_complete_rust_buffer
-    private val MH_ffi_arithmetical_rust_future_complete_rust_buffer: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_complete_rust_buffer",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_complete_rust_buffer
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_complete_rust_buffer: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_complete_rust_buffer",
         java.lang.foreign.FunctionDescriptor.of(
             RustBuffer.LAYOUT,
             java.lang.foreign.ValueLayout.JAVA_LONG,
@@ -1992,13 +2418,13 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_arithmetical_rust_future_complete_rust_buffer(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_complete_rust_buffer(
         allocator: java.lang.foreign.SegmentAllocator,
         handle: Long,
         uniffiOutErr: java.lang.foreign.MemorySegment,
     ): java.lang.foreign.MemorySegment =
         try {
-            MH_ffi_arithmetical_rust_future_complete_rust_buffer.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_complete_rust_buffer.invokeExact(
                 allocator,
                 handle,
                 uniffiOutErr,
@@ -2007,9 +2433,9 @@ internal object UniffiLib {
             throw AssertionError("invokeExact failed", ex)
         }
 
-    // ffi_arithmetical_rust_future_poll_void
-    private val MH_ffi_arithmetical_rust_future_poll_void: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_poll_void",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_poll_void
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_poll_void: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_poll_void",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
             java.lang.foreign.ValueLayout.ADDRESS,
@@ -2017,13 +2443,13 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_arithmetical_rust_future_poll_void(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_poll_void(
         handle: Long,
         callback: java.lang.foreign.MemorySegment,
         callbackData: Long,
     ) {
         try {
-            MH_ffi_arithmetical_rust_future_poll_void.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_poll_void.invokeExact(
                 handle,
                 callback,
                 callbackData,
@@ -2033,19 +2459,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_arithmetical_rust_future_cancel_void
-    private val MH_ffi_arithmetical_rust_future_cancel_void: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_cancel_void",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_void
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_void: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_void",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_arithmetical_rust_future_cancel_void(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_void(
         handle: Long,
     ) {
         try {
-            MH_ffi_arithmetical_rust_future_cancel_void.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_cancel_void.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -2053,19 +2479,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_arithmetical_rust_future_free_void
-    private val MH_ffi_arithmetical_rust_future_free_void: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_free_void",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_free_void
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_free_void: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_free_void",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_arithmetical_rust_future_free_void(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_free_void(
         handle: Long,
     ) {
         try {
-            MH_ffi_arithmetical_rust_future_free_void.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_free_void.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -2073,21 +2499,21 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_arithmetical_rust_future_complete_void
-    private val MH_ffi_arithmetical_rust_future_complete_void: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_rust_future_complete_void",
+    // ffi_uniffi_fixture_primitive_arrays_rust_future_complete_void
+    private val MH_ffi_uniffi_fixture_primitive_arrays_rust_future_complete_void: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_rust_future_complete_void",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
             java.lang.foreign.ValueLayout.ADDRESS,
         ),
     )
 
-    fun ffi_arithmetical_rust_future_complete_void(
+    fun ffi_uniffi_fixture_primitive_arrays_rust_future_complete_void(
         handle: Long,
         uniffiOutErr: java.lang.foreign.MemorySegment,
     ) {
         try {
-            MH_ffi_arithmetical_rust_future_complete_void.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_rust_future_complete_void.invokeExact(
                 handle,
                 uniffiOutErr,
             )
@@ -2096,86 +2522,273 @@ internal object UniffiLib {
         }
     }
 
-    // uniffi_arithmetical_checksum_func_add
-    private val MH_uniffi_arithmetical_checksum_func_add: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "uniffi_arithmetical_checksum_func_add",
+    // uniffi_uniffi_fixture_primitive_arrays_checksum_func_count_true
+    private val MH_uniffi_uniffi_fixture_primitive_arrays_checksum_func_count_true: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_fixture_primitive_arrays_checksum_func_count_true",
         java.lang.foreign.FunctionDescriptor.of(
             java.lang.foreign.ValueLayout.JAVA_SHORT,
         ),
     )
 
-    fun uniffi_arithmetical_checksum_func_add(
+    fun uniffi_uniffi_fixture_primitive_arrays_checksum_func_count_true(
     ): Short =
         try {
-            MH_uniffi_arithmetical_checksum_func_add.invokeExact(
+            MH_uniffi_uniffi_fixture_primitive_arrays_checksum_func_count_true.invokeExact(
             ) as Short
         } catch (ex: Throwable) {
             throw AssertionError("invokeExact failed", ex)
         }
 
-    // uniffi_arithmetical_checksum_func_div
-    private val MH_uniffi_arithmetical_checksum_func_div: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "uniffi_arithmetical_checksum_func_div",
+    // uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_bool
+    private val MH_uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_bool: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_bool",
         java.lang.foreign.FunctionDescriptor.of(
             java.lang.foreign.ValueLayout.JAVA_SHORT,
         ),
     )
 
-    fun uniffi_arithmetical_checksum_func_div(
+    fun uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_bool(
     ): Short =
         try {
-            MH_uniffi_arithmetical_checksum_func_div.invokeExact(
+            MH_uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_bool.invokeExact(
             ) as Short
         } catch (ex: Throwable) {
             throw AssertionError("invokeExact failed", ex)
         }
 
-    // uniffi_arithmetical_checksum_func_equal
-    private val MH_uniffi_arithmetical_checksum_func_equal: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "uniffi_arithmetical_checksum_func_equal",
+    // uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_float32
+    private val MH_uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_float32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_float32",
         java.lang.foreign.FunctionDescriptor.of(
             java.lang.foreign.ValueLayout.JAVA_SHORT,
         ),
     )
 
-    fun uniffi_arithmetical_checksum_func_equal(
+    fun uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_float32(
     ): Short =
         try {
-            MH_uniffi_arithmetical_checksum_func_equal.invokeExact(
+            MH_uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_float32.invokeExact(
             ) as Short
         } catch (ex: Throwable) {
             throw AssertionError("invokeExact failed", ex)
         }
 
-    // uniffi_arithmetical_checksum_func_sub
-    private val MH_uniffi_arithmetical_checksum_func_sub: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "uniffi_arithmetical_checksum_func_sub",
+    // uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_float64
+    private val MH_uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_float64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_float64",
         java.lang.foreign.FunctionDescriptor.of(
             java.lang.foreign.ValueLayout.JAVA_SHORT,
         ),
     )
 
-    fun uniffi_arithmetical_checksum_func_sub(
+    fun uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_float64(
     ): Short =
         try {
-            MH_uniffi_arithmetical_checksum_func_sub.invokeExact(
+            MH_uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_float64.invokeExact(
             ) as Short
         } catch (ex: Throwable) {
             throw AssertionError("invokeExact failed", ex)
         }
 
-    // ffi_arithmetical_uniffi_contract_version
-    private val MH_ffi_arithmetical_uniffi_contract_version: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_arithmetical_uniffi_contract_version",
+    // uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_int16
+    private val MH_uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_int16: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_int16",
+        java.lang.foreign.FunctionDescriptor.of(
+            java.lang.foreign.ValueLayout.JAVA_SHORT,
+        ),
+    )
+
+    fun uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_int16(
+    ): Short =
+        try {
+            MH_uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_int16.invokeExact(
+            ) as Short
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_int32
+    private val MH_uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_int32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_int32",
+        java.lang.foreign.FunctionDescriptor.of(
+            java.lang.foreign.ValueLayout.JAVA_SHORT,
+        ),
+    )
+
+    fun uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_int32(
+    ): Short =
+        try {
+            MH_uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_int32.invokeExact(
+            ) as Short
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_int64
+    private val MH_uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_int64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_int64",
+        java.lang.foreign.FunctionDescriptor.of(
+            java.lang.foreign.ValueLayout.JAVA_SHORT,
+        ),
+    )
+
+    fun uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_int64(
+    ): Short =
+        try {
+            MH_uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_int64.invokeExact(
+            ) as Short
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_uint16
+    private val MH_uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_uint16: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_uint16",
+        java.lang.foreign.FunctionDescriptor.of(
+            java.lang.foreign.ValueLayout.JAVA_SHORT,
+        ),
+    )
+
+    fun uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_uint16(
+    ): Short =
+        try {
+            MH_uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_uint16.invokeExact(
+            ) as Short
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_uint32
+    private val MH_uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_uint32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_uint32",
+        java.lang.foreign.FunctionDescriptor.of(
+            java.lang.foreign.ValueLayout.JAVA_SHORT,
+        ),
+    )
+
+    fun uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_uint32(
+    ): Short =
+        try {
+            MH_uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_uint32.invokeExact(
+            ) as Short
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_uint64
+    private val MH_uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_uint64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_uint64",
+        java.lang.foreign.FunctionDescriptor.of(
+            java.lang.foreign.ValueLayout.JAVA_SHORT,
+        ),
+    )
+
+    fun uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_uint64(
+    ): Short =
+        try {
+            MH_uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_uint64.invokeExact(
+            ) as Short
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // uniffi_uniffi_fixture_primitive_arrays_checksum_func_sum_float32
+    private val MH_uniffi_uniffi_fixture_primitive_arrays_checksum_func_sum_float32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_fixture_primitive_arrays_checksum_func_sum_float32",
+        java.lang.foreign.FunctionDescriptor.of(
+            java.lang.foreign.ValueLayout.JAVA_SHORT,
+        ),
+    )
+
+    fun uniffi_uniffi_fixture_primitive_arrays_checksum_func_sum_float32(
+    ): Short =
+        try {
+            MH_uniffi_uniffi_fixture_primitive_arrays_checksum_func_sum_float32.invokeExact(
+            ) as Short
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // uniffi_uniffi_fixture_primitive_arrays_checksum_func_sum_float64
+    private val MH_uniffi_uniffi_fixture_primitive_arrays_checksum_func_sum_float64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_fixture_primitive_arrays_checksum_func_sum_float64",
+        java.lang.foreign.FunctionDescriptor.of(
+            java.lang.foreign.ValueLayout.JAVA_SHORT,
+        ),
+    )
+
+    fun uniffi_uniffi_fixture_primitive_arrays_checksum_func_sum_float64(
+    ): Short =
+        try {
+            MH_uniffi_uniffi_fixture_primitive_arrays_checksum_func_sum_float64.invokeExact(
+            ) as Short
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // uniffi_uniffi_fixture_primitive_arrays_checksum_func_sum_int16
+    private val MH_uniffi_uniffi_fixture_primitive_arrays_checksum_func_sum_int16: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_fixture_primitive_arrays_checksum_func_sum_int16",
+        java.lang.foreign.FunctionDescriptor.of(
+            java.lang.foreign.ValueLayout.JAVA_SHORT,
+        ),
+    )
+
+    fun uniffi_uniffi_fixture_primitive_arrays_checksum_func_sum_int16(
+    ): Short =
+        try {
+            MH_uniffi_uniffi_fixture_primitive_arrays_checksum_func_sum_int16.invokeExact(
+            ) as Short
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // uniffi_uniffi_fixture_primitive_arrays_checksum_func_sum_int32
+    private val MH_uniffi_uniffi_fixture_primitive_arrays_checksum_func_sum_int32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_fixture_primitive_arrays_checksum_func_sum_int32",
+        java.lang.foreign.FunctionDescriptor.of(
+            java.lang.foreign.ValueLayout.JAVA_SHORT,
+        ),
+    )
+
+    fun uniffi_uniffi_fixture_primitive_arrays_checksum_func_sum_int32(
+    ): Short =
+        try {
+            MH_uniffi_uniffi_fixture_primitive_arrays_checksum_func_sum_int32.invokeExact(
+            ) as Short
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // uniffi_uniffi_fixture_primitive_arrays_checksum_func_sum_int64
+    private val MH_uniffi_uniffi_fixture_primitive_arrays_checksum_func_sum_int64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_fixture_primitive_arrays_checksum_func_sum_int64",
+        java.lang.foreign.FunctionDescriptor.of(
+            java.lang.foreign.ValueLayout.JAVA_SHORT,
+        ),
+    )
+
+    fun uniffi_uniffi_fixture_primitive_arrays_checksum_func_sum_int64(
+    ): Short =
+        try {
+            MH_uniffi_uniffi_fixture_primitive_arrays_checksum_func_sum_int64.invokeExact(
+            ) as Short
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // ffi_uniffi_fixture_primitive_arrays_uniffi_contract_version
+    private val MH_ffi_uniffi_fixture_primitive_arrays_uniffi_contract_version: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_primitive_arrays_uniffi_contract_version",
         java.lang.foreign.FunctionDescriptor.of(
             java.lang.foreign.ValueLayout.JAVA_INT,
         ),
     )
 
-    fun ffi_arithmetical_uniffi_contract_version(
+    fun ffi_uniffi_fixture_primitive_arrays_uniffi_contract_version(
     ): Int =
         try {
-            MH_ffi_arithmetical_uniffi_contract_version.invokeExact(
+            MH_ffi_uniffi_fixture_primitive_arrays_uniffi_contract_version.invokeExact(
             ) as Int
         } catch (ex: Throwable) {
             throw AssertionError("invokeExact failed", ex)
@@ -2192,8 +2805,8 @@ internal object UniffiLib {
 }
 
 
-// === FILE: org/mozilla/uniffi/example/arithmetic/UniffiNullRustCallStatusErrorHandler.kt ===
-package org.mozilla.uniffi.example.arithmetic
+// === FILE: uniffi/primitive_arrays/UniffiNullRustCallStatusErrorHandler.kt ===
+package uniffi.primitive_arrays
 
 // UniffiRustCallStatusErrorHandler implementation for times when we don't
 // expect a CALL_ERROR.
@@ -2205,8 +2818,8 @@ internal class UniffiNullRustCallStatusErrorHandler : UniffiRustCallStatusErrorH
 }
 
 
-// === FILE: org/mozilla/uniffi/example/arithmetic/UniffiRustCallStatus.kt ===
-package org.mozilla.uniffi.example.arithmetic
+// === FILE: uniffi/primitive_arrays/UniffiRustCallStatus.kt ===
+package uniffi.primitive_arrays
 
 object UniffiRustCallStatus {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -2267,16 +2880,16 @@ object UniffiRustCallStatus {
 }
 
 
-// === FILE: org/mozilla/uniffi/example/arithmetic/UniffiRustCallStatusErrorHandler.kt ===
-package org.mozilla.uniffi.example.arithmetic
+// === FILE: uniffi/primitive_arrays/UniffiRustCallStatusErrorHandler.kt ===
+package uniffi.primitive_arrays
 
 interface UniffiRustCallStatusErrorHandler<E : Exception> {
     fun lift(errorBuf: java.lang.foreign.MemorySegment): E
 }
 
 
-// === FILE: org/mozilla/uniffi/example/arithmetic/UniffiSlabAllocator.kt ===
-package org.mozilla.uniffi.example.arithmetic
+// === FILE: uniffi/primitive_arrays/UniffiSlabAllocator.kt ===
+package uniffi.primitive_arrays
 
 // Thread-local slab allocator for short-lived native memory segments.
 //
