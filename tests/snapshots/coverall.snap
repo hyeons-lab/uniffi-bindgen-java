@@ -1101,7 +1101,15 @@ public class Coveralls implements AutoCloseable, CoverallsInterface {
     });
   }
 
-  private class UniffiCleanAction implements Runnable {
+  // `static` is load-bearing: a non-static nested class would carry an
+  // implicit `Coveralls.this` reference, which would keep
+  // the wrapper strongly reachable via the cleaner's internal list
+  // until the action runs. That would prevent the wrapper from ever
+  // becoming phantom-reachable, so the cleaner would never fire, and
+  // every forgotten `close()` would leak the underlying Rust handle.
+  // With `static` the action only captures the primitive `handle` long
+  // via its constructor — exactly what the Cleaner contract requires.
+  private static class UniffiCleanAction implements Runnable {
     private final long handle;
 
     public UniffiCleanAction(long handle) {
@@ -2214,7 +2222,15 @@ public class FalliblePatch implements AutoCloseable, FalliblePatchInterface {
     });
   }
 
-  private class UniffiCleanAction implements Runnable {
+  // `static` is load-bearing: a non-static nested class would carry an
+  // implicit `FalliblePatch.this` reference, which would keep
+  // the wrapper strongly reachable via the cleaner's internal list
+  // until the action runs. That would prevent the wrapper from ever
+  // becoming phantom-reachable, so the cleaner would never fire, and
+  // every forgotten `close()` would leak the underlying Rust handle.
+  // With `static` the action only captures the primitive `handle` long
+  // via its constructor — exactly what the Cleaner contract requires.
+  private static class UniffiCleanAction implements Runnable {
     private final long handle;
 
     public UniffiCleanAction(long handle) {
@@ -6399,7 +6415,15 @@ public class GettersImpl implements AutoCloseable, Getters {
     });
   }
 
-  private class UniffiCleanAction implements Runnable {
+  // `static` is load-bearing: a non-static nested class would carry an
+  // implicit `GettersImpl.this` reference, which would keep
+  // the wrapper strongly reachable via the cleaner's internal list
+  // until the action runs. That would prevent the wrapper from ever
+  // becoming phantom-reachable, so the cleaner would never fire, and
+  // every forgotten `close()` would leak the underlying Rust handle.
+  // With `static` the action only captures the primitive `handle` long
+  // via its constructor — exactly what the Cleaner contract requires.
+  private static class UniffiCleanAction implements Runnable {
     private final long handle;
 
     public UniffiCleanAction(long handle) {
@@ -6739,7 +6763,15 @@ public class IFirst implements AutoCloseable, IFirstInterface {
     });
   }
 
-  private class UniffiCleanAction implements Runnable {
+  // `static` is load-bearing: a non-static nested class would carry an
+  // implicit `IFirst.this` reference, which would keep
+  // the wrapper strongly reachable via the cleaner's internal list
+  // until the action runs. That would prevent the wrapper from ever
+  // becoming phantom-reachable, so the cleaner would never fire, and
+  // every forgotten `close()` would leak the underlying Rust handle.
+  // With `static` the action only captures the primitive `handle` long
+  // via its constructor — exactly what the Cleaner contract requires.
+  private static class UniffiCleanAction implements Runnable {
     private final long handle;
 
     public UniffiCleanAction(long handle) {
@@ -6899,7 +6931,15 @@ public class ISecond implements AutoCloseable, ISecondInterface {
     });
   }
 
-  private class UniffiCleanAction implements Runnable {
+  // `static` is load-bearing: a non-static nested class would carry an
+  // implicit `ISecond.this` reference, which would keep
+  // the wrapper strongly reachable via the cleaner's internal list
+  // until the action runs. That would prevent the wrapper from ever
+  // becoming phantom-reachable, so the cleaner would never fire, and
+  // every forgotten `close()` would leak the underlying Rust handle.
+  // With `static` the action only captures the primitive `handle` long
+  // via its constructor — exactly what the Cleaner contract requires.
+  private static class UniffiCleanAction implements Runnable {
     private final long handle;
 
     public UniffiCleanAction(long handle) {
@@ -7445,7 +7485,15 @@ public class Node implements AutoCloseable, NodeInterface, NodeTrait {
     });
   }
 
-  private class UniffiCleanAction implements Runnable {
+  // `static` is load-bearing: a non-static nested class would carry an
+  // implicit `Node.this` reference, which would keep
+  // the wrapper strongly reachable via the cleaner's internal list
+  // until the action runs. That would prevent the wrapper from ever
+  // becoming phantom-reachable, so the cleaner would never fire, and
+  // every forgotten `close()` would leak the underlying Rust handle.
+  // With `static` the action only captures the primitive `handle` long
+  // via its constructor — exactly what the Cleaner contract requires.
+  private static class UniffiCleanAction implements Runnable {
     private final long handle;
 
     public UniffiCleanAction(long handle) {
@@ -7759,7 +7807,15 @@ public class NodeTraitImpl implements AutoCloseable, NodeTrait {
     });
   }
 
-  private class UniffiCleanAction implements Runnable {
+  // `static` is load-bearing: a non-static nested class would carry an
+  // implicit `NodeTraitImpl.this` reference, which would keep
+  // the wrapper strongly reachable via the cleaner's internal list
+  // until the action runs. That would prevent the wrapper from ever
+  // becoming phantom-reachable, so the cleaner would never fire, and
+  // every forgotten `close()` would leak the underlying Rust handle.
+  // With `static` the action only captures the primitive `handle` long
+  // via its constructor — exactly what the Cleaner contract requires.
+  private static class UniffiCleanAction implements Runnable {
     private final long handle;
 
     public UniffiCleanAction(long handle) {
@@ -8029,7 +8085,15 @@ public class Patch implements AutoCloseable, PatchInterface {
     });
   }
 
-  private class UniffiCleanAction implements Runnable {
+  // `static` is load-bearing: a non-static nested class would carry an
+  // implicit `Patch.this` reference, which would keep
+  // the wrapper strongly reachable via the cleaner's internal list
+  // until the action runs. That would prevent the wrapper from ever
+  // becoming phantom-reachable, so the cleaner would never fire, and
+  // every forgotten `close()` would leak the underlying Rust handle.
+  // With `static` the action only captures the primitive `handle` long
+  // via its constructor — exactly what the Cleaner contract requires.
+  private static class UniffiCleanAction implements Runnable {
     private final long handle;
 
     public UniffiCleanAction(long handle) {
@@ -8917,7 +8981,15 @@ public class StringUtil implements AutoCloseable, StringUtilInterface {
     });
   }
 
-  private class UniffiCleanAction implements Runnable {
+  // `static` is load-bearing: a non-static nested class would carry an
+  // implicit `StringUtil.this` reference, which would keep
+  // the wrapper strongly reachable via the cleaner's internal list
+  // until the action runs. That would prevent the wrapper from ever
+  // becoming phantom-reachable, so the cleaner would never fire, and
+  // every forgotten `close()` would leak the underlying Rust handle.
+  // With `static` the action only captures the primitive `handle` long
+  // via its constructor — exactly what the Cleaner contract requires.
+  private static class UniffiCleanAction implements Runnable {
     private final long handle;
 
     public UniffiCleanAction(long handle) {
@@ -9083,7 +9155,15 @@ public class StringUtilObject implements AutoCloseable, StringUtilObjectInterfac
     });
   }
 
-  private class UniffiCleanAction implements Runnable {
+  // `static` is load-bearing: a non-static nested class would carry an
+  // implicit `StringUtilObject.this` reference, which would keep
+  // the wrapper strongly reachable via the cleaner's internal list
+  // until the action runs. That would prevent the wrapper from ever
+  // becoming phantom-reachable, so the cleaner would never fire, and
+  // every forgotten `close()` would leak the underlying Rust handle.
+  // With `static` the action only captures the primitive `handle` long
+  // via its constructor — exactly what the Cleaner contract requires.
+  private static class UniffiCleanAction implements Runnable {
     private final long handle;
 
     public UniffiCleanAction(long handle) {
@@ -9249,7 +9329,15 @@ public class ThreadsafeCounter implements AutoCloseable, ThreadsafeCounterInterf
     });
   }
 
-  private class UniffiCleanAction implements Runnable {
+  // `static` is load-bearing: a non-static nested class would carry an
+  // implicit `ThreadsafeCounter.this` reference, which would keep
+  // the wrapper strongly reachable via the cleaner's internal list
+  // until the action runs. That would prevent the wrapper from ever
+  // becoming phantom-reachable, so the cleaner would never fire, and
+  // every forgotten `close()` would leak the underlying Rust handle.
+  // With `static` the action only captures the primitive `handle` long
+  // via its constructor — exactly what the Cleaner contract requires.
+  private static class UniffiCleanAction implements Runnable {
     private final long handle;
 
     public UniffiCleanAction(long handle) {
