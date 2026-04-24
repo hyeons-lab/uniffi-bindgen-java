@@ -29,7 +29,7 @@ use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use uniffi_bindgen::{
     ComponentInterface,
-    interface::{Argument, Callable, FfiType, Field},
+    interface::{Argument, Callable, FfiDefinition, FfiType, Field},
 };
 use uniffi_meta::{AsType, Type};
 
@@ -244,23 +244,147 @@ impl KotlinCodeOracle {
             FfiType::RustBuffer(_) => "RustBuffer.LAYOUT".to_string(),
             FfiType::RustCallStatus => "java.lang.foreign.ValueLayout.ADDRESS".to_string(),
             FfiType::ForeignBytes => "ForeignBytes.LAYOUT".to_string(),
-            // The Java backend emits the matching `Uniffi<Name>` struct
-            // class (alongside its LAYOUT) via NamespaceLibraryTemplate's
-            // `FfiDefinition::Struct` branch. The Kotlin templates haven't
-            // ported that branch yet, so emitting the layout reference
-            // here would produce kotlinc errors at build time. Fail loud
-            // at codegen so any callback / struct-using fixture surfaces
-            // the gap immediately. Arithmetic doesn't trigger this; the
-            // first fixture that does is coverall.
-            FfiType::Struct(name) => panic!(
-                "Kotlin FFI struct layouts are not generated yet; \
-                 cannot bind FFI struct `{}`. See gen_kotlin/mod.rs.",
-                name
-            ),
+            // Post-P3j-a the matching `UniffiXxx.LAYOUT` helper is
+            // emitted by `NamespaceLibraryTemplate.kt`'s
+            // `FfiDefinition::Struct` branch, so we can reference it
+            // directly here — same shape as the Java backend.
+            FfiType::Struct(name) => format!("{}.LAYOUT", self.ffi_struct_name(name)),
             FfiType::Callback(_)
             | FfiType::VoidPointer
             | FfiType::Reference(_)
             | FfiType::MutReference(_) => "java.lang.foreign.ValueLayout.ADDRESS".to_string(),
+        }
+    }
+
+    /// Kotlin rendering of an FFI callback's public class name
+    /// (`UniffiCallbackInterfaceFoo`). Matches the Java convention so
+    /// the cross-backend shared uniffi metadata stays aligned.
+    pub fn ffi_callback_name(&self, nm: &str) -> String {
+        format!("Uniffi{}", nm.to_upper_camel_case())
+    }
+
+    /// Kotlin rendering of an FFI struct's public class name
+    /// (`UniffiVTableCallbackInterfaceFoo`). Same convention as
+    /// `ffi_callback_name`.
+    pub fn ffi_struct_name(&self, nm: &str) -> String {
+        format!("Uniffi{}", nm.to_upper_camel_case())
+    }
+
+    /// Resolve an `FfiType` to the enclosing helper class name
+    /// (used when rendering a struct-field's `<Struct>.LAYOUT`).
+    pub fn ffi_struct_type_name(&self, ffi_type: &FfiType) -> String {
+        match ffi_type {
+            FfiType::Struct(name) => self.ffi_struct_name(name),
+            FfiType::RustBuffer(_) => "RustBuffer".to_string(),
+            FfiType::RustCallStatus => "UniffiRustCallStatus".to_string(),
+            FfiType::ForeignBytes => "ForeignBytes".to_string(),
+            _ => panic!("ffi_struct_type_name called on non-struct type: {ffi_type:?}"),
+        }
+    }
+
+    /// Whether an FFI type is a struct that sits embedded (by value)
+    /// inside another struct — in that case its field access goes
+    /// through `MemorySegment.asSlice` / `MemorySegment.copy` rather
+    /// than `seg.get(layout, offset)` / `seg.set(layout, offset, v)`.
+    pub fn ffi_type_is_embedded_struct(&self, ffi_type: &FfiType) -> bool {
+        matches!(
+            ffi_type,
+            FfiType::RustBuffer(_)
+                | FfiType::RustCallStatus
+                | FfiType::ForeignBytes
+                | FfiType::Struct(_)
+        )
+    }
+
+    /// Unaligned `ValueLayout` variant used for struct-field access.
+    /// The JVM aligns top-level value layouts to their natural
+    /// alignment, but fields inside a packed struct can land on any
+    /// byte boundary — reading them with the aligned layout will
+    /// `IllegalArgumentException` at runtime. Java's
+    /// `ffi_value_layout_unaligned` exists for the same reason.
+    pub fn ffi_value_layout_unaligned(&self, ffi_type: &FfiType) -> String {
+        match ffi_type {
+            FfiType::Int8 | FfiType::UInt8 => "java.lang.foreign.ValueLayout.JAVA_BYTE".to_string(),
+            FfiType::Int16 | FfiType::UInt16 => {
+                "java.lang.foreign.ValueLayout.JAVA_SHORT_UNALIGNED".to_string()
+            }
+            FfiType::Int32 | FfiType::UInt32 => {
+                "java.lang.foreign.ValueLayout.JAVA_INT_UNALIGNED".to_string()
+            }
+            FfiType::Int64 | FfiType::UInt64 | FfiType::Handle => {
+                "java.lang.foreign.ValueLayout.JAVA_LONG_UNALIGNED".to_string()
+            }
+            FfiType::Float32 => "java.lang.foreign.ValueLayout.JAVA_FLOAT_UNALIGNED".to_string(),
+            FfiType::Float64 => "java.lang.foreign.ValueLayout.JAVA_DOUBLE_UNALIGNED".to_string(),
+            FfiType::Callback(_)
+            | FfiType::VoidPointer
+            | FfiType::Reference(_)
+            | FfiType::MutReference(_) => {
+                "java.lang.foreign.ValueLayout.ADDRESS_UNALIGNED".to_string()
+            }
+            // Struct types use slice-based access, not ValueLayout
+            // access — fall back to the aligned layout; the caller
+            // should be branching on `ffi_type_is_embedded_struct`
+            // before asking for a ValueLayout at all.
+            _ => self.ffi_value_layout(ffi_type),
+        }
+    }
+
+    /// Natural alignment (bytes) of an FFI type. Used by the layout
+    /// generator to emit padding fields so the Kotlin struct matches
+    /// the Rust repr(C) layout.
+    pub fn ffi_type_alignment(&self, ffi_type: &FfiType) -> usize {
+        match ffi_type {
+            FfiType::Int8 | FfiType::UInt8 => 1,
+            FfiType::Int16 | FfiType::UInt16 => 2,
+            FfiType::Int32 | FfiType::UInt32 | FfiType::Float32 => 4,
+            FfiType::Int64 | FfiType::UInt64 | FfiType::Float64 | FfiType::Handle => 8,
+            FfiType::Callback(_)
+            | FfiType::VoidPointer
+            | FfiType::Reference(_)
+            | FfiType::MutReference(_) => 8,
+            // Embedded structs — max alignment of their fields, all
+            // happen to be 8-byte aligned for uniffi's built-ins.
+            FfiType::RustBuffer(_)
+            | FfiType::RustCallStatus
+            | FfiType::ForeignBytes
+            | FfiType::Struct(_) => 8,
+        }
+    }
+
+    /// Size (bytes) of an FFI type as it appears inside a parent
+    /// struct. Hardcoded for uniffi's built-in structs (RustBuffer,
+    /// RustCallStatus, ForeignBytes); returns 0 for user structs
+    /// (unknown at codegen time — the layout generator falls back on
+    /// the alignment alone in that case).
+    pub fn ffi_type_size(&self, ffi_type: &FfiType) -> usize {
+        match ffi_type {
+            FfiType::Int8 | FfiType::UInt8 => 1,
+            FfiType::Int16 | FfiType::UInt16 => 2,
+            FfiType::Int32 | FfiType::UInt32 | FfiType::Float32 => 4,
+            FfiType::Int64 | FfiType::UInt64 | FfiType::Float64 | FfiType::Handle => 8,
+            FfiType::Callback(_)
+            | FfiType::VoidPointer
+            | FfiType::Reference(_)
+            | FfiType::MutReference(_) => 8,
+            FfiType::RustBuffer(_) => 24,
+            FfiType::RustCallStatus => 32,
+            FfiType::ForeignBytes => 16,
+            FfiType::Struct(_) => 0,
+        }
+    }
+
+    /// Layout of an FFI type when it appears as a field inside a
+    /// parent struct. Differs from `ffi_value_layout` only for
+    /// structs-inside-structs: those use their full `.LAYOUT` rather
+    /// than an `ADDRESS` pointer reference.
+    pub fn ffi_struct_field_layout(&self, ffi_type: &FfiType) -> String {
+        match ffi_type {
+            FfiType::RustBuffer(_) => "RustBuffer.LAYOUT".to_string(),
+            FfiType::RustCallStatus => "UniffiRustCallStatus.LAYOUT".to_string(),
+            FfiType::ForeignBytes => "ForeignBytes.LAYOUT".to_string(),
+            FfiType::Struct(name) => format!("{}.LAYOUT", self.ffi_struct_name(name)),
+            _ => self.ffi_value_layout(ffi_type),
         }
     }
 
@@ -769,5 +893,88 @@ mod filters {
         _v: &dyn Values,
     ) -> Result<bool, askama::Error> {
         Ok(KotlinCodeOracle.ffi_type_is_struct(type_))
+    }
+
+    /// Public class name for an FFI callback function (`UniffiXxx`
+    /// for a callback named `xxx`).
+    pub(super) fn ffi_callback_name<S: AsRef<str>>(
+        nm: S,
+        _v: &dyn Values,
+    ) -> Result<String, askama::Error> {
+        Ok(KotlinCodeOracle.ffi_callback_name(nm.as_ref()))
+    }
+
+    /// Public class name for an FFI struct (`UniffiXxx`).
+    pub(super) fn ffi_struct_name<S: AsRef<str>>(
+        nm: S,
+        _v: &dyn Values,
+    ) -> Result<String, askama::Error> {
+        Ok(KotlinCodeOracle.ffi_struct_name(nm.as_ref()))
+    }
+
+    /// Enclosing helper-class name for a struct-shaped FfiType.
+    pub(super) fn ffi_struct_type_name(
+        type_: &FfiType,
+        _v: &dyn Values,
+    ) -> Result<String, askama::Error> {
+        Ok(KotlinCodeOracle.ffi_struct_type_name(type_))
+    }
+
+    /// True when the FFI type sits embedded (by value) inside another
+    /// struct — field access goes through `MemorySegment.asSlice` /
+    /// `MemorySegment.copy` rather than `seg.get / seg.set`.
+    pub(super) fn ffi_type_is_embedded_struct(
+        type_: &FfiType,
+        _v: &dyn Values,
+    ) -> Result<bool, askama::Error> {
+        Ok(KotlinCodeOracle.ffi_type_is_embedded_struct(type_))
+    }
+
+    /// Unaligned `ValueLayout` constant (used for struct-field access
+    /// where the field may land on any byte boundary).
+    pub(super) fn ffi_value_layout_unaligned(
+        type_: &FfiType,
+        _v: &dyn Values,
+    ) -> Result<String, askama::Error> {
+        Ok(KotlinCodeOracle.ffi_value_layout_unaligned(type_))
+    }
+
+    /// Generates the `structLayout(...)` body for an FfiStruct — a
+    /// comma-separated list of per-field layouts with computed
+    /// padding so the Kotlin struct matches the Rust `#[repr(C)]`
+    /// layout. Mirrors the Java `ffi_struct_layout_body` filter
+    /// byte-for-byte.
+    pub(super) fn ffi_struct_layout_body(
+        ffi_struct: &uniffi_bindgen::interface::FfiStruct,
+        _v: &dyn Values,
+    ) -> Result<String, askama::Error> {
+        let oracle = KotlinCodeOracle;
+        let mut parts = Vec::new();
+        let mut offset: usize = 0;
+        for field in ffi_struct.fields() {
+            let field_type = field.type_();
+            let alignment = oracle.ffi_type_alignment(&field_type);
+            let padding = if !offset.is_multiple_of(alignment) {
+                alignment - (offset % alignment)
+            } else {
+                0
+            };
+            if padding > 0 {
+                parts.push(format!(
+                    "java.lang.foreign.MemoryLayout.paddingLayout({padding})"
+                ));
+                offset += padding;
+            }
+            let layout = oracle.ffi_struct_field_layout(&field_type);
+            let field_name = oracle.var_name_raw(field.name());
+            parts.push(format!("{layout}.withName(\"{field_name}\")"));
+            let size = oracle.ffi_type_size(&field_type);
+            if size > 0 {
+                offset += size;
+            } else {
+                offset = 0;
+            }
+        }
+        Ok(parts.join(",\n        "))
     }
 }

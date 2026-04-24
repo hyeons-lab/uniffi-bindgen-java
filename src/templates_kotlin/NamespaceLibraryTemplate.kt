@@ -196,6 +196,117 @@ internal object UniffiLib {
     }
 }
 
+{#- FFI callback-function helper classes and FFI struct helper
+   classes. Uniffi scaffolding emits these unconditionally
+   (async-support future-completion structs, clone/free callbacks,
+   etc.), so every generated binding carries them regardless of
+   user type usage. Each is emitted as its own `// UNIFFI:FILE`
+   block — the splitter pulls them out into individual `.kt` files.
+-#}
+{%- for def in ci.ffi_definitions() %}
+{%- match def %}
+{%- when FfiDefinition::Function(_) %}
+{#- Functions are handled in the MethodHandle loop above. -#}
+{%- when FfiDefinition::CallbackFunction(callback) %}
+
+// UNIFFI:FILE {{ callback.name()|ffi_callback_name }}.kt
+package {{ config.package_name() }}
+
+internal object {{ callback.name()|ffi_callback_name }} {
+    val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
+        java.lang.foreign.FunctionDescriptor.{%- match callback.return_type() -%}
+        {%- when Some(return_type) -%}
+        of({{ return_type|ffi_value_layout }}
+        {%- for arg in callback.arguments() %}, {{ arg.type_().borrow()|ffi_value_layout }}{% endfor -%}
+        {%- if callback.has_rust_call_status_arg() %}, java.lang.foreign.ValueLayout.ADDRESS{% endif -%}
+        )
+        {%- when None -%}
+        ofVoid(
+        {%- for arg in callback.arguments() %}{{ arg.type_().borrow()|ffi_value_layout }}{% if !loop.last %}, {% endif %}{% endfor -%}
+        {%- if callback.has_rust_call_status_arg() %}{% if !callback.arguments().is_empty() %}, {% endif %}java.lang.foreign.ValueLayout.ADDRESS{% endif -%}
+        )
+        {%- endmatch %}
+
+    fun interface Fn {
+        fun callback(
+            {%- for arg in callback.arguments() %}
+            {{ arg.name().borrow()|var_name }}: {{ arg.type_().borrow()|ffi_type_name }}{% if !loop.last %},{% endif %}
+            {%- endfor %}
+            {%- if callback.has_rust_call_status_arg() %}{% if !callback.arguments().is_empty() %},{% endif %}
+            uniffiCallStatus: java.lang.foreign.MemorySegment
+            {%- endif %}
+        ){%- match callback.return_type() %}{%- when Some(return_type) %}: {{ return_type|ffi_type_name }}{%- when None %}{%- endmatch %}
+    }
+
+    fun toUpcallStub(fn: Fn, arena: java.lang.foreign.Arena): java.lang.foreign.MemorySegment {
+        try {
+            val handle = java.lang.invoke.MethodHandles.lookup()
+                .findVirtual(
+                    Fn::class.java,
+                    "callback",
+                    java.lang.invoke.MethodType.methodType(
+                        {%- match callback.return_type() %}
+                        {%- when Some(return_type) %}
+                        {{ return_type|ffi_type_name }}::class.javaPrimitiveType ?: {{ return_type|ffi_type_name }}::class.java,
+                        {%- when None %}
+                        Void.TYPE,
+                        {%- endmatch %}
+                        {%- for arg in callback.arguments() %}
+                        {{ arg.type_().borrow()|ffi_type_name }}::class.javaPrimitiveType ?: {{ arg.type_().borrow()|ffi_type_name }}::class.java{% if !loop.last %},{% endif %}
+                        {%- endfor %}
+                        {%- if callback.has_rust_call_status_arg() %}
+                        {% if !callback.arguments().is_empty() %},{% endif %}java.lang.foreign.MemorySegment::class.java
+                        {%- endif %}
+                    ),
+                )
+                .bindTo(fn)
+            return java.lang.foreign.Linker.nativeLinker().upcallStub(handle, DESCRIPTOR, arena)
+        } catch (e: ReflectiveOperationException) {
+            throw AssertionError("Failed to create upcall stub", e)
+        }
+    }
+}
+{%- when FfiDefinition::Struct(ffi_struct) %}
+
+// UNIFFI:FILE {{ ffi_struct.name()|ffi_struct_name }}.kt
+package {{ config.package_name() }}
+
+internal object {{ ffi_struct.name()|ffi_struct_name }} {
+    val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
+        {{ ffi_struct|ffi_struct_layout_body }}
+    )
+    {%- for field in ffi_struct.fields() %}
+    private val OFFSET_{{ field.name()|fn_name }}: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("{{ field.name() }}"))
+    {%- endfor %}
+    {%- for field in ffi_struct.fields() %}
+    {%- if field.type_().borrow()|ffi_type_is_embedded_struct %}
+
+    fun get{{ field.name() }}(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
+        seg.asSlice(OFFSET_{{ field.name()|fn_name }}, {{ field.type_().borrow()|ffi_struct_type_name }}.LAYOUT.byteSize())
+
+    fun set{{ field.name() }}(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
+        java.lang.foreign.MemorySegment.copy(value, 0L, seg, OFFSET_{{ field.name()|fn_name }}, {{ field.type_().borrow()|ffi_struct_type_name }}.LAYOUT.byteSize())
+    }
+    {%- else %}
+
+    fun get{{ field.name() }}(seg: java.lang.foreign.MemorySegment): {{ field.type_().borrow()|ffi_type_name }} =
+        seg.get({{ field.type_().borrow()|ffi_value_layout_unaligned }}, OFFSET_{{ field.name()|fn_name }}){{ field.type_().borrow()|ffi_invoke_exact_cast }}
+
+    fun set{{ field.name() }}(seg: java.lang.foreign.MemorySegment, value: {{ field.type_().borrow()|ffi_type_name }}) {
+        seg.set({{ field.type_().borrow()|ffi_value_layout_unaligned }}, OFFSET_{{ field.name()|fn_name }}, value)
+    }
+    {%- endif %}
+    {%- endfor %}
+
+    fun allocate(allocator: java.lang.foreign.SegmentAllocator): java.lang.foreign.MemorySegment {
+        val seg = allocator.allocate(LAYOUT)
+        seg.fill(0.toByte())
+        return seg
+    }
+}
+{%- endmatch %}
+{%- endfor %}
+
 // UNIFFI:FILE UniffiInitializer.kt
 package {{ config.package_name() }}
 

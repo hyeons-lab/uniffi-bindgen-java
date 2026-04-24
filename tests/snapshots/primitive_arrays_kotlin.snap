@@ -671,6 +671,952 @@ object RustBuffer {
 }
 
 
+// === FILE: uniffi/primitive_arrays/UniffiCallbackInterfaceClone.kt ===
+package uniffi.primitive_arrays
+
+internal object UniffiCallbackInterfaceClone {
+    val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
+        java.lang.foreign.FunctionDescriptor.of(java.lang.foreign.ValueLayout.JAVA_LONG, java.lang.foreign.ValueLayout.JAVA_LONG)
+
+    fun interface Fn {
+        fun callback(
+            handle: Long
+        ): Long
+    }
+
+    fun toUpcallStub(fn: Fn, arena: java.lang.foreign.Arena): java.lang.foreign.MemorySegment {
+        try {
+            val handle = java.lang.invoke.MethodHandles.lookup()
+                .findVirtual(
+                    Fn::class.java,
+                    "callback",
+                    java.lang.invoke.MethodType.methodType(
+                        Long::class.javaPrimitiveType ?: Long::class.java,
+                        Long::class.javaPrimitiveType ?: Long::class.java
+                    ),
+                )
+                .bindTo(fn)
+            return java.lang.foreign.Linker.nativeLinker().upcallStub(handle, DESCRIPTOR, arena)
+        } catch (e: ReflectiveOperationException) {
+            throw AssertionError("Failed to create upcall stub", e)
+        }
+    }
+}
+
+
+// === FILE: uniffi/primitive_arrays/UniffiCallbackInterfaceFree.kt ===
+package uniffi.primitive_arrays
+
+internal object UniffiCallbackInterfaceFree {
+    val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
+        java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG)
+
+    fun interface Fn {
+        fun callback(
+            handle: Long
+        )
+    }
+
+    fun toUpcallStub(fn: Fn, arena: java.lang.foreign.Arena): java.lang.foreign.MemorySegment {
+        try {
+            val handle = java.lang.invoke.MethodHandles.lookup()
+                .findVirtual(
+                    Fn::class.java,
+                    "callback",
+                    java.lang.invoke.MethodType.methodType(
+                        Void.TYPE,
+                        Long::class.javaPrimitiveType ?: Long::class.java
+                    ),
+                )
+                .bindTo(fn)
+            return java.lang.foreign.Linker.nativeLinker().upcallStub(handle, DESCRIPTOR, arena)
+        } catch (e: ReflectiveOperationException) {
+            throw AssertionError("Failed to create upcall stub", e)
+        }
+    }
+}
+
+
+// === FILE: uniffi/primitive_arrays/UniffiForeignFutureCompleteF32.kt ===
+package uniffi.primitive_arrays
+
+internal object UniffiForeignFutureCompleteF32 {
+    val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
+        java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, UniffiForeignFutureResultF32.LAYOUT)
+
+    fun interface Fn {
+        fun callback(
+            callbackData: Long,
+            result: java.lang.foreign.MemorySegment
+        )
+    }
+
+    fun toUpcallStub(fn: Fn, arena: java.lang.foreign.Arena): java.lang.foreign.MemorySegment {
+        try {
+            val handle = java.lang.invoke.MethodHandles.lookup()
+                .findVirtual(
+                    Fn::class.java,
+                    "callback",
+                    java.lang.invoke.MethodType.methodType(
+                        Void.TYPE,
+                        Long::class.javaPrimitiveType ?: Long::class.java,
+                        java.lang.foreign.MemorySegment::class.javaPrimitiveType ?: java.lang.foreign.MemorySegment::class.java
+                    ),
+                )
+                .bindTo(fn)
+            return java.lang.foreign.Linker.nativeLinker().upcallStub(handle, DESCRIPTOR, arena)
+        } catch (e: ReflectiveOperationException) {
+            throw AssertionError("Failed to create upcall stub", e)
+        }
+    }
+}
+
+
+// === FILE: uniffi/primitive_arrays/UniffiForeignFutureCompleteF64.kt ===
+package uniffi.primitive_arrays
+
+internal object UniffiForeignFutureCompleteF64 {
+    val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
+        java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, UniffiForeignFutureResultF64.LAYOUT)
+
+    fun interface Fn {
+        fun callback(
+            callbackData: Long,
+            result: java.lang.foreign.MemorySegment
+        )
+    }
+
+    fun toUpcallStub(fn: Fn, arena: java.lang.foreign.Arena): java.lang.foreign.MemorySegment {
+        try {
+            val handle = java.lang.invoke.MethodHandles.lookup()
+                .findVirtual(
+                    Fn::class.java,
+                    "callback",
+                    java.lang.invoke.MethodType.methodType(
+                        Void.TYPE,
+                        Long::class.javaPrimitiveType ?: Long::class.java,
+                        java.lang.foreign.MemorySegment::class.javaPrimitiveType ?: java.lang.foreign.MemorySegment::class.java
+                    ),
+                )
+                .bindTo(fn)
+            return java.lang.foreign.Linker.nativeLinker().upcallStub(handle, DESCRIPTOR, arena)
+        } catch (e: ReflectiveOperationException) {
+            throw AssertionError("Failed to create upcall stub", e)
+        }
+    }
+}
+
+
+// === FILE: uniffi/primitive_arrays/UniffiForeignFutureCompleteI16.kt ===
+package uniffi.primitive_arrays
+
+internal object UniffiForeignFutureCompleteI16 {
+    val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
+        java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, UniffiForeignFutureResultI16.LAYOUT)
+
+    fun interface Fn {
+        fun callback(
+            callbackData: Long,
+            result: java.lang.foreign.MemorySegment
+        )
+    }
+
+    fun toUpcallStub(fn: Fn, arena: java.lang.foreign.Arena): java.lang.foreign.MemorySegment {
+        try {
+            val handle = java.lang.invoke.MethodHandles.lookup()
+                .findVirtual(
+                    Fn::class.java,
+                    "callback",
+                    java.lang.invoke.MethodType.methodType(
+                        Void.TYPE,
+                        Long::class.javaPrimitiveType ?: Long::class.java,
+                        java.lang.foreign.MemorySegment::class.javaPrimitiveType ?: java.lang.foreign.MemorySegment::class.java
+                    ),
+                )
+                .bindTo(fn)
+            return java.lang.foreign.Linker.nativeLinker().upcallStub(handle, DESCRIPTOR, arena)
+        } catch (e: ReflectiveOperationException) {
+            throw AssertionError("Failed to create upcall stub", e)
+        }
+    }
+}
+
+
+// === FILE: uniffi/primitive_arrays/UniffiForeignFutureCompleteI32.kt ===
+package uniffi.primitive_arrays
+
+internal object UniffiForeignFutureCompleteI32 {
+    val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
+        java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, UniffiForeignFutureResultI32.LAYOUT)
+
+    fun interface Fn {
+        fun callback(
+            callbackData: Long,
+            result: java.lang.foreign.MemorySegment
+        )
+    }
+
+    fun toUpcallStub(fn: Fn, arena: java.lang.foreign.Arena): java.lang.foreign.MemorySegment {
+        try {
+            val handle = java.lang.invoke.MethodHandles.lookup()
+                .findVirtual(
+                    Fn::class.java,
+                    "callback",
+                    java.lang.invoke.MethodType.methodType(
+                        Void.TYPE,
+                        Long::class.javaPrimitiveType ?: Long::class.java,
+                        java.lang.foreign.MemorySegment::class.javaPrimitiveType ?: java.lang.foreign.MemorySegment::class.java
+                    ),
+                )
+                .bindTo(fn)
+            return java.lang.foreign.Linker.nativeLinker().upcallStub(handle, DESCRIPTOR, arena)
+        } catch (e: ReflectiveOperationException) {
+            throw AssertionError("Failed to create upcall stub", e)
+        }
+    }
+}
+
+
+// === FILE: uniffi/primitive_arrays/UniffiForeignFutureCompleteI64.kt ===
+package uniffi.primitive_arrays
+
+internal object UniffiForeignFutureCompleteI64 {
+    val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
+        java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, UniffiForeignFutureResultI64.LAYOUT)
+
+    fun interface Fn {
+        fun callback(
+            callbackData: Long,
+            result: java.lang.foreign.MemorySegment
+        )
+    }
+
+    fun toUpcallStub(fn: Fn, arena: java.lang.foreign.Arena): java.lang.foreign.MemorySegment {
+        try {
+            val handle = java.lang.invoke.MethodHandles.lookup()
+                .findVirtual(
+                    Fn::class.java,
+                    "callback",
+                    java.lang.invoke.MethodType.methodType(
+                        Void.TYPE,
+                        Long::class.javaPrimitiveType ?: Long::class.java,
+                        java.lang.foreign.MemorySegment::class.javaPrimitiveType ?: java.lang.foreign.MemorySegment::class.java
+                    ),
+                )
+                .bindTo(fn)
+            return java.lang.foreign.Linker.nativeLinker().upcallStub(handle, DESCRIPTOR, arena)
+        } catch (e: ReflectiveOperationException) {
+            throw AssertionError("Failed to create upcall stub", e)
+        }
+    }
+}
+
+
+// === FILE: uniffi/primitive_arrays/UniffiForeignFutureCompleteI8.kt ===
+package uniffi.primitive_arrays
+
+internal object UniffiForeignFutureCompleteI8 {
+    val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
+        java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, UniffiForeignFutureResultI8.LAYOUT)
+
+    fun interface Fn {
+        fun callback(
+            callbackData: Long,
+            result: java.lang.foreign.MemorySegment
+        )
+    }
+
+    fun toUpcallStub(fn: Fn, arena: java.lang.foreign.Arena): java.lang.foreign.MemorySegment {
+        try {
+            val handle = java.lang.invoke.MethodHandles.lookup()
+                .findVirtual(
+                    Fn::class.java,
+                    "callback",
+                    java.lang.invoke.MethodType.methodType(
+                        Void.TYPE,
+                        Long::class.javaPrimitiveType ?: Long::class.java,
+                        java.lang.foreign.MemorySegment::class.javaPrimitiveType ?: java.lang.foreign.MemorySegment::class.java
+                    ),
+                )
+                .bindTo(fn)
+            return java.lang.foreign.Linker.nativeLinker().upcallStub(handle, DESCRIPTOR, arena)
+        } catch (e: ReflectiveOperationException) {
+            throw AssertionError("Failed to create upcall stub", e)
+        }
+    }
+}
+
+
+// === FILE: uniffi/primitive_arrays/UniffiForeignFutureCompleteRustBuffer.kt ===
+package uniffi.primitive_arrays
+
+internal object UniffiForeignFutureCompleteRustBuffer {
+    val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
+        java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, UniffiForeignFutureResultRustBuffer.LAYOUT)
+
+    fun interface Fn {
+        fun callback(
+            callbackData: Long,
+            result: java.lang.foreign.MemorySegment
+        )
+    }
+
+    fun toUpcallStub(fn: Fn, arena: java.lang.foreign.Arena): java.lang.foreign.MemorySegment {
+        try {
+            val handle = java.lang.invoke.MethodHandles.lookup()
+                .findVirtual(
+                    Fn::class.java,
+                    "callback",
+                    java.lang.invoke.MethodType.methodType(
+                        Void.TYPE,
+                        Long::class.javaPrimitiveType ?: Long::class.java,
+                        java.lang.foreign.MemorySegment::class.javaPrimitiveType ?: java.lang.foreign.MemorySegment::class.java
+                    ),
+                )
+                .bindTo(fn)
+            return java.lang.foreign.Linker.nativeLinker().upcallStub(handle, DESCRIPTOR, arena)
+        } catch (e: ReflectiveOperationException) {
+            throw AssertionError("Failed to create upcall stub", e)
+        }
+    }
+}
+
+
+// === FILE: uniffi/primitive_arrays/UniffiForeignFutureCompleteU16.kt ===
+package uniffi.primitive_arrays
+
+internal object UniffiForeignFutureCompleteU16 {
+    val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
+        java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, UniffiForeignFutureResultU16.LAYOUT)
+
+    fun interface Fn {
+        fun callback(
+            callbackData: Long,
+            result: java.lang.foreign.MemorySegment
+        )
+    }
+
+    fun toUpcallStub(fn: Fn, arena: java.lang.foreign.Arena): java.lang.foreign.MemorySegment {
+        try {
+            val handle = java.lang.invoke.MethodHandles.lookup()
+                .findVirtual(
+                    Fn::class.java,
+                    "callback",
+                    java.lang.invoke.MethodType.methodType(
+                        Void.TYPE,
+                        Long::class.javaPrimitiveType ?: Long::class.java,
+                        java.lang.foreign.MemorySegment::class.javaPrimitiveType ?: java.lang.foreign.MemorySegment::class.java
+                    ),
+                )
+                .bindTo(fn)
+            return java.lang.foreign.Linker.nativeLinker().upcallStub(handle, DESCRIPTOR, arena)
+        } catch (e: ReflectiveOperationException) {
+            throw AssertionError("Failed to create upcall stub", e)
+        }
+    }
+}
+
+
+// === FILE: uniffi/primitive_arrays/UniffiForeignFutureCompleteU32.kt ===
+package uniffi.primitive_arrays
+
+internal object UniffiForeignFutureCompleteU32 {
+    val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
+        java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, UniffiForeignFutureResultU32.LAYOUT)
+
+    fun interface Fn {
+        fun callback(
+            callbackData: Long,
+            result: java.lang.foreign.MemorySegment
+        )
+    }
+
+    fun toUpcallStub(fn: Fn, arena: java.lang.foreign.Arena): java.lang.foreign.MemorySegment {
+        try {
+            val handle = java.lang.invoke.MethodHandles.lookup()
+                .findVirtual(
+                    Fn::class.java,
+                    "callback",
+                    java.lang.invoke.MethodType.methodType(
+                        Void.TYPE,
+                        Long::class.javaPrimitiveType ?: Long::class.java,
+                        java.lang.foreign.MemorySegment::class.javaPrimitiveType ?: java.lang.foreign.MemorySegment::class.java
+                    ),
+                )
+                .bindTo(fn)
+            return java.lang.foreign.Linker.nativeLinker().upcallStub(handle, DESCRIPTOR, arena)
+        } catch (e: ReflectiveOperationException) {
+            throw AssertionError("Failed to create upcall stub", e)
+        }
+    }
+}
+
+
+// === FILE: uniffi/primitive_arrays/UniffiForeignFutureCompleteU64.kt ===
+package uniffi.primitive_arrays
+
+internal object UniffiForeignFutureCompleteU64 {
+    val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
+        java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, UniffiForeignFutureResultU64.LAYOUT)
+
+    fun interface Fn {
+        fun callback(
+            callbackData: Long,
+            result: java.lang.foreign.MemorySegment
+        )
+    }
+
+    fun toUpcallStub(fn: Fn, arena: java.lang.foreign.Arena): java.lang.foreign.MemorySegment {
+        try {
+            val handle = java.lang.invoke.MethodHandles.lookup()
+                .findVirtual(
+                    Fn::class.java,
+                    "callback",
+                    java.lang.invoke.MethodType.methodType(
+                        Void.TYPE,
+                        Long::class.javaPrimitiveType ?: Long::class.java,
+                        java.lang.foreign.MemorySegment::class.javaPrimitiveType ?: java.lang.foreign.MemorySegment::class.java
+                    ),
+                )
+                .bindTo(fn)
+            return java.lang.foreign.Linker.nativeLinker().upcallStub(handle, DESCRIPTOR, arena)
+        } catch (e: ReflectiveOperationException) {
+            throw AssertionError("Failed to create upcall stub", e)
+        }
+    }
+}
+
+
+// === FILE: uniffi/primitive_arrays/UniffiForeignFutureCompleteU8.kt ===
+package uniffi.primitive_arrays
+
+internal object UniffiForeignFutureCompleteU8 {
+    val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
+        java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, UniffiForeignFutureResultU8.LAYOUT)
+
+    fun interface Fn {
+        fun callback(
+            callbackData: Long,
+            result: java.lang.foreign.MemorySegment
+        )
+    }
+
+    fun toUpcallStub(fn: Fn, arena: java.lang.foreign.Arena): java.lang.foreign.MemorySegment {
+        try {
+            val handle = java.lang.invoke.MethodHandles.lookup()
+                .findVirtual(
+                    Fn::class.java,
+                    "callback",
+                    java.lang.invoke.MethodType.methodType(
+                        Void.TYPE,
+                        Long::class.javaPrimitiveType ?: Long::class.java,
+                        java.lang.foreign.MemorySegment::class.javaPrimitiveType ?: java.lang.foreign.MemorySegment::class.java
+                    ),
+                )
+                .bindTo(fn)
+            return java.lang.foreign.Linker.nativeLinker().upcallStub(handle, DESCRIPTOR, arena)
+        } catch (e: ReflectiveOperationException) {
+            throw AssertionError("Failed to create upcall stub", e)
+        }
+    }
+}
+
+
+// === FILE: uniffi/primitive_arrays/UniffiForeignFutureCompleteVoid.kt ===
+package uniffi.primitive_arrays
+
+internal object UniffiForeignFutureCompleteVoid {
+    val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
+        java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, UniffiForeignFutureResultVoid.LAYOUT)
+
+    fun interface Fn {
+        fun callback(
+            callbackData: Long,
+            result: java.lang.foreign.MemorySegment
+        )
+    }
+
+    fun toUpcallStub(fn: Fn, arena: java.lang.foreign.Arena): java.lang.foreign.MemorySegment {
+        try {
+            val handle = java.lang.invoke.MethodHandles.lookup()
+                .findVirtual(
+                    Fn::class.java,
+                    "callback",
+                    java.lang.invoke.MethodType.methodType(
+                        Void.TYPE,
+                        Long::class.javaPrimitiveType ?: Long::class.java,
+                        java.lang.foreign.MemorySegment::class.javaPrimitiveType ?: java.lang.foreign.MemorySegment::class.java
+                    ),
+                )
+                .bindTo(fn)
+            return java.lang.foreign.Linker.nativeLinker().upcallStub(handle, DESCRIPTOR, arena)
+        } catch (e: ReflectiveOperationException) {
+            throw AssertionError("Failed to create upcall stub", e)
+        }
+    }
+}
+
+
+// === FILE: uniffi/primitive_arrays/UniffiForeignFutureDroppedCallback.kt ===
+package uniffi.primitive_arrays
+
+internal object UniffiForeignFutureDroppedCallback {
+    val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
+        java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG)
+
+    fun interface Fn {
+        fun callback(
+            handle: Long
+        )
+    }
+
+    fun toUpcallStub(fn: Fn, arena: java.lang.foreign.Arena): java.lang.foreign.MemorySegment {
+        try {
+            val handle = java.lang.invoke.MethodHandles.lookup()
+                .findVirtual(
+                    Fn::class.java,
+                    "callback",
+                    java.lang.invoke.MethodType.methodType(
+                        Void.TYPE,
+                        Long::class.javaPrimitiveType ?: Long::class.java
+                    ),
+                )
+                .bindTo(fn)
+            return java.lang.foreign.Linker.nativeLinker().upcallStub(handle, DESCRIPTOR, arena)
+        } catch (e: ReflectiveOperationException) {
+            throw AssertionError("Failed to create upcall stub", e)
+        }
+    }
+}
+
+
+// === FILE: uniffi/primitive_arrays/UniffiForeignFutureDroppedCallbackStruct.kt ===
+package uniffi.primitive_arrays
+
+internal object UniffiForeignFutureDroppedCallbackStruct {
+    val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
+        java.lang.foreign.ValueLayout.JAVA_LONG.withName("handle"),
+        java.lang.foreign.ValueLayout.ADDRESS.withName("free")
+    )
+    private val OFFSET_handle: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("handle"))
+    private val OFFSET_free: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("free"))
+
+    fun gethandle(seg: java.lang.foreign.MemorySegment): Long =
+        seg.get(java.lang.foreign.ValueLayout.JAVA_LONG_UNALIGNED, OFFSET_handle) as Long
+
+    fun sethandle(seg: java.lang.foreign.MemorySegment, value: Long) {
+        seg.set(java.lang.foreign.ValueLayout.JAVA_LONG_UNALIGNED, OFFSET_handle, value)
+    }
+
+    fun getfree(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
+        seg.get(java.lang.foreign.ValueLayout.ADDRESS_UNALIGNED, OFFSET_free) as java.lang.foreign.MemorySegment
+
+    fun setfree(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
+        seg.set(java.lang.foreign.ValueLayout.ADDRESS_UNALIGNED, OFFSET_free, value)
+    }
+
+    fun allocate(allocator: java.lang.foreign.SegmentAllocator): java.lang.foreign.MemorySegment {
+        val seg = allocator.allocate(LAYOUT)
+        seg.fill(0.toByte())
+        return seg
+    }
+}
+
+
+// === FILE: uniffi/primitive_arrays/UniffiForeignFutureResultF32.kt ===
+package uniffi.primitive_arrays
+
+internal object UniffiForeignFutureResultF32 {
+    val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
+        java.lang.foreign.ValueLayout.JAVA_FLOAT.withName("returnValue"),
+        java.lang.foreign.MemoryLayout.paddingLayout(4),
+        UniffiRustCallStatus.LAYOUT.withName("callStatus")
+    )
+    private val OFFSET_returnValue: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("return_value"))
+    private val OFFSET_callStatus: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("call_status"))
+
+    fun getreturn_value(seg: java.lang.foreign.MemorySegment): Float =
+        seg.get(java.lang.foreign.ValueLayout.JAVA_FLOAT_UNALIGNED, OFFSET_returnValue) as Float
+
+    fun setreturn_value(seg: java.lang.foreign.MemorySegment, value: Float) {
+        seg.set(java.lang.foreign.ValueLayout.JAVA_FLOAT_UNALIGNED, OFFSET_returnValue, value)
+    }
+
+    fun getcall_status(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
+        seg.asSlice(OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
+
+    fun setcall_status(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
+        java.lang.foreign.MemorySegment.copy(value, 0L, seg, OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
+    }
+
+    fun allocate(allocator: java.lang.foreign.SegmentAllocator): java.lang.foreign.MemorySegment {
+        val seg = allocator.allocate(LAYOUT)
+        seg.fill(0.toByte())
+        return seg
+    }
+}
+
+
+// === FILE: uniffi/primitive_arrays/UniffiForeignFutureResultF64.kt ===
+package uniffi.primitive_arrays
+
+internal object UniffiForeignFutureResultF64 {
+    val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
+        java.lang.foreign.ValueLayout.JAVA_DOUBLE.withName("returnValue"),
+        UniffiRustCallStatus.LAYOUT.withName("callStatus")
+    )
+    private val OFFSET_returnValue: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("return_value"))
+    private val OFFSET_callStatus: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("call_status"))
+
+    fun getreturn_value(seg: java.lang.foreign.MemorySegment): Double =
+        seg.get(java.lang.foreign.ValueLayout.JAVA_DOUBLE_UNALIGNED, OFFSET_returnValue) as Double
+
+    fun setreturn_value(seg: java.lang.foreign.MemorySegment, value: Double) {
+        seg.set(java.lang.foreign.ValueLayout.JAVA_DOUBLE_UNALIGNED, OFFSET_returnValue, value)
+    }
+
+    fun getcall_status(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
+        seg.asSlice(OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
+
+    fun setcall_status(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
+        java.lang.foreign.MemorySegment.copy(value, 0L, seg, OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
+    }
+
+    fun allocate(allocator: java.lang.foreign.SegmentAllocator): java.lang.foreign.MemorySegment {
+        val seg = allocator.allocate(LAYOUT)
+        seg.fill(0.toByte())
+        return seg
+    }
+}
+
+
+// === FILE: uniffi/primitive_arrays/UniffiForeignFutureResultI16.kt ===
+package uniffi.primitive_arrays
+
+internal object UniffiForeignFutureResultI16 {
+    val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
+        java.lang.foreign.ValueLayout.JAVA_SHORT.withName("returnValue"),
+        java.lang.foreign.MemoryLayout.paddingLayout(6),
+        UniffiRustCallStatus.LAYOUT.withName("callStatus")
+    )
+    private val OFFSET_returnValue: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("return_value"))
+    private val OFFSET_callStatus: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("call_status"))
+
+    fun getreturn_value(seg: java.lang.foreign.MemorySegment): Short =
+        seg.get(java.lang.foreign.ValueLayout.JAVA_SHORT_UNALIGNED, OFFSET_returnValue) as Short
+
+    fun setreturn_value(seg: java.lang.foreign.MemorySegment, value: Short) {
+        seg.set(java.lang.foreign.ValueLayout.JAVA_SHORT_UNALIGNED, OFFSET_returnValue, value)
+    }
+
+    fun getcall_status(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
+        seg.asSlice(OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
+
+    fun setcall_status(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
+        java.lang.foreign.MemorySegment.copy(value, 0L, seg, OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
+    }
+
+    fun allocate(allocator: java.lang.foreign.SegmentAllocator): java.lang.foreign.MemorySegment {
+        val seg = allocator.allocate(LAYOUT)
+        seg.fill(0.toByte())
+        return seg
+    }
+}
+
+
+// === FILE: uniffi/primitive_arrays/UniffiForeignFutureResultI32.kt ===
+package uniffi.primitive_arrays
+
+internal object UniffiForeignFutureResultI32 {
+    val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
+        java.lang.foreign.ValueLayout.JAVA_INT.withName("returnValue"),
+        java.lang.foreign.MemoryLayout.paddingLayout(4),
+        UniffiRustCallStatus.LAYOUT.withName("callStatus")
+    )
+    private val OFFSET_returnValue: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("return_value"))
+    private val OFFSET_callStatus: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("call_status"))
+
+    fun getreturn_value(seg: java.lang.foreign.MemorySegment): Int =
+        seg.get(java.lang.foreign.ValueLayout.JAVA_INT_UNALIGNED, OFFSET_returnValue) as Int
+
+    fun setreturn_value(seg: java.lang.foreign.MemorySegment, value: Int) {
+        seg.set(java.lang.foreign.ValueLayout.JAVA_INT_UNALIGNED, OFFSET_returnValue, value)
+    }
+
+    fun getcall_status(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
+        seg.asSlice(OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
+
+    fun setcall_status(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
+        java.lang.foreign.MemorySegment.copy(value, 0L, seg, OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
+    }
+
+    fun allocate(allocator: java.lang.foreign.SegmentAllocator): java.lang.foreign.MemorySegment {
+        val seg = allocator.allocate(LAYOUT)
+        seg.fill(0.toByte())
+        return seg
+    }
+}
+
+
+// === FILE: uniffi/primitive_arrays/UniffiForeignFutureResultI64.kt ===
+package uniffi.primitive_arrays
+
+internal object UniffiForeignFutureResultI64 {
+    val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
+        java.lang.foreign.ValueLayout.JAVA_LONG.withName("returnValue"),
+        UniffiRustCallStatus.LAYOUT.withName("callStatus")
+    )
+    private val OFFSET_returnValue: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("return_value"))
+    private val OFFSET_callStatus: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("call_status"))
+
+    fun getreturn_value(seg: java.lang.foreign.MemorySegment): Long =
+        seg.get(java.lang.foreign.ValueLayout.JAVA_LONG_UNALIGNED, OFFSET_returnValue) as Long
+
+    fun setreturn_value(seg: java.lang.foreign.MemorySegment, value: Long) {
+        seg.set(java.lang.foreign.ValueLayout.JAVA_LONG_UNALIGNED, OFFSET_returnValue, value)
+    }
+
+    fun getcall_status(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
+        seg.asSlice(OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
+
+    fun setcall_status(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
+        java.lang.foreign.MemorySegment.copy(value, 0L, seg, OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
+    }
+
+    fun allocate(allocator: java.lang.foreign.SegmentAllocator): java.lang.foreign.MemorySegment {
+        val seg = allocator.allocate(LAYOUT)
+        seg.fill(0.toByte())
+        return seg
+    }
+}
+
+
+// === FILE: uniffi/primitive_arrays/UniffiForeignFutureResultI8.kt ===
+package uniffi.primitive_arrays
+
+internal object UniffiForeignFutureResultI8 {
+    val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
+        java.lang.foreign.ValueLayout.JAVA_BYTE.withName("returnValue"),
+        java.lang.foreign.MemoryLayout.paddingLayout(7),
+        UniffiRustCallStatus.LAYOUT.withName("callStatus")
+    )
+    private val OFFSET_returnValue: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("return_value"))
+    private val OFFSET_callStatus: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("call_status"))
+
+    fun getreturn_value(seg: java.lang.foreign.MemorySegment): Byte =
+        seg.get(java.lang.foreign.ValueLayout.JAVA_BYTE, OFFSET_returnValue) as Byte
+
+    fun setreturn_value(seg: java.lang.foreign.MemorySegment, value: Byte) {
+        seg.set(java.lang.foreign.ValueLayout.JAVA_BYTE, OFFSET_returnValue, value)
+    }
+
+    fun getcall_status(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
+        seg.asSlice(OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
+
+    fun setcall_status(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
+        java.lang.foreign.MemorySegment.copy(value, 0L, seg, OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
+    }
+
+    fun allocate(allocator: java.lang.foreign.SegmentAllocator): java.lang.foreign.MemorySegment {
+        val seg = allocator.allocate(LAYOUT)
+        seg.fill(0.toByte())
+        return seg
+    }
+}
+
+
+// === FILE: uniffi/primitive_arrays/UniffiForeignFutureResultRustBuffer.kt ===
+package uniffi.primitive_arrays
+
+internal object UniffiForeignFutureResultRustBuffer {
+    val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
+        RustBuffer.LAYOUT.withName("returnValue"),
+        UniffiRustCallStatus.LAYOUT.withName("callStatus")
+    )
+    private val OFFSET_returnValue: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("return_value"))
+    private val OFFSET_callStatus: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("call_status"))
+
+    fun getreturn_value(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
+        seg.asSlice(OFFSET_returnValue, RustBuffer.LAYOUT.byteSize())
+
+    fun setreturn_value(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
+        java.lang.foreign.MemorySegment.copy(value, 0L, seg, OFFSET_returnValue, RustBuffer.LAYOUT.byteSize())
+    }
+
+    fun getcall_status(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
+        seg.asSlice(OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
+
+    fun setcall_status(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
+        java.lang.foreign.MemorySegment.copy(value, 0L, seg, OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
+    }
+
+    fun allocate(allocator: java.lang.foreign.SegmentAllocator): java.lang.foreign.MemorySegment {
+        val seg = allocator.allocate(LAYOUT)
+        seg.fill(0.toByte())
+        return seg
+    }
+}
+
+
+// === FILE: uniffi/primitive_arrays/UniffiForeignFutureResultU16.kt ===
+package uniffi.primitive_arrays
+
+internal object UniffiForeignFutureResultU16 {
+    val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
+        java.lang.foreign.ValueLayout.JAVA_SHORT.withName("returnValue"),
+        java.lang.foreign.MemoryLayout.paddingLayout(6),
+        UniffiRustCallStatus.LAYOUT.withName("callStatus")
+    )
+    private val OFFSET_returnValue: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("return_value"))
+    private val OFFSET_callStatus: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("call_status"))
+
+    fun getreturn_value(seg: java.lang.foreign.MemorySegment): Short =
+        seg.get(java.lang.foreign.ValueLayout.JAVA_SHORT_UNALIGNED, OFFSET_returnValue) as Short
+
+    fun setreturn_value(seg: java.lang.foreign.MemorySegment, value: Short) {
+        seg.set(java.lang.foreign.ValueLayout.JAVA_SHORT_UNALIGNED, OFFSET_returnValue, value)
+    }
+
+    fun getcall_status(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
+        seg.asSlice(OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
+
+    fun setcall_status(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
+        java.lang.foreign.MemorySegment.copy(value, 0L, seg, OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
+    }
+
+    fun allocate(allocator: java.lang.foreign.SegmentAllocator): java.lang.foreign.MemorySegment {
+        val seg = allocator.allocate(LAYOUT)
+        seg.fill(0.toByte())
+        return seg
+    }
+}
+
+
+// === FILE: uniffi/primitive_arrays/UniffiForeignFutureResultU32.kt ===
+package uniffi.primitive_arrays
+
+internal object UniffiForeignFutureResultU32 {
+    val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
+        java.lang.foreign.ValueLayout.JAVA_INT.withName("returnValue"),
+        java.lang.foreign.MemoryLayout.paddingLayout(4),
+        UniffiRustCallStatus.LAYOUT.withName("callStatus")
+    )
+    private val OFFSET_returnValue: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("return_value"))
+    private val OFFSET_callStatus: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("call_status"))
+
+    fun getreturn_value(seg: java.lang.foreign.MemorySegment): Int =
+        seg.get(java.lang.foreign.ValueLayout.JAVA_INT_UNALIGNED, OFFSET_returnValue) as Int
+
+    fun setreturn_value(seg: java.lang.foreign.MemorySegment, value: Int) {
+        seg.set(java.lang.foreign.ValueLayout.JAVA_INT_UNALIGNED, OFFSET_returnValue, value)
+    }
+
+    fun getcall_status(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
+        seg.asSlice(OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
+
+    fun setcall_status(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
+        java.lang.foreign.MemorySegment.copy(value, 0L, seg, OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
+    }
+
+    fun allocate(allocator: java.lang.foreign.SegmentAllocator): java.lang.foreign.MemorySegment {
+        val seg = allocator.allocate(LAYOUT)
+        seg.fill(0.toByte())
+        return seg
+    }
+}
+
+
+// === FILE: uniffi/primitive_arrays/UniffiForeignFutureResultU64.kt ===
+package uniffi.primitive_arrays
+
+internal object UniffiForeignFutureResultU64 {
+    val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
+        java.lang.foreign.ValueLayout.JAVA_LONG.withName("returnValue"),
+        UniffiRustCallStatus.LAYOUT.withName("callStatus")
+    )
+    private val OFFSET_returnValue: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("return_value"))
+    private val OFFSET_callStatus: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("call_status"))
+
+    fun getreturn_value(seg: java.lang.foreign.MemorySegment): Long =
+        seg.get(java.lang.foreign.ValueLayout.JAVA_LONG_UNALIGNED, OFFSET_returnValue) as Long
+
+    fun setreturn_value(seg: java.lang.foreign.MemorySegment, value: Long) {
+        seg.set(java.lang.foreign.ValueLayout.JAVA_LONG_UNALIGNED, OFFSET_returnValue, value)
+    }
+
+    fun getcall_status(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
+        seg.asSlice(OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
+
+    fun setcall_status(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
+        java.lang.foreign.MemorySegment.copy(value, 0L, seg, OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
+    }
+
+    fun allocate(allocator: java.lang.foreign.SegmentAllocator): java.lang.foreign.MemorySegment {
+        val seg = allocator.allocate(LAYOUT)
+        seg.fill(0.toByte())
+        return seg
+    }
+}
+
+
+// === FILE: uniffi/primitive_arrays/UniffiForeignFutureResultU8.kt ===
+package uniffi.primitive_arrays
+
+internal object UniffiForeignFutureResultU8 {
+    val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
+        java.lang.foreign.ValueLayout.JAVA_BYTE.withName("returnValue"),
+        java.lang.foreign.MemoryLayout.paddingLayout(7),
+        UniffiRustCallStatus.LAYOUT.withName("callStatus")
+    )
+    private val OFFSET_returnValue: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("return_value"))
+    private val OFFSET_callStatus: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("call_status"))
+
+    fun getreturn_value(seg: java.lang.foreign.MemorySegment): Byte =
+        seg.get(java.lang.foreign.ValueLayout.JAVA_BYTE, OFFSET_returnValue) as Byte
+
+    fun setreturn_value(seg: java.lang.foreign.MemorySegment, value: Byte) {
+        seg.set(java.lang.foreign.ValueLayout.JAVA_BYTE, OFFSET_returnValue, value)
+    }
+
+    fun getcall_status(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
+        seg.asSlice(OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
+
+    fun setcall_status(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
+        java.lang.foreign.MemorySegment.copy(value, 0L, seg, OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
+    }
+
+    fun allocate(allocator: java.lang.foreign.SegmentAllocator): java.lang.foreign.MemorySegment {
+        val seg = allocator.allocate(LAYOUT)
+        seg.fill(0.toByte())
+        return seg
+    }
+}
+
+
+// === FILE: uniffi/primitive_arrays/UniffiForeignFutureResultVoid.kt ===
+package uniffi.primitive_arrays
+
+internal object UniffiForeignFutureResultVoid {
+    val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
+        UniffiRustCallStatus.LAYOUT.withName("callStatus")
+    )
+    private val OFFSET_callStatus: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("call_status"))
+
+    fun getcall_status(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
+        seg.asSlice(OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
+
+    fun setcall_status(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
+        java.lang.foreign.MemorySegment.copy(value, 0L, seg, OFFSET_callStatus, UniffiRustCallStatus.LAYOUT.byteSize())
+    }
+
+    fun allocate(allocator: java.lang.foreign.SegmentAllocator): java.lang.foreign.MemorySegment {
+        val seg = allocator.allocate(LAYOUT)
+        seg.fill(0.toByte())
+        return seg
+    }
+}
+
+
 // === FILE: uniffi/primitive_arrays/UniffiHelpers.kt ===
 package uniffi.primitive_arrays
 
@@ -2893,6 +3839,41 @@ package uniffi.primitive_arrays
 
 interface UniffiRustCallStatusErrorHandler<E : Exception> {
     fun lift(errorBuf: java.lang.foreign.MemorySegment): E
+}
+
+
+// === FILE: uniffi/primitive_arrays/UniffiRustFutureContinuationCallback.kt ===
+package uniffi.primitive_arrays
+
+internal object UniffiRustFutureContinuationCallback {
+    val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
+        java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, java.lang.foreign.ValueLayout.JAVA_BYTE)
+
+    fun interface Fn {
+        fun callback(
+            `data`: Long,
+            pollResult: Byte
+        )
+    }
+
+    fun toUpcallStub(fn: Fn, arena: java.lang.foreign.Arena): java.lang.foreign.MemorySegment {
+        try {
+            val handle = java.lang.invoke.MethodHandles.lookup()
+                .findVirtual(
+                    Fn::class.java,
+                    "callback",
+                    java.lang.invoke.MethodType.methodType(
+                        Void.TYPE,
+                        Long::class.javaPrimitiveType ?: Long::class.java,
+                        Byte::class.javaPrimitiveType ?: Byte::class.java
+                    ),
+                )
+                .bindTo(fn)
+            return java.lang.foreign.Linker.nativeLinker().upcallStub(handle, DESCRIPTOR, arena)
+        } catch (e: ReflectiveOperationException) {
+            throw AssertionError("Failed to create upcall stub", e)
+        }
+    }
 }
 
 
