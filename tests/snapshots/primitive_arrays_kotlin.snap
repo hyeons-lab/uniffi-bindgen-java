@@ -81,6 +81,31 @@ object FfiConverterBoolean : FfiConverter<Boolean, Byte> {
 }
 
 
+// === FILE: uniffi/primitive_arrays/FfiConverterBooleanArray.kt ===
+package uniffi.primitive_arrays
+
+object FfiConverterBooleanArray : FfiConverterRustBuffer<BooleanArray> {
+    override fun read(buf: java.nio.ByteBuffer): BooleanArray {
+        val len = buf.getInt()
+        val arr = BooleanArray(len)
+        for (i in 0 until len) {
+            arr[i] = buf.get() != 0.toByte()
+        }
+        return arr
+    }
+
+    override fun allocationSize(value: BooleanArray): Long = 4L + value.size.toLong()
+
+    override fun write(value: BooleanArray, buf: java.nio.ByteBuffer) {
+        buf.putInt(value.size)
+        for (b in value) {
+            buf.put(if (b) 1.toByte() else 0.toByte())
+        }
+    }
+}
+
+
+
 // === FILE: uniffi/primitive_arrays/FfiConverterByte.kt ===
 package uniffi.primitive_arrays
 
@@ -115,7 +140,6 @@ object FfiConverterByteArray : FfiConverterRustBuffer<ByteArray> {
 }
 
 
-
 // === FILE: uniffi/primitive_arrays/FfiConverterDouble.kt ===
 package uniffi.primitive_arrays
 
@@ -144,6 +168,50 @@ object FfiConverterFloat : FfiConverter<Float, Float> {
 }
 
 
+// === FILE: uniffi/primitive_arrays/FfiConverterFloat32Array.kt ===
+package uniffi.primitive_arrays
+
+object FfiConverterFloat32Array : FfiConverterRustBuffer<FloatArray> {
+    override fun read(buf: java.nio.ByteBuffer): FloatArray {
+        val len = buf.getInt()
+        val arr = FloatArray(len)
+        buf.asFloatBuffer().get(arr)
+        buf.position(buf.position() + len * 4)
+        return arr
+    }
+
+    override fun allocationSize(value: FloatArray): Long = 4L + value.size.toLong() * 4L
+
+    override fun write(value: FloatArray, buf: java.nio.ByteBuffer) {
+        buf.putInt(value.size)
+        buf.asFloatBuffer().put(value)
+        buf.position(buf.position() + value.size * 4)
+    }
+}
+
+
+// === FILE: uniffi/primitive_arrays/FfiConverterFloat64Array.kt ===
+package uniffi.primitive_arrays
+
+object FfiConverterFloat64Array : FfiConverterRustBuffer<DoubleArray> {
+    override fun read(buf: java.nio.ByteBuffer): DoubleArray {
+        val len = buf.getInt()
+        val arr = DoubleArray(len)
+        buf.asDoubleBuffer().get(arr)
+        buf.position(buf.position() + len * 8)
+        return arr
+    }
+
+    override fun allocationSize(value: DoubleArray): Long = 4L + value.size.toLong() * 8L
+
+    override fun write(value: DoubleArray, buf: java.nio.ByteBuffer) {
+        buf.putInt(value.size)
+        buf.asDoubleBuffer().put(value)
+        buf.position(buf.position() + value.size * 8)
+    }
+}
+
+
 // === FILE: uniffi/primitive_arrays/FfiConverterInt.kt ===
 package uniffi.primitive_arrays
 
@@ -154,6 +222,72 @@ object FfiConverterInt : FfiConverter<Int, Int> {
     override fun allocationSize(value: Int): Long = 4L
     override fun write(value: Int, buf: java.nio.ByteBuffer) {
         buf.putInt(value)
+    }
+}
+
+
+// === FILE: uniffi/primitive_arrays/FfiConverterInt16Array.kt ===
+package uniffi.primitive_arrays
+
+object FfiConverterInt16Array : FfiConverterRustBuffer<ShortArray> {
+    override fun read(buf: java.nio.ByteBuffer): ShortArray {
+        val len = buf.getInt()
+        val arr = ShortArray(len)
+        buf.asShortBuffer().get(arr)
+        buf.position(buf.position() + len * 2)
+        return arr
+    }
+
+    override fun allocationSize(value: ShortArray): Long = 4L + value.size.toLong() * 2L
+
+    override fun write(value: ShortArray, buf: java.nio.ByteBuffer) {
+        buf.putInt(value.size)
+        buf.asShortBuffer().put(value)
+        buf.position(buf.position() + value.size * 2)
+    }
+}
+
+
+// === FILE: uniffi/primitive_arrays/FfiConverterInt32Array.kt ===
+package uniffi.primitive_arrays
+
+object FfiConverterInt32Array : FfiConverterRustBuffer<IntArray> {
+    override fun read(buf: java.nio.ByteBuffer): IntArray {
+        val len = buf.getInt()
+        val arr = IntArray(len)
+        buf.asIntBuffer().get(arr)
+        buf.position(buf.position() + len * 4)
+        return arr
+    }
+
+    override fun allocationSize(value: IntArray): Long = 4L + value.size.toLong() * 4L
+
+    override fun write(value: IntArray, buf: java.nio.ByteBuffer) {
+        buf.putInt(value.size)
+        buf.asIntBuffer().put(value)
+        buf.position(buf.position() + value.size * 4)
+    }
+}
+
+
+// === FILE: uniffi/primitive_arrays/FfiConverterInt64Array.kt ===
+package uniffi.primitive_arrays
+
+object FfiConverterInt64Array : FfiConverterRustBuffer<LongArray> {
+    override fun read(buf: java.nio.ByteBuffer): LongArray {
+        val len = buf.getInt()
+        val arr = LongArray(len)
+        buf.asLongBuffer().get(arr)
+        buf.position(buf.position() + len * 8)
+        return arr
+    }
+
+    override fun allocationSize(value: LongArray): Long = 4L + value.size.toLong() * 8L
+
+    override fun write(value: LongArray, buf: java.nio.ByteBuffer) {
+        buf.putInt(value.size)
+        buf.asLongBuffer().put(value)
+        buf.position(buf.position() + value.size * 8)
     }
 }
 
@@ -181,132 +315,6 @@ interface FfiConverterRustBuffer<T> : FfiConverter<T, java.lang.foreign.MemorySe
     override fun lower(value: T): java.lang.foreign.MemorySegment = lowerIntoRustBuffer(value)
 }
 
-
-// === FILE: uniffi/primitive_arrays/FfiConverterSequenceBoolean.kt ===
-package uniffi.primitive_arrays
-
-object FfiConverterSequenceBoolean : FfiConverterRustBuffer<List<Boolean>> {
-    override fun read(buf: java.nio.ByteBuffer): List<Boolean> {
-        val len = buf.getInt()
-        val list = ArrayList<Boolean>(len)
-        repeat(len) { list.add(FfiConverterBoolean.read(buf)) }
-        return list
-    }
-
-    override fun allocationSize(value: List<Boolean>): Long {
-        return 4L + value.sumOf { FfiConverterBoolean.allocationSize(it) }
-    }
-
-    override fun write(value: List<Boolean>, buf: java.nio.ByteBuffer) {
-        buf.putInt(value.size)
-        value.forEach { FfiConverterBoolean.write(it, buf) }
-    }
-}
-
-// === FILE: uniffi/primitive_arrays/FfiConverterSequenceDouble.kt ===
-package uniffi.primitive_arrays
-
-object FfiConverterSequenceDouble : FfiConverterRustBuffer<List<Double>> {
-    override fun read(buf: java.nio.ByteBuffer): List<Double> {
-        val len = buf.getInt()
-        val list = ArrayList<Double>(len)
-        repeat(len) { list.add(FfiConverterDouble.read(buf)) }
-        return list
-    }
-
-    override fun allocationSize(value: List<Double>): Long {
-        return 4L + value.sumOf { FfiConverterDouble.allocationSize(it) }
-    }
-
-    override fun write(value: List<Double>, buf: java.nio.ByteBuffer) {
-        buf.putInt(value.size)
-        value.forEach { FfiConverterDouble.write(it, buf) }
-    }
-}
-
-// === FILE: uniffi/primitive_arrays/FfiConverterSequenceFloat.kt ===
-package uniffi.primitive_arrays
-
-object FfiConverterSequenceFloat : FfiConverterRustBuffer<List<Float>> {
-    override fun read(buf: java.nio.ByteBuffer): List<Float> {
-        val len = buf.getInt()
-        val list = ArrayList<Float>(len)
-        repeat(len) { list.add(FfiConverterFloat.read(buf)) }
-        return list
-    }
-
-    override fun allocationSize(value: List<Float>): Long {
-        return 4L + value.sumOf { FfiConverterFloat.allocationSize(it) }
-    }
-
-    override fun write(value: List<Float>, buf: java.nio.ByteBuffer) {
-        buf.putInt(value.size)
-        value.forEach { FfiConverterFloat.write(it, buf) }
-    }
-}
-
-// === FILE: uniffi/primitive_arrays/FfiConverterSequenceInt.kt ===
-package uniffi.primitive_arrays
-
-object FfiConverterSequenceInt : FfiConverterRustBuffer<List<Int>> {
-    override fun read(buf: java.nio.ByteBuffer): List<Int> {
-        val len = buf.getInt()
-        val list = ArrayList<Int>(len)
-        repeat(len) { list.add(FfiConverterInt.read(buf)) }
-        return list
-    }
-
-    override fun allocationSize(value: List<Int>): Long {
-        return 4L + value.sumOf { FfiConverterInt.allocationSize(it) }
-    }
-
-    override fun write(value: List<Int>, buf: java.nio.ByteBuffer) {
-        buf.putInt(value.size)
-        value.forEach { FfiConverterInt.write(it, buf) }
-    }
-}
-
-// === FILE: uniffi/primitive_arrays/FfiConverterSequenceLong.kt ===
-package uniffi.primitive_arrays
-
-object FfiConverterSequenceLong : FfiConverterRustBuffer<List<Long>> {
-    override fun read(buf: java.nio.ByteBuffer): List<Long> {
-        val len = buf.getInt()
-        val list = ArrayList<Long>(len)
-        repeat(len) { list.add(FfiConverterLong.read(buf)) }
-        return list
-    }
-
-    override fun allocationSize(value: List<Long>): Long {
-        return 4L + value.sumOf { FfiConverterLong.allocationSize(it) }
-    }
-
-    override fun write(value: List<Long>, buf: java.nio.ByteBuffer) {
-        buf.putInt(value.size)
-        value.forEach { FfiConverterLong.write(it, buf) }
-    }
-}
-
-// === FILE: uniffi/primitive_arrays/FfiConverterSequenceShort.kt ===
-package uniffi.primitive_arrays
-
-object FfiConverterSequenceShort : FfiConverterRustBuffer<List<Short>> {
-    override fun read(buf: java.nio.ByteBuffer): List<Short> {
-        val len = buf.getInt()
-        val list = ArrayList<Short>(len)
-        repeat(len) { list.add(FfiConverterShort.read(buf)) }
-        return list
-    }
-
-    override fun allocationSize(value: List<Short>): Long {
-        return 4L + value.sumOf { FfiConverterShort.allocationSize(it) }
-    }
-
-    override fun write(value: List<Short>, buf: java.nio.ByteBuffer) {
-        buf.putInt(value.size)
-        value.forEach { FfiConverterShort.write(it, buf) }
-    }
-}
 
 // === FILE: uniffi/primitive_arrays/FfiConverterShort.kt ===
 package uniffi.primitive_arrays
@@ -477,111 +485,111 @@ package uniffi.primitive_arrays
 object Primitive_arrays {
 
 
-    fun countTrue(`data`: List<Boolean>): Int =
+    fun countTrue(`data`: BooleanArray): Int =
         UniffiHelpers.uniffiRustCallInt { _, _status ->
-            UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_count_true(FfiConverterSequenceBoolean.lower(`data`), _status)
+            UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_count_true(FfiConverterBooleanArray.lower(`data`), _status)
         }
 
 
-    fun roundtripBool(`data`: List<Boolean>): List<Boolean> =
-        FfiConverterSequenceBoolean.lift(
+    fun roundtripBool(`data`: BooleanArray): BooleanArray =
+        FfiConverterBooleanArray.lift(
             UniffiHelpers.uniffiRustCall { _allocator, _status ->
-                UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_bool(_allocator, FfiConverterSequenceBoolean.lower(`data`), _status)
+                UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_bool(_allocator, FfiConverterBooleanArray.lower(`data`), _status)
             }
         )
 
 
-    fun roundtripFloat32(`data`: List<Float>): List<Float> =
-        FfiConverterSequenceFloat.lift(
+    fun roundtripFloat32(`data`: FloatArray): FloatArray =
+        FfiConverterFloat32Array.lift(
             UniffiHelpers.uniffiRustCall { _allocator, _status ->
-                UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_float32(_allocator, FfiConverterSequenceFloat.lower(`data`), _status)
+                UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_float32(_allocator, FfiConverterFloat32Array.lower(`data`), _status)
             }
         )
 
 
-    fun roundtripFloat64(`data`: List<Double>): List<Double> =
-        FfiConverterSequenceDouble.lift(
+    fun roundtripFloat64(`data`: DoubleArray): DoubleArray =
+        FfiConverterFloat64Array.lift(
             UniffiHelpers.uniffiRustCall { _allocator, _status ->
-                UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_float64(_allocator, FfiConverterSequenceDouble.lower(`data`), _status)
+                UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_float64(_allocator, FfiConverterFloat64Array.lower(`data`), _status)
             }
         )
 
 
-    fun roundtripInt16(`data`: List<Short>): List<Short> =
-        FfiConverterSequenceShort.lift(
+    fun roundtripInt16(`data`: ShortArray): ShortArray =
+        FfiConverterInt16Array.lift(
             UniffiHelpers.uniffiRustCall { _allocator, _status ->
-                UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_int16(_allocator, FfiConverterSequenceShort.lower(`data`), _status)
+                UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_int16(_allocator, FfiConverterInt16Array.lower(`data`), _status)
             }
         )
 
 
-    fun roundtripInt32(`data`: List<Int>): List<Int> =
-        FfiConverterSequenceInt.lift(
+    fun roundtripInt32(`data`: IntArray): IntArray =
+        FfiConverterInt32Array.lift(
             UniffiHelpers.uniffiRustCall { _allocator, _status ->
-                UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_int32(_allocator, FfiConverterSequenceInt.lower(`data`), _status)
+                UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_int32(_allocator, FfiConverterInt32Array.lower(`data`), _status)
             }
         )
 
 
-    fun roundtripInt64(`data`: List<Long>): List<Long> =
-        FfiConverterSequenceLong.lift(
+    fun roundtripInt64(`data`: LongArray): LongArray =
+        FfiConverterInt64Array.lift(
             UniffiHelpers.uniffiRustCall { _allocator, _status ->
-                UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_int64(_allocator, FfiConverterSequenceLong.lower(`data`), _status)
+                UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_int64(_allocator, FfiConverterInt64Array.lower(`data`), _status)
             }
         )
 
 
-    fun roundtripUint16(`data`: List<Short>): List<Short> =
-        FfiConverterSequenceShort.lift(
+    fun roundtripUint16(`data`: ShortArray): ShortArray =
+        FfiConverterInt16Array.lift(
             UniffiHelpers.uniffiRustCall { _allocator, _status ->
-                UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_uint16(_allocator, FfiConverterSequenceShort.lower(`data`), _status)
+                UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_uint16(_allocator, FfiConverterInt16Array.lower(`data`), _status)
             }
         )
 
 
-    fun roundtripUint32(`data`: List<Int>): List<Int> =
-        FfiConverterSequenceInt.lift(
+    fun roundtripUint32(`data`: IntArray): IntArray =
+        FfiConverterInt32Array.lift(
             UniffiHelpers.uniffiRustCall { _allocator, _status ->
-                UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_uint32(_allocator, FfiConverterSequenceInt.lower(`data`), _status)
+                UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_uint32(_allocator, FfiConverterInt32Array.lower(`data`), _status)
             }
         )
 
 
-    fun roundtripUint64(`data`: List<Long>): List<Long> =
-        FfiConverterSequenceLong.lift(
+    fun roundtripUint64(`data`: LongArray): LongArray =
+        FfiConverterInt64Array.lift(
             UniffiHelpers.uniffiRustCall { _allocator, _status ->
-                UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_uint64(_allocator, FfiConverterSequenceLong.lower(`data`), _status)
+                UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_roundtrip_uint64(_allocator, FfiConverterInt64Array.lower(`data`), _status)
             }
         )
 
 
-    fun sumFloat32(`data`: List<Float>): Float =
+    fun sumFloat32(`data`: FloatArray): Float =
         UniffiHelpers.uniffiRustCallFloat { _, _status ->
-            UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_sum_float32(FfiConverterSequenceFloat.lower(`data`), _status)
+            UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_sum_float32(FfiConverterFloat32Array.lower(`data`), _status)
         }
 
 
-    fun sumFloat64(`data`: List<Double>): Double =
+    fun sumFloat64(`data`: DoubleArray): Double =
         UniffiHelpers.uniffiRustCallDouble { _, _status ->
-            UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_sum_float64(FfiConverterSequenceDouble.lower(`data`), _status)
+            UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_sum_float64(FfiConverterFloat64Array.lower(`data`), _status)
         }
 
 
-    fun sumInt16(`data`: List<Short>): Short =
+    fun sumInt16(`data`: ShortArray): Short =
         UniffiHelpers.uniffiRustCallShort { _, _status ->
-            UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_sum_int16(FfiConverterSequenceShort.lower(`data`), _status)
+            UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_sum_int16(FfiConverterInt16Array.lower(`data`), _status)
         }
 
 
-    fun sumInt32(`data`: List<Int>): Int =
+    fun sumInt32(`data`: IntArray): Int =
         UniffiHelpers.uniffiRustCallInt { _, _status ->
-            UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_sum_int32(FfiConverterSequenceInt.lower(`data`), _status)
+            UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_sum_int32(FfiConverterInt32Array.lower(`data`), _status)
         }
 
 
-    fun sumInt64(`data`: List<Long>): Long =
+    fun sumInt64(`data`: LongArray): Long =
         UniffiHelpers.uniffiRustCallLong { _, _status ->
-            UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_sum_int64(FfiConverterSequenceLong.lower(`data`), _status)
+            UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_sum_int64(FfiConverterInt64Array.lower(`data`), _status)
         }
 }
 // === FILE: uniffi/primitive_arrays/RustBuffer.kt ===
