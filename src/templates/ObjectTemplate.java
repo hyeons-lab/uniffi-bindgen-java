@@ -204,7 +204,15 @@ public class {{ impl_class_name }} implements AutoCloseable, {{ interface_name }
     });
   }
 
-  private class UniffiCleanAction implements Runnable {
+  // `static` is load-bearing: a non-static nested class would carry an
+  // implicit `{{ impl_class_name }}.this` reference, which would keep
+  // the wrapper strongly reachable via the cleaner's internal list
+  // until the action runs. That would prevent the wrapper from ever
+  // becoming phantom-reachable, so the cleaner would never fire, and
+  // every forgotten `close()` would leak the underlying Rust handle.
+  // With `static` the action only captures the primitive `handle` long
+  // via its constructor — exactly what the Cleaner contract requires.
+  private static class UniffiCleanAction implements Runnable {
     private final long handle;
 
     public UniffiCleanAction(long handle) {
