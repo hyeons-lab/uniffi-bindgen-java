@@ -142,6 +142,20 @@ fn snapshot_geometry() -> Result<()> {
     snapshot_fixture("uniffi-example-geometry", "geometry")
 }
 
+/// Kotlin-side snapshot for geometry. P3f adds `data class` records and
+/// `T?` optionals — geometry exercises both (`Point` / `Line` records,
+/// plus `intersection`'s `Point?` return). Coverall stays Java-only
+/// until objects / callbacks / sequences land in P4+.
+#[test]
+fn snapshot_geometry_kotlin() -> Result<()> {
+    snapshot_fixture_for(
+        "uniffi-example-geometry",
+        "geometry_kotlin",
+        Language::Kotlin,
+        "kt",
+    )
+}
+
 #[test]
 fn snapshot_coverall() -> Result<()> {
     snapshot_fixture("uniffi-fixture-coverall", "coverall")
