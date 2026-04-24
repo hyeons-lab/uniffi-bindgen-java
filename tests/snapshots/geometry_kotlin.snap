@@ -1,0 +1,2281 @@
+---
+source: tests/snapshots.rs
+expression: combined
+---
+// === FILE: uniffi/geometry/FfiConverter.kt ===
+package uniffi.geometry
+
+// The FfiConverter interface handles converter types to and from the FFI.
+//
+// All implementations are public to support external types — when a type is
+// external we need to import its FfiConverter.
+interface FfiConverter<T, FfiType> {
+    // Convert an FFI type to a Kotlin type
+    fun lift(value: FfiType): T
+
+    // Convert a Kotlin type to an FFI type
+    fun lower(value: T): FfiType
+
+    // Read a Kotlin type from a `ByteBuffer`
+    fun read(buf: java.nio.ByteBuffer): T
+
+    // Calculate bytes to allocate when creating a `RustBuffer`.
+    //
+    // Must return at least as many bytes as `write()` will write. May return
+    // more than needed (e.g. for Strings, whose UTF-8 byte count depends on
+    // the codepoints, we pessimistically allocate 3 bytes per char). Extra
+    // bytes aren't a problem because the RustBuffer is short-lived.
+    fun allocationSize(value: T): Long
+
+    // Write a Kotlin type to a `ByteBuffer`
+    fun write(value: T, buf: java.nio.ByteBuffer)
+
+    // Lower a value into a `RustBuffer`.
+    //
+    // This lowers a value into a `RustBuffer` rather than the normal FfiType.
+    // Used by the callback interface code — callback returns are always
+    // serialized into a `RustBuffer` regardless of their normal FFI type.
+    fun lowerIntoRustBuffer(value: T): java.lang.foreign.MemorySegment {
+        val rbuf = RustBuffer.alloc(allocationSize(value))
+        try {
+            val bbuf = RustBuffer.asWriteByteBuffer(rbuf)
+            write(value, bbuf)
+            RustBuffer.setLen(rbuf, bbuf.position().toLong())
+            return rbuf
+        } catch (e: Throwable) {
+            RustBuffer.free(rbuf)
+            throw e
+        }
+    }
+
+    // Lift a value from a `RustBuffer`.
+    //
+    // Mostly here for symmetry with `lowerIntoRustBuffer()`. Currently only
+    // used by `FfiConverterRustBuffer` below.
+    fun liftFromRustBuffer(rbuf: java.lang.foreign.MemorySegment): T {
+        val byteBuf = RustBuffer.asByteBuffer(rbuf)
+        try {
+            val item = read(byteBuf)
+            if (byteBuf.hasRemaining()) {
+                throw RuntimeException("junk remaining in buffer after lifting, something is very wrong!!")
+            }
+            return item
+        } finally {
+            RustBuffer.free(rbuf)
+        }
+    }
+}
+
+
+// === FILE: uniffi/geometry/FfiConverterBoolean.kt ===
+package uniffi.geometry
+
+object FfiConverterBoolean : FfiConverter<Boolean, Byte> {
+    override fun lift(value: Byte): Boolean = value.toInt() != 0
+    override fun read(buf: java.nio.ByteBuffer): Boolean = lift(buf.get())
+    override fun lower(value: Boolean): Byte = if (value) 1.toByte() else 0.toByte()
+    override fun allocationSize(value: Boolean): Long = 1L
+    override fun write(value: Boolean, buf: java.nio.ByteBuffer) {
+        buf.put(lower(value))
+    }
+}
+
+
+// === FILE: uniffi/geometry/FfiConverterByte.kt ===
+package uniffi.geometry
+
+object FfiConverterByte : FfiConverter<Byte, Byte> {
+    override fun lift(value: Byte): Byte = value
+    override fun read(buf: java.nio.ByteBuffer): Byte = buf.get()
+    override fun lower(value: Byte): Byte = value
+    override fun allocationSize(value: Byte): Long = 1L
+    override fun write(value: Byte, buf: java.nio.ByteBuffer) {
+        buf.put(value)
+    }
+}
+
+
+// === FILE: uniffi/geometry/FfiConverterByteArray.kt ===
+package uniffi.geometry
+
+object FfiConverterByteArray : FfiConverterRustBuffer<ByteArray> {
+    override fun read(buf: java.nio.ByteBuffer): ByteArray {
+        val len = buf.int
+        val arr = ByteArray(len)
+        buf.get(arr)
+        return arr
+    }
+
+    override fun allocationSize(value: ByteArray): Long = (4 + value.size).toLong()
+
+    override fun write(value: ByteArray, buf: java.nio.ByteBuffer) {
+        buf.putInt(value.size)
+        buf.put(value)
+    }
+}
+
+
+
+// === FILE: uniffi/geometry/FfiConverterDouble.kt ===
+package uniffi.geometry
+
+object FfiConverterDouble : FfiConverter<Double, Double> {
+    override fun lift(value: Double): Double = value
+    override fun read(buf: java.nio.ByteBuffer): Double = buf.double
+    override fun lower(value: Double): Double = value
+    override fun allocationSize(value: Double): Long = 8L
+    override fun write(value: Double, buf: java.nio.ByteBuffer) {
+        buf.putDouble(value)
+    }
+}
+
+
+// === FILE: uniffi/geometry/FfiConverterFloat.kt ===
+package uniffi.geometry
+
+object FfiConverterFloat : FfiConverter<Float, Float> {
+    override fun lift(value: Float): Float = value
+    override fun read(buf: java.nio.ByteBuffer): Float = buf.float
+    override fun lower(value: Float): Float = value
+    override fun allocationSize(value: Float): Long = 4L
+    override fun write(value: Float, buf: java.nio.ByteBuffer) {
+        buf.putFloat(value)
+    }
+}
+
+
+// === FILE: uniffi/geometry/FfiConverterInteger.kt ===
+package uniffi.geometry
+
+object FfiConverterInteger : FfiConverter<Int, Int> {
+    override fun lift(value: Int): Int = value
+    override fun read(buf: java.nio.ByteBuffer): Int = buf.int
+    override fun lower(value: Int): Int = value
+    override fun allocationSize(value: Int): Long = 4L
+    override fun write(value: Int, buf: java.nio.ByteBuffer) {
+        buf.putInt(value)
+    }
+}
+
+
+// === FILE: uniffi/geometry/FfiConverterLong.kt ===
+package uniffi.geometry
+
+object FfiConverterLong : FfiConverter<Long, Long> {
+    override fun lift(value: Long): Long = value
+    override fun read(buf: java.nio.ByteBuffer): Long = buf.long
+    override fun lower(value: Long): Long = value
+    override fun allocationSize(value: Long): Long = 8L
+    override fun write(value: Long, buf: java.nio.ByteBuffer) {
+        buf.putLong(value)
+    }
+}
+
+
+// === FILE: uniffi/geometry/FfiConverterOptionalTypePoint.kt ===
+package uniffi.geometry
+
+// Kotlin uses its type system to express nullability directly via `T?`,
+// so the `lift` / `lower` boundary handles a null sentinel byte without
+// any wrapper class on the Kotlin side.
+object FfiConverterOptionalTypePoint : FfiConverterRustBuffer<Point?> {
+    override fun read(buf: java.nio.ByteBuffer): Point? {
+        if (buf.get() == 0.toByte()) {
+            return null
+        }
+        return FfiConverterTypePoint.read(buf)
+    }
+
+    override fun allocationSize(value: Point?): Long {
+        if (value == null) {
+            return 1L
+        }
+        return 1L + FfiConverterTypePoint.allocationSize(value)
+    }
+
+    override fun write(value: Point?, buf: java.nio.ByteBuffer) {
+        if (value == null) {
+            buf.put(0.toByte())
+        } else {
+            buf.put(1.toByte())
+            FfiConverterTypePoint.write(value, buf)
+        }
+    }
+}
+
+// === FILE: uniffi/geometry/FfiConverterRustBuffer.kt ===
+package uniffi.geometry
+
+// FfiConverter that uses `RustBuffer` as the FfiType.
+interface FfiConverterRustBuffer<T> : FfiConverter<T, java.lang.foreign.MemorySegment> {
+    override fun lift(value: java.lang.foreign.MemorySegment): T = liftFromRustBuffer(value)
+    override fun lower(value: T): java.lang.foreign.MemorySegment = lowerIntoRustBuffer(value)
+}
+
+
+// === FILE: uniffi/geometry/FfiConverterShort.kt ===
+package uniffi.geometry
+
+object FfiConverterShort : FfiConverter<Short, Short> {
+    override fun lift(value: Short): Short = value
+    override fun read(buf: java.nio.ByteBuffer): Short = buf.short
+    override fun lower(value: Short): Short = value
+    override fun allocationSize(value: Short): Long = 2L
+    override fun write(value: Short, buf: java.nio.ByteBuffer) {
+        buf.putShort(value)
+    }
+}
+
+
+// === FILE: uniffi/geometry/FfiConverterString.kt ===
+package uniffi.geometry
+
+object FfiConverterString : FfiConverter<String, java.lang.foreign.MemorySegment> {
+    // Note: we don't inherit from FfiConverterRustBuffer because we use a
+    // special encoding when lowering/lifting. We use `RustBuffer.len` to
+    // store the length rather than writing it into the buffer body.
+    override fun lift(value: java.lang.foreign.MemorySegment): String =
+        try {
+            val byteArr = ByteArray(RustBuffer.getLen(value).toInt())
+            RustBuffer.asByteBuffer(value).get(byteArr)
+            String(byteArr, java.nio.charset.StandardCharsets.UTF_8)
+        } finally {
+            RustBuffer.free(value)
+        }
+
+    override fun read(buf: java.nio.ByteBuffer): String {
+        val len = buf.int
+        val byteArr = ByteArray(len)
+        buf.get(byteArr)
+        return String(byteArr, java.nio.charset.StandardCharsets.UTF_8)
+    }
+
+    private fun toUtf8(value: String): java.nio.ByteBuffer {
+        // Guard against invalid UTF-16 (lone surrogates) so the conversion
+        // produces a clean, decodable UTF-8 stream.
+        val encoder = java.nio.charset.StandardCharsets.UTF_8.newEncoder()
+        encoder.onMalformedInput(java.nio.charset.CodingErrorAction.REPORT)
+        return try {
+            encoder.encode(java.nio.CharBuffer.wrap(value))
+        } catch (e: java.nio.charset.CharacterCodingException) {
+            throw RuntimeException(e)
+        }
+    }
+
+    override fun lower(value: String): java.lang.foreign.MemorySegment {
+        val byteBuf = toUtf8(value)
+        val rbuf = RustBuffer.alloc(byteBuf.limit().toLong())
+        RustBuffer.asWriteByteBuffer(rbuf).put(byteBuf)
+        RustBuffer.setLen(rbuf, byteBuf.limit().toLong())
+        return rbuf
+    }
+
+    // We don't know exactly how many bytes the UTF-8 encoding will need,
+    // so pessimistically allocate 3 bytes per UTF-16 code unit — always
+    // enough even for worst-case surrogate expansions.
+    override fun allocationSize(value: String): Long {
+        val sizeForLength = 4L
+        val sizeForString = value.length.toLong() * 3L
+        return sizeForLength + sizeForString
+    }
+
+    override fun write(value: String, buf: java.nio.ByteBuffer) {
+        val byteBuf = toUtf8(value)
+        buf.putInt(byteBuf.limit())
+        buf.put(byteBuf)
+    }
+}
+
+
+// === FILE: uniffi/geometry/FfiConverterTypeLine.kt ===
+package uniffi.geometry
+
+object FfiConverterTypeLine : FfiConverterRustBuffer<Line> {
+    override fun read(buf: java.nio.ByteBuffer): Line {
+        return Line(
+            FfiConverterTypePoint.read(buf),
+            FfiConverterTypePoint.read(buf)
+        )
+    }
+
+    override fun allocationSize(value: Line): Long {
+        return (
+            FfiConverterTypePoint.allocationSize(value.start) +
+            FfiConverterTypePoint.allocationSize(value.end)
+        )
+    }
+
+    override fun write(value: Line, buf: java.nio.ByteBuffer) {
+        FfiConverterTypePoint.write(value.start, buf)
+        FfiConverterTypePoint.write(value.end, buf)
+    }
+}
+
+// === FILE: uniffi/geometry/FfiConverterTypePoint.kt ===
+package uniffi.geometry
+
+object FfiConverterTypePoint : FfiConverterRustBuffer<Point> {
+    override fun read(buf: java.nio.ByteBuffer): Point {
+        return Point(
+            FfiConverterDouble.read(buf),
+            FfiConverterDouble.read(buf)
+        )
+    }
+
+    override fun allocationSize(value: Point): Long {
+        return (
+            FfiConverterDouble.allocationSize(value.coordX) +
+            FfiConverterDouble.allocationSize(value.coordY)
+        )
+    }
+
+    override fun write(value: Point, buf: java.nio.ByteBuffer) {
+        FfiConverterDouble.write(value.coordX, buf)
+        FfiConverterDouble.write(value.coordY, buf)
+    }
+}
+
+// === FILE: uniffi/geometry/ForeignBytes.kt ===
+package uniffi.geometry
+
+// Helper for safely passing byte references into the rust code.
+//
+// Not actually used yet — there aren't many things you can take a direct
+// pointer to in the JVM, and if we're going to copy something we might as
+// well copy it into a `RustBuffer`. Here for API completeness.
+object ForeignBytes {
+    val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
+        java.lang.foreign.ValueLayout.JAVA_INT.withName("len"),
+        java.lang.foreign.MemoryLayout.paddingLayout(4),  // alignment padding before ADDRESS
+        java.lang.foreign.ValueLayout.ADDRESS.withName("data"),
+    )
+
+    private val OFFSET_LEN: Long =
+        LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("len"))
+    private val OFFSET_DATA: Long =
+        LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("data"))
+
+    fun getLen(seg: java.lang.foreign.MemorySegment): Int =
+        seg.get(java.lang.foreign.ValueLayout.JAVA_INT_UNALIGNED, OFFSET_LEN)
+
+    fun setLen(seg: java.lang.foreign.MemorySegment, value: Int) {
+        seg.set(java.lang.foreign.ValueLayout.JAVA_INT_UNALIGNED, OFFSET_LEN, value)
+    }
+
+    fun getData(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
+        seg.get(java.lang.foreign.ValueLayout.ADDRESS_UNALIGNED, OFFSET_DATA)
+
+    fun setData(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
+        seg.set(java.lang.foreign.ValueLayout.ADDRESS_UNALIGNED, OFFSET_DATA, value)
+    }
+}
+
+
+// === FILE: uniffi/geometry/Geometry.kt ===
+package uniffi.geometry
+
+object Geometry {
+
+
+    fun gradient(ln: Line): Double =
+        UniffiHelpers.uniffiRustCallDouble { _, _status ->
+            UniffiLib.uniffi_uniffi_geometry_fn_func_gradient(FfiConverterTypeLine.lower(ln), _status)
+        }
+
+
+    fun intersection(ln1: Line, ln2: Line): Point? =
+        FfiConverterOptionalTypePoint.lift(
+            UniffiHelpers.uniffiRustCall { _allocator, _status ->
+                UniffiLib.uniffi_uniffi_geometry_fn_func_intersection(_allocator, FfiConverterTypeLine.lower(ln1), FfiConverterTypeLine.lower(ln2), _status)
+            }
+        )
+}
+// === FILE: uniffi/geometry/InternalException.kt ===
+package uniffi.geometry
+
+open class InternalException(message: String) : RuntimeException(message)
+
+
+// === FILE: uniffi/geometry/Line.kt ===
+package uniffi.geometry
+
+data class Line(
+    val start: Point,
+    val end: Point
+)
+
+
+// === FILE: uniffi/geometry/NamespaceLibrary.kt ===
+package uniffi.geometry
+
+internal object NamespaceLibrary {
+    @Synchronized
+    fun findLibraryName(componentName: String): String {
+        val libOverride = System.getProperty("uniffi.component.$componentName.libraryOverride")
+        if (libOverride != null) {
+            return libOverride
+        }
+        return "uniffi_geometry-CARGO_BUILD_HASH"
+    }
+
+    fun loadLibrary(): java.lang.foreign.SymbolLookup {
+        val name = findLibraryName("geometry")
+        if (name.startsWith("/") || // Unix absolute path
+            name.startsWith("\\\\") || // Windows UNC path
+            (name.length > 2 && name[1] == ':') // Windows drive path (e.g. C:\)
+        ) {
+            System.load(name)
+        } else {
+            System.loadLibrary(name)
+        }
+        return java.lang.foreign.SymbolLookup.loaderLookup()
+    }
+
+    fun uniffiCheckContractApiVersion() {
+        val bindingsContractVersion = 30
+        val scaffoldingContractVersion = UniffiLib.ffi_uniffi_geometry_uniffi_contract_version()
+        if (bindingsContractVersion != scaffoldingContractVersion) {
+            throw RuntimeException("UniFFI contract version mismatch: try cleaning and rebuilding your project")
+        }
+    }
+
+    // API checksum verification is skipped in this revision of the Kotlin
+    // backend — it requires a per-function checksum loop
+    // (`ci.iter_checksums()`) plus matching `MethodHandle`s on `UniffiLib`,
+    // neither of which exist yet. The runtime is otherwise complete enough
+    // to build and load; mismatches surface at call time rather than init
+    // time until this is wired up.
+    fun uniffiCheckApiChecksums() {
+        // TODO: emit `if (UniffiLib.<name>() != <checksum>.toShort()) throw ...`
+        // once per-function FFI wrappers are generated.
+    }
+}
+
+
+// === FILE: uniffi/geometry/Point.kt ===
+package uniffi.geometry
+
+data class Point(
+    val coordX: Double,
+    val coordY: Double
+)
+
+
+// === FILE: uniffi/geometry/RustBuffer.kt ===
+package uniffi.geometry
+
+/**
+ * Helper for safely working with byte buffers returned from the Rust code.
+ * A rust-owned buffer is represented by its capacity, its current length,
+ * and a pointer to the underlying data.
+ */
+object RustBuffer {
+    val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
+        java.lang.foreign.ValueLayout.JAVA_LONG.withName("capacity"),
+        java.lang.foreign.ValueLayout.JAVA_LONG.withName("len"),
+        java.lang.foreign.ValueLayout.ADDRESS.withName("data"),
+    )
+
+    private val OFFSET_CAPACITY: Long =
+        LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("capacity"))
+    private val OFFSET_LEN: Long =
+        LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("len"))
+    private val OFFSET_DATA: Long =
+        LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("data"))
+
+    fun getCapacity(seg: java.lang.foreign.MemorySegment): Long =
+        seg.get(java.lang.foreign.ValueLayout.JAVA_LONG_UNALIGNED, OFFSET_CAPACITY)
+
+    fun setCapacity(seg: java.lang.foreign.MemorySegment, value: Long) {
+        seg.set(java.lang.foreign.ValueLayout.JAVA_LONG_UNALIGNED, OFFSET_CAPACITY, value)
+    }
+
+    fun getLen(seg: java.lang.foreign.MemorySegment): Long =
+        seg.get(java.lang.foreign.ValueLayout.JAVA_LONG_UNALIGNED, OFFSET_LEN)
+
+    fun setLen(seg: java.lang.foreign.MemorySegment, value: Long) {
+        seg.set(java.lang.foreign.ValueLayout.JAVA_LONG_UNALIGNED, OFFSET_LEN, value)
+    }
+
+    fun getData(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
+        seg.get(java.lang.foreign.ValueLayout.ADDRESS_UNALIGNED, OFFSET_DATA)
+
+    fun setData(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
+        seg.set(java.lang.foreign.ValueLayout.ADDRESS_UNALIGNED, OFFSET_DATA, value)
+    }
+
+    fun alloc(size: Long): java.lang.foreign.MemorySegment {
+        val buffer = UniffiHelpers.uniffiRustCall { allocator, status ->
+            UniffiLib.ffi_uniffi_geometry_rustbuffer_alloc(allocator, size, status)
+        }
+        if (getData(buffer) == java.lang.foreign.MemorySegment.NULL && size > 0) {
+            throw RuntimeException("RustBuffer.alloc() returned null data pointer (size=$size)")
+        }
+        return buffer
+    }
+
+    fun free(buffer: java.lang.foreign.MemorySegment) {
+        UniffiHelpers.uniffiRustCallVoid { _, status ->
+            UniffiLib.ffi_uniffi_geometry_rustbuffer_free(buffer, status)
+        }
+    }
+
+    /** Get a ByteBuffer view of the data for reading (len bytes). */
+    fun asByteBuffer(seg: java.lang.foreign.MemorySegment): java.nio.ByteBuffer {
+        val len = getLen(seg)
+        if (len == 0L) {
+            return java.nio.ByteBuffer.allocate(0).order(java.nio.ByteOrder.BIG_ENDIAN)
+        }
+        return getData(seg).reinterpret(len).asByteBuffer().order(java.nio.ByteOrder.BIG_ENDIAN)
+    }
+
+    /** Get a ByteBuffer view of the data for writing (capacity bytes). */
+    fun asWriteByteBuffer(seg: java.lang.foreign.MemorySegment): java.nio.ByteBuffer {
+        val capacity = getCapacity(seg)
+        if (capacity == 0L) {
+            return java.nio.ByteBuffer.allocate(0).order(java.nio.ByteOrder.BIG_ENDIAN)
+        }
+        return getData(seg).reinterpret(capacity).asByteBuffer().order(java.nio.ByteOrder.BIG_ENDIAN)
+    }
+}
+
+
+// === FILE: uniffi/geometry/UniffiHelpers.kt ===
+package uniffi.geometry
+
+// Helpers for calling Rust.
+//
+// In practice we usually need to be synchronized to call this safely, so it
+// doesn't synchronize itself.
+object UniffiHelpers {
+
+    // Thread-local reusable RustCallStatus to avoid allocation on the hot path.
+    private val REUSABLE_STATUS: ThreadLocal<java.lang.foreign.MemorySegment> =
+        ThreadLocal.withInitial { java.lang.foreign.Arena.global().allocate(UniffiRustCallStatus.LAYOUT) }
+
+    // Slab allocator for struct return values from FFI downcalls.
+    // See UniffiSlabAllocator for the design rationale.
+    private val RETURN_ALLOCATOR = UniffiSlabAllocator(RustBuffer.LAYOUT, 1024)
+
+    fun interface UniffiRustCallFunction<U> {
+        fun apply(allocator: java.lang.foreign.SegmentAllocator, status: java.lang.foreign.MemorySegment): U
+    }
+
+    fun interface UniffiRustCallVoidFunction {
+        fun apply(allocator: java.lang.foreign.SegmentAllocator, status: java.lang.foreign.MemorySegment)
+    }
+
+    // Call a rust function that returns a Result<>. Pass in the error handler
+    // that corresponds to the Err.
+    @Throws(Exception::class)
+    fun <U, E : Exception> uniffiRustCallWithError(
+        errorHandler: UniffiRustCallStatusErrorHandler<E>,
+        callback: UniffiRustCallFunction<U>,
+    ): U {
+        val status = REUSABLE_STATUS.get()
+        status.fill(0.toByte())
+        val returnValue = callback.apply(RETURN_ALLOCATOR, status)
+        uniffiCheckCallStatus(errorHandler, status)
+        return returnValue
+    }
+
+    // Overload for void-returning functions. Renamed (vs the Java
+    // `uniffiRustCallWithError` overload) because Kotlin's SAM-overload
+    // resolution can't reliably pick between this and the generic variant
+    // when callers pass a lambda whose return type Kotlin tries to coerce.
+    @Throws(Exception::class)
+    fun <E : Exception> uniffiRustCallVoidWithError(
+        errorHandler: UniffiRustCallStatusErrorHandler<E>,
+        callback: UniffiRustCallVoidFunction,
+    ) {
+        val status = REUSABLE_STATUS.get()
+        status.fill(0.toByte())
+        callback.apply(RETURN_ALLOCATOR, status)
+        uniffiCheckCallStatus(errorHandler, status)
+    }
+
+    // Check UniffiRustCallStatus and throw an error if the call wasn't successful.
+    @Throws(Exception::class)
+    fun <E : Exception> uniffiCheckCallStatus(
+        errorHandler: UniffiRustCallStatusErrorHandler<E>,
+        status: java.lang.foreign.MemorySegment,
+    ) {
+        when {
+            UniffiRustCallStatus.isSuccess(status) -> return
+            UniffiRustCallStatus.isError(status) -> throw errorHandler.lift(UniffiRustCallStatus.getErrorBuf(status))
+            UniffiRustCallStatus.isPanic(status) -> {
+                val errorBuf = UniffiRustCallStatus.getErrorBuf(status)
+                if (RustBuffer.getLen(errorBuf) > 0) {
+                    // FfiConverterString.lift frees the RustBuffer as part of
+                    // the read; the resulting InternalException owns the
+                    // decoded message.
+                    throw InternalException(FfiConverterString.lift(errorBuf))
+                } else {
+                    throw InternalException("Rust panic")
+                }
+            }
+            else -> throw InternalException("Unknown rust call status: ${UniffiRustCallStatus.getCode(status)}")
+        }
+    }
+
+    // Primitive-specialized variants that avoid autoboxing overhead. For each
+    // primitive type we expose a functional interface + call + callWithError.
+
+    fun interface UniffiRustCallLongFunction {
+        fun apply(allocator: java.lang.foreign.SegmentAllocator, status: java.lang.foreign.MemorySegment): Long
+    }
+
+    @Throws(Exception::class)
+    fun <E : Exception> uniffiRustCallWithErrorLong(
+        errorHandler: UniffiRustCallStatusErrorHandler<E>,
+        callback: UniffiRustCallLongFunction,
+    ): Long {
+        val status = REUSABLE_STATUS.get()
+        status.fill(0.toByte())
+        val returnValue = callback.apply(RETURN_ALLOCATOR, status)
+        uniffiCheckCallStatus(errorHandler, status)
+        return returnValue
+    }
+
+    fun uniffiRustCallLong(callback: UniffiRustCallLongFunction): Long =
+        uniffiRustCallWithErrorLong(UniffiNullRustCallStatusErrorHandler(), callback)
+
+    fun interface UniffiRustCallIntFunction {
+        fun apply(allocator: java.lang.foreign.SegmentAllocator, status: java.lang.foreign.MemorySegment): Int
+    }
+
+    @Throws(Exception::class)
+    fun <E : Exception> uniffiRustCallWithErrorInt(
+        errorHandler: UniffiRustCallStatusErrorHandler<E>,
+        callback: UniffiRustCallIntFunction,
+    ): Int {
+        val status = REUSABLE_STATUS.get()
+        status.fill(0.toByte())
+        val returnValue = callback.apply(RETURN_ALLOCATOR, status)
+        uniffiCheckCallStatus(errorHandler, status)
+        return returnValue
+    }
+
+    fun uniffiRustCallInt(callback: UniffiRustCallIntFunction): Int =
+        uniffiRustCallWithErrorInt(UniffiNullRustCallStatusErrorHandler(), callback)
+
+    fun interface UniffiRustCallShortFunction {
+        fun apply(allocator: java.lang.foreign.SegmentAllocator, status: java.lang.foreign.MemorySegment): Short
+    }
+
+    @Throws(Exception::class)
+    fun <E : Exception> uniffiRustCallWithErrorShort(
+        errorHandler: UniffiRustCallStatusErrorHandler<E>,
+        callback: UniffiRustCallShortFunction,
+    ): Short {
+        val status = REUSABLE_STATUS.get()
+        status.fill(0.toByte())
+        val returnValue = callback.apply(RETURN_ALLOCATOR, status)
+        uniffiCheckCallStatus(errorHandler, status)
+        return returnValue
+    }
+
+    fun uniffiRustCallShort(callback: UniffiRustCallShortFunction): Short =
+        uniffiRustCallWithErrorShort(UniffiNullRustCallStatusErrorHandler(), callback)
+
+    fun interface UniffiRustCallByteFunction {
+        fun apply(allocator: java.lang.foreign.SegmentAllocator, status: java.lang.foreign.MemorySegment): Byte
+    }
+
+    @Throws(Exception::class)
+    fun <E : Exception> uniffiRustCallWithErrorByte(
+        errorHandler: UniffiRustCallStatusErrorHandler<E>,
+        callback: UniffiRustCallByteFunction,
+    ): Byte {
+        val status = REUSABLE_STATUS.get()
+        status.fill(0.toByte())
+        val returnValue = callback.apply(RETURN_ALLOCATOR, status)
+        uniffiCheckCallStatus(errorHandler, status)
+        return returnValue
+    }
+
+    fun uniffiRustCallByte(callback: UniffiRustCallByteFunction): Byte =
+        uniffiRustCallWithErrorByte(UniffiNullRustCallStatusErrorHandler(), callback)
+
+    fun interface UniffiRustCallFloatFunction {
+        fun apply(allocator: java.lang.foreign.SegmentAllocator, status: java.lang.foreign.MemorySegment): Float
+    }
+
+    @Throws(Exception::class)
+    fun <E : Exception> uniffiRustCallWithErrorFloat(
+        errorHandler: UniffiRustCallStatusErrorHandler<E>,
+        callback: UniffiRustCallFloatFunction,
+    ): Float {
+        val status = REUSABLE_STATUS.get()
+        status.fill(0.toByte())
+        val returnValue = callback.apply(RETURN_ALLOCATOR, status)
+        uniffiCheckCallStatus(errorHandler, status)
+        return returnValue
+    }
+
+    fun uniffiRustCallFloat(callback: UniffiRustCallFloatFunction): Float =
+        uniffiRustCallWithErrorFloat(UniffiNullRustCallStatusErrorHandler(), callback)
+
+    fun interface UniffiRustCallDoubleFunction {
+        fun apply(allocator: java.lang.foreign.SegmentAllocator, status: java.lang.foreign.MemorySegment): Double
+    }
+
+    @Throws(Exception::class)
+    fun <E : Exception> uniffiRustCallWithErrorDouble(
+        errorHandler: UniffiRustCallStatusErrorHandler<E>,
+        callback: UniffiRustCallDoubleFunction,
+    ): Double {
+        val status = REUSABLE_STATUS.get()
+        status.fill(0.toByte())
+        val returnValue = callback.apply(RETURN_ALLOCATOR, status)
+        uniffiCheckCallStatus(errorHandler, status)
+        return returnValue
+    }
+
+    fun uniffiRustCallDouble(callback: UniffiRustCallDoubleFunction): Double =
+        uniffiRustCallWithErrorDouble(UniffiNullRustCallStatusErrorHandler(), callback)
+
+    fun interface UniffiRustCallBooleanFunction {
+        fun apply(allocator: java.lang.foreign.SegmentAllocator, status: java.lang.foreign.MemorySegment): Boolean
+    }
+
+    @Throws(Exception::class)
+    fun <E : Exception> uniffiRustCallWithErrorBoolean(
+        errorHandler: UniffiRustCallStatusErrorHandler<E>,
+        callback: UniffiRustCallBooleanFunction,
+    ): Boolean {
+        val status = REUSABLE_STATUS.get()
+        status.fill(0.toByte())
+        val returnValue = callback.apply(RETURN_ALLOCATOR, status)
+        uniffiCheckCallStatus(errorHandler, status)
+        return returnValue
+    }
+
+    fun uniffiRustCallBoolean(callback: UniffiRustCallBooleanFunction): Boolean =
+        uniffiRustCallWithErrorBoolean(UniffiNullRustCallStatusErrorHandler(), callback)
+
+    // Call a rust function that returns a plain value.
+    fun <U> uniffiRustCall(callback: UniffiRustCallFunction<U>): U =
+        uniffiRustCallWithError(UniffiNullRustCallStatusErrorHandler(), callback)
+
+    // Call a rust function that returns nothing. Renamed vs
+    // `uniffiRustCall` to avoid Kotlin SAM-overload ambiguity.
+    fun uniffiRustCallVoid(callback: UniffiRustCallVoidFunction) {
+        uniffiRustCallVoidWithError(UniffiNullRustCallStatusErrorHandler(), callback)
+    }
+
+    fun <T> uniffiTraitInterfaceCall(
+        callStatus: java.lang.foreign.MemorySegment,
+        makeCall: java.util.function.Supplier<T>,
+        writeReturn: java.util.function.Consumer<T>,
+    ) {
+        try {
+            writeReturn.accept(makeCall.get())
+        } catch (e: Exception) {
+            UniffiRustCallStatus.setCode(callStatus, UniffiRustCallStatus.UNIFFI_CALL_UNEXPECTED_ERROR)
+            UniffiRustCallStatus.setErrorBuf(
+                callStatus,
+                FfiConverterString.lower(uniffiStackTraceToString(e)),
+            )
+        }
+    }
+
+    private fun uniffiStackTraceToString(e: Throwable): String =
+        try {
+            val sw = java.io.StringWriter()
+            e.printStackTrace(java.io.PrintWriter(sw))
+            sw.toString()
+        } catch (_: Throwable) {
+            e.toString()
+        }
+
+    fun <T, E : Throwable> uniffiTraitInterfaceCallWithError(
+        callStatus: java.lang.foreign.MemorySegment,
+        makeCall: java.util.concurrent.Callable<T>,
+        writeReturn: java.util.function.Consumer<T>,
+        lowerError: java.util.function.Function<E, java.lang.foreign.MemorySegment>,
+        errorClazz: Class<E>,
+    ) {
+        try {
+            writeReturn.accept(makeCall.call())
+        } catch (e: Exception) {
+            if (errorClazz.isAssignableFrom(e.javaClass)) {
+                @Suppress("UNCHECKED_CAST")
+                val castedE = e as E
+                UniffiRustCallStatus.setCode(callStatus, UniffiRustCallStatus.UNIFFI_CALL_ERROR)
+                UniffiRustCallStatus.setErrorBuf(callStatus, lowerError.apply(castedE))
+            } else {
+                UniffiRustCallStatus.setCode(callStatus, UniffiRustCallStatus.UNIFFI_CALL_UNEXPECTED_ERROR)
+                UniffiRustCallStatus.setErrorBuf(
+                    callStatus,
+                    FfiConverterString.lower(uniffiStackTraceToString(e)),
+                )
+            }
+        }
+    }
+}
+
+// Contains loading, initialization code, and the FFI Function declarations
+// using Java FFM (Foreign Function & Memory API).
+
+
+// === FILE: uniffi/geometry/UniffiInitializer.kt ===
+package uniffi.geometry
+
+/**
+ * Ensures the native library is initialized.
+ * Call this function to force initialization before using any types from this library.
+ */
+object UniffiInitializer {
+    /** Force initialization of the native library. */
+    fun ensureInitialized() {
+        // Force UniffiLib class to load (runs integrity checks and initialization functions).
+        @Suppress("UNUSED_VARIABLE")
+        val ignored: Class<*> = UniffiLib::class.java
+    }
+}
+
+// Primitive + String + ByteArray FfiConverters. All are emitted
+// unconditionally for now; a later revision will gate them on which types
+// the interface actually uses (mirroring the Java `Types.java` dispatch
+// logic, which needs Askama filter machinery on the Kotlin side that
+// doesn't exist yet).
+
+
+// === FILE: uniffi/geometry/UniffiLib.kt ===
+package uniffi.geometry
+
+// FFM-based library binding. Each FFI function gets a `MethodHandle` field
+// + a wrapper function that performs the `invokeExact` call. The loop
+// below iterates `ci.iter_ffi_function_definitions()` so every runtime AND
+// per-component FFI function gets bound at class-init time.
+internal object UniffiLib {
+    private val LINKER: java.lang.foreign.Linker = java.lang.foreign.Linker.nativeLinker()
+    private val SYMBOLS: java.lang.foreign.SymbolLookup
+
+    init {
+        SYMBOLS = NamespaceLibrary.loadLibrary()
+    }
+
+    private fun findDowncallHandle(
+        name: String,
+        descriptor: java.lang.foreign.FunctionDescriptor,
+    ): java.lang.invoke.MethodHandle =
+        SYMBOLS.find(name)
+            .map { s -> LINKER.downcallHandle(s, descriptor) }
+            .orElseThrow { RuntimeException("Missing FFI symbol: $name") }
+
+    // uniffi_uniffi_geometry_fn_func_gradient
+    private val MH_uniffi_uniffi_geometry_fn_func_gradient: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_geometry_fn_func_gradient",
+        java.lang.foreign.FunctionDescriptor.of(
+            java.lang.foreign.ValueLayout.JAVA_DOUBLE,
+            RustBuffer.LAYOUT,
+            java.lang.foreign.ValueLayout.ADDRESS,
+        ),
+    )
+
+    fun uniffi_uniffi_geometry_fn_func_gradient(
+        ln: java.lang.foreign.MemorySegment,
+        uniffiOutErr: java.lang.foreign.MemorySegment,
+    ): Double =
+        try {
+            MH_uniffi_uniffi_geometry_fn_func_gradient.invokeExact(
+                ln,
+                uniffiOutErr,
+            ) as Double
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // uniffi_uniffi_geometry_fn_func_intersection
+    private val MH_uniffi_uniffi_geometry_fn_func_intersection: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_geometry_fn_func_intersection",
+        java.lang.foreign.FunctionDescriptor.of(
+            RustBuffer.LAYOUT,
+            RustBuffer.LAYOUT,
+            RustBuffer.LAYOUT,
+            java.lang.foreign.ValueLayout.ADDRESS,
+        ),
+    )
+
+    fun uniffi_uniffi_geometry_fn_func_intersection(
+        allocator: java.lang.foreign.SegmentAllocator,
+        ln1: java.lang.foreign.MemorySegment,
+        ln2: java.lang.foreign.MemorySegment,
+        uniffiOutErr: java.lang.foreign.MemorySegment,
+    ): java.lang.foreign.MemorySegment =
+        try {
+            MH_uniffi_uniffi_geometry_fn_func_intersection.invokeExact(
+                allocator,
+                ln1,
+                ln2,
+                uniffiOutErr,
+            ) as java.lang.foreign.MemorySegment
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // ffi_uniffi_geometry_rustbuffer_alloc
+    private val MH_ffi_uniffi_geometry_rustbuffer_alloc: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rustbuffer_alloc",
+        java.lang.foreign.FunctionDescriptor.of(
+            RustBuffer.LAYOUT,
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+            java.lang.foreign.ValueLayout.ADDRESS,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rustbuffer_alloc(
+        allocator: java.lang.foreign.SegmentAllocator,
+        size: Long,
+        uniffiOutErr: java.lang.foreign.MemorySegment,
+    ): java.lang.foreign.MemorySegment =
+        try {
+            MH_ffi_uniffi_geometry_rustbuffer_alloc.invokeExact(
+                allocator,
+                size,
+                uniffiOutErr,
+            ) as java.lang.foreign.MemorySegment
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // ffi_uniffi_geometry_rustbuffer_from_bytes
+    private val MH_ffi_uniffi_geometry_rustbuffer_from_bytes: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rustbuffer_from_bytes",
+        java.lang.foreign.FunctionDescriptor.of(
+            RustBuffer.LAYOUT,
+            ForeignBytes.LAYOUT,
+            java.lang.foreign.ValueLayout.ADDRESS,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rustbuffer_from_bytes(
+        allocator: java.lang.foreign.SegmentAllocator,
+        bytes: java.lang.foreign.MemorySegment,
+        uniffiOutErr: java.lang.foreign.MemorySegment,
+    ): java.lang.foreign.MemorySegment =
+        try {
+            MH_ffi_uniffi_geometry_rustbuffer_from_bytes.invokeExact(
+                allocator,
+                bytes,
+                uniffiOutErr,
+            ) as java.lang.foreign.MemorySegment
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // ffi_uniffi_geometry_rustbuffer_free
+    private val MH_ffi_uniffi_geometry_rustbuffer_free: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rustbuffer_free",
+        java.lang.foreign.FunctionDescriptor.ofVoid(
+            RustBuffer.LAYOUT,
+            java.lang.foreign.ValueLayout.ADDRESS,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rustbuffer_free(
+        buf: java.lang.foreign.MemorySegment,
+        uniffiOutErr: java.lang.foreign.MemorySegment,
+    ) {
+        try {
+            MH_ffi_uniffi_geometry_rustbuffer_free.invokeExact(
+                buf,
+                uniffiOutErr,
+            )
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+    }
+
+    // ffi_uniffi_geometry_rustbuffer_reserve
+    private val MH_ffi_uniffi_geometry_rustbuffer_reserve: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rustbuffer_reserve",
+        java.lang.foreign.FunctionDescriptor.of(
+            RustBuffer.LAYOUT,
+            RustBuffer.LAYOUT,
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+            java.lang.foreign.ValueLayout.ADDRESS,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rustbuffer_reserve(
+        allocator: java.lang.foreign.SegmentAllocator,
+        buf: java.lang.foreign.MemorySegment,
+        additional: Long,
+        uniffiOutErr: java.lang.foreign.MemorySegment,
+    ): java.lang.foreign.MemorySegment =
+        try {
+            MH_ffi_uniffi_geometry_rustbuffer_reserve.invokeExact(
+                allocator,
+                buf,
+                additional,
+                uniffiOutErr,
+            ) as java.lang.foreign.MemorySegment
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // ffi_uniffi_geometry_rust_future_poll_u8
+    private val MH_ffi_uniffi_geometry_rust_future_poll_u8: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_poll_u8",
+        java.lang.foreign.FunctionDescriptor.ofVoid(
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+            java.lang.foreign.ValueLayout.ADDRESS,
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_poll_u8(
+        handle: Long,
+        callback: java.lang.foreign.MemorySegment,
+        callbackData: Long,
+    ) {
+        try {
+            MH_ffi_uniffi_geometry_rust_future_poll_u8.invokeExact(
+                handle,
+                callback,
+                callbackData,
+            )
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+    }
+
+    // ffi_uniffi_geometry_rust_future_cancel_u8
+    private val MH_ffi_uniffi_geometry_rust_future_cancel_u8: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_cancel_u8",
+        java.lang.foreign.FunctionDescriptor.ofVoid(
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_cancel_u8(
+        handle: Long,
+    ) {
+        try {
+            MH_ffi_uniffi_geometry_rust_future_cancel_u8.invokeExact(
+                handle,
+            )
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+    }
+
+    // ffi_uniffi_geometry_rust_future_free_u8
+    private val MH_ffi_uniffi_geometry_rust_future_free_u8: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_free_u8",
+        java.lang.foreign.FunctionDescriptor.ofVoid(
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_free_u8(
+        handle: Long,
+    ) {
+        try {
+            MH_ffi_uniffi_geometry_rust_future_free_u8.invokeExact(
+                handle,
+            )
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+    }
+
+    // ffi_uniffi_geometry_rust_future_complete_u8
+    private val MH_ffi_uniffi_geometry_rust_future_complete_u8: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_complete_u8",
+        java.lang.foreign.FunctionDescriptor.of(
+            java.lang.foreign.ValueLayout.JAVA_BYTE,
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+            java.lang.foreign.ValueLayout.ADDRESS,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_complete_u8(
+        handle: Long,
+        uniffiOutErr: java.lang.foreign.MemorySegment,
+    ): Byte =
+        try {
+            MH_ffi_uniffi_geometry_rust_future_complete_u8.invokeExact(
+                handle,
+                uniffiOutErr,
+            ) as Byte
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // ffi_uniffi_geometry_rust_future_poll_i8
+    private val MH_ffi_uniffi_geometry_rust_future_poll_i8: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_poll_i8",
+        java.lang.foreign.FunctionDescriptor.ofVoid(
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+            java.lang.foreign.ValueLayout.ADDRESS,
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_poll_i8(
+        handle: Long,
+        callback: java.lang.foreign.MemorySegment,
+        callbackData: Long,
+    ) {
+        try {
+            MH_ffi_uniffi_geometry_rust_future_poll_i8.invokeExact(
+                handle,
+                callback,
+                callbackData,
+            )
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+    }
+
+    // ffi_uniffi_geometry_rust_future_cancel_i8
+    private val MH_ffi_uniffi_geometry_rust_future_cancel_i8: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_cancel_i8",
+        java.lang.foreign.FunctionDescriptor.ofVoid(
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_cancel_i8(
+        handle: Long,
+    ) {
+        try {
+            MH_ffi_uniffi_geometry_rust_future_cancel_i8.invokeExact(
+                handle,
+            )
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+    }
+
+    // ffi_uniffi_geometry_rust_future_free_i8
+    private val MH_ffi_uniffi_geometry_rust_future_free_i8: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_free_i8",
+        java.lang.foreign.FunctionDescriptor.ofVoid(
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_free_i8(
+        handle: Long,
+    ) {
+        try {
+            MH_ffi_uniffi_geometry_rust_future_free_i8.invokeExact(
+                handle,
+            )
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+    }
+
+    // ffi_uniffi_geometry_rust_future_complete_i8
+    private val MH_ffi_uniffi_geometry_rust_future_complete_i8: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_complete_i8",
+        java.lang.foreign.FunctionDescriptor.of(
+            java.lang.foreign.ValueLayout.JAVA_BYTE,
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+            java.lang.foreign.ValueLayout.ADDRESS,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_complete_i8(
+        handle: Long,
+        uniffiOutErr: java.lang.foreign.MemorySegment,
+    ): Byte =
+        try {
+            MH_ffi_uniffi_geometry_rust_future_complete_i8.invokeExact(
+                handle,
+                uniffiOutErr,
+            ) as Byte
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // ffi_uniffi_geometry_rust_future_poll_u16
+    private val MH_ffi_uniffi_geometry_rust_future_poll_u16: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_poll_u16",
+        java.lang.foreign.FunctionDescriptor.ofVoid(
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+            java.lang.foreign.ValueLayout.ADDRESS,
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_poll_u16(
+        handle: Long,
+        callback: java.lang.foreign.MemorySegment,
+        callbackData: Long,
+    ) {
+        try {
+            MH_ffi_uniffi_geometry_rust_future_poll_u16.invokeExact(
+                handle,
+                callback,
+                callbackData,
+            )
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+    }
+
+    // ffi_uniffi_geometry_rust_future_cancel_u16
+    private val MH_ffi_uniffi_geometry_rust_future_cancel_u16: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_cancel_u16",
+        java.lang.foreign.FunctionDescriptor.ofVoid(
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_cancel_u16(
+        handle: Long,
+    ) {
+        try {
+            MH_ffi_uniffi_geometry_rust_future_cancel_u16.invokeExact(
+                handle,
+            )
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+    }
+
+    // ffi_uniffi_geometry_rust_future_free_u16
+    private val MH_ffi_uniffi_geometry_rust_future_free_u16: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_free_u16",
+        java.lang.foreign.FunctionDescriptor.ofVoid(
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_free_u16(
+        handle: Long,
+    ) {
+        try {
+            MH_ffi_uniffi_geometry_rust_future_free_u16.invokeExact(
+                handle,
+            )
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+    }
+
+    // ffi_uniffi_geometry_rust_future_complete_u16
+    private val MH_ffi_uniffi_geometry_rust_future_complete_u16: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_complete_u16",
+        java.lang.foreign.FunctionDescriptor.of(
+            java.lang.foreign.ValueLayout.JAVA_SHORT,
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+            java.lang.foreign.ValueLayout.ADDRESS,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_complete_u16(
+        handle: Long,
+        uniffiOutErr: java.lang.foreign.MemorySegment,
+    ): Short =
+        try {
+            MH_ffi_uniffi_geometry_rust_future_complete_u16.invokeExact(
+                handle,
+                uniffiOutErr,
+            ) as Short
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // ffi_uniffi_geometry_rust_future_poll_i16
+    private val MH_ffi_uniffi_geometry_rust_future_poll_i16: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_poll_i16",
+        java.lang.foreign.FunctionDescriptor.ofVoid(
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+            java.lang.foreign.ValueLayout.ADDRESS,
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_poll_i16(
+        handle: Long,
+        callback: java.lang.foreign.MemorySegment,
+        callbackData: Long,
+    ) {
+        try {
+            MH_ffi_uniffi_geometry_rust_future_poll_i16.invokeExact(
+                handle,
+                callback,
+                callbackData,
+            )
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+    }
+
+    // ffi_uniffi_geometry_rust_future_cancel_i16
+    private val MH_ffi_uniffi_geometry_rust_future_cancel_i16: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_cancel_i16",
+        java.lang.foreign.FunctionDescriptor.ofVoid(
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_cancel_i16(
+        handle: Long,
+    ) {
+        try {
+            MH_ffi_uniffi_geometry_rust_future_cancel_i16.invokeExact(
+                handle,
+            )
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+    }
+
+    // ffi_uniffi_geometry_rust_future_free_i16
+    private val MH_ffi_uniffi_geometry_rust_future_free_i16: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_free_i16",
+        java.lang.foreign.FunctionDescriptor.ofVoid(
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_free_i16(
+        handle: Long,
+    ) {
+        try {
+            MH_ffi_uniffi_geometry_rust_future_free_i16.invokeExact(
+                handle,
+            )
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+    }
+
+    // ffi_uniffi_geometry_rust_future_complete_i16
+    private val MH_ffi_uniffi_geometry_rust_future_complete_i16: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_complete_i16",
+        java.lang.foreign.FunctionDescriptor.of(
+            java.lang.foreign.ValueLayout.JAVA_SHORT,
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+            java.lang.foreign.ValueLayout.ADDRESS,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_complete_i16(
+        handle: Long,
+        uniffiOutErr: java.lang.foreign.MemorySegment,
+    ): Short =
+        try {
+            MH_ffi_uniffi_geometry_rust_future_complete_i16.invokeExact(
+                handle,
+                uniffiOutErr,
+            ) as Short
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // ffi_uniffi_geometry_rust_future_poll_u32
+    private val MH_ffi_uniffi_geometry_rust_future_poll_u32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_poll_u32",
+        java.lang.foreign.FunctionDescriptor.ofVoid(
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+            java.lang.foreign.ValueLayout.ADDRESS,
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_poll_u32(
+        handle: Long,
+        callback: java.lang.foreign.MemorySegment,
+        callbackData: Long,
+    ) {
+        try {
+            MH_ffi_uniffi_geometry_rust_future_poll_u32.invokeExact(
+                handle,
+                callback,
+                callbackData,
+            )
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+    }
+
+    // ffi_uniffi_geometry_rust_future_cancel_u32
+    private val MH_ffi_uniffi_geometry_rust_future_cancel_u32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_cancel_u32",
+        java.lang.foreign.FunctionDescriptor.ofVoid(
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_cancel_u32(
+        handle: Long,
+    ) {
+        try {
+            MH_ffi_uniffi_geometry_rust_future_cancel_u32.invokeExact(
+                handle,
+            )
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+    }
+
+    // ffi_uniffi_geometry_rust_future_free_u32
+    private val MH_ffi_uniffi_geometry_rust_future_free_u32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_free_u32",
+        java.lang.foreign.FunctionDescriptor.ofVoid(
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_free_u32(
+        handle: Long,
+    ) {
+        try {
+            MH_ffi_uniffi_geometry_rust_future_free_u32.invokeExact(
+                handle,
+            )
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+    }
+
+    // ffi_uniffi_geometry_rust_future_complete_u32
+    private val MH_ffi_uniffi_geometry_rust_future_complete_u32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_complete_u32",
+        java.lang.foreign.FunctionDescriptor.of(
+            java.lang.foreign.ValueLayout.JAVA_INT,
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+            java.lang.foreign.ValueLayout.ADDRESS,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_complete_u32(
+        handle: Long,
+        uniffiOutErr: java.lang.foreign.MemorySegment,
+    ): Int =
+        try {
+            MH_ffi_uniffi_geometry_rust_future_complete_u32.invokeExact(
+                handle,
+                uniffiOutErr,
+            ) as Int
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // ffi_uniffi_geometry_rust_future_poll_i32
+    private val MH_ffi_uniffi_geometry_rust_future_poll_i32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_poll_i32",
+        java.lang.foreign.FunctionDescriptor.ofVoid(
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+            java.lang.foreign.ValueLayout.ADDRESS,
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_poll_i32(
+        handle: Long,
+        callback: java.lang.foreign.MemorySegment,
+        callbackData: Long,
+    ) {
+        try {
+            MH_ffi_uniffi_geometry_rust_future_poll_i32.invokeExact(
+                handle,
+                callback,
+                callbackData,
+            )
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+    }
+
+    // ffi_uniffi_geometry_rust_future_cancel_i32
+    private val MH_ffi_uniffi_geometry_rust_future_cancel_i32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_cancel_i32",
+        java.lang.foreign.FunctionDescriptor.ofVoid(
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_cancel_i32(
+        handle: Long,
+    ) {
+        try {
+            MH_ffi_uniffi_geometry_rust_future_cancel_i32.invokeExact(
+                handle,
+            )
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+    }
+
+    // ffi_uniffi_geometry_rust_future_free_i32
+    private val MH_ffi_uniffi_geometry_rust_future_free_i32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_free_i32",
+        java.lang.foreign.FunctionDescriptor.ofVoid(
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_free_i32(
+        handle: Long,
+    ) {
+        try {
+            MH_ffi_uniffi_geometry_rust_future_free_i32.invokeExact(
+                handle,
+            )
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+    }
+
+    // ffi_uniffi_geometry_rust_future_complete_i32
+    private val MH_ffi_uniffi_geometry_rust_future_complete_i32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_complete_i32",
+        java.lang.foreign.FunctionDescriptor.of(
+            java.lang.foreign.ValueLayout.JAVA_INT,
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+            java.lang.foreign.ValueLayout.ADDRESS,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_complete_i32(
+        handle: Long,
+        uniffiOutErr: java.lang.foreign.MemorySegment,
+    ): Int =
+        try {
+            MH_ffi_uniffi_geometry_rust_future_complete_i32.invokeExact(
+                handle,
+                uniffiOutErr,
+            ) as Int
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // ffi_uniffi_geometry_rust_future_poll_u64
+    private val MH_ffi_uniffi_geometry_rust_future_poll_u64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_poll_u64",
+        java.lang.foreign.FunctionDescriptor.ofVoid(
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+            java.lang.foreign.ValueLayout.ADDRESS,
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_poll_u64(
+        handle: Long,
+        callback: java.lang.foreign.MemorySegment,
+        callbackData: Long,
+    ) {
+        try {
+            MH_ffi_uniffi_geometry_rust_future_poll_u64.invokeExact(
+                handle,
+                callback,
+                callbackData,
+            )
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+    }
+
+    // ffi_uniffi_geometry_rust_future_cancel_u64
+    private val MH_ffi_uniffi_geometry_rust_future_cancel_u64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_cancel_u64",
+        java.lang.foreign.FunctionDescriptor.ofVoid(
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_cancel_u64(
+        handle: Long,
+    ) {
+        try {
+            MH_ffi_uniffi_geometry_rust_future_cancel_u64.invokeExact(
+                handle,
+            )
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+    }
+
+    // ffi_uniffi_geometry_rust_future_free_u64
+    private val MH_ffi_uniffi_geometry_rust_future_free_u64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_free_u64",
+        java.lang.foreign.FunctionDescriptor.ofVoid(
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_free_u64(
+        handle: Long,
+    ) {
+        try {
+            MH_ffi_uniffi_geometry_rust_future_free_u64.invokeExact(
+                handle,
+            )
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+    }
+
+    // ffi_uniffi_geometry_rust_future_complete_u64
+    private val MH_ffi_uniffi_geometry_rust_future_complete_u64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_complete_u64",
+        java.lang.foreign.FunctionDescriptor.of(
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+            java.lang.foreign.ValueLayout.ADDRESS,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_complete_u64(
+        handle: Long,
+        uniffiOutErr: java.lang.foreign.MemorySegment,
+    ): Long =
+        try {
+            MH_ffi_uniffi_geometry_rust_future_complete_u64.invokeExact(
+                handle,
+                uniffiOutErr,
+            ) as Long
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // ffi_uniffi_geometry_rust_future_poll_i64
+    private val MH_ffi_uniffi_geometry_rust_future_poll_i64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_poll_i64",
+        java.lang.foreign.FunctionDescriptor.ofVoid(
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+            java.lang.foreign.ValueLayout.ADDRESS,
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_poll_i64(
+        handle: Long,
+        callback: java.lang.foreign.MemorySegment,
+        callbackData: Long,
+    ) {
+        try {
+            MH_ffi_uniffi_geometry_rust_future_poll_i64.invokeExact(
+                handle,
+                callback,
+                callbackData,
+            )
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+    }
+
+    // ffi_uniffi_geometry_rust_future_cancel_i64
+    private val MH_ffi_uniffi_geometry_rust_future_cancel_i64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_cancel_i64",
+        java.lang.foreign.FunctionDescriptor.ofVoid(
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_cancel_i64(
+        handle: Long,
+    ) {
+        try {
+            MH_ffi_uniffi_geometry_rust_future_cancel_i64.invokeExact(
+                handle,
+            )
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+    }
+
+    // ffi_uniffi_geometry_rust_future_free_i64
+    private val MH_ffi_uniffi_geometry_rust_future_free_i64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_free_i64",
+        java.lang.foreign.FunctionDescriptor.ofVoid(
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_free_i64(
+        handle: Long,
+    ) {
+        try {
+            MH_ffi_uniffi_geometry_rust_future_free_i64.invokeExact(
+                handle,
+            )
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+    }
+
+    // ffi_uniffi_geometry_rust_future_complete_i64
+    private val MH_ffi_uniffi_geometry_rust_future_complete_i64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_complete_i64",
+        java.lang.foreign.FunctionDescriptor.of(
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+            java.lang.foreign.ValueLayout.ADDRESS,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_complete_i64(
+        handle: Long,
+        uniffiOutErr: java.lang.foreign.MemorySegment,
+    ): Long =
+        try {
+            MH_ffi_uniffi_geometry_rust_future_complete_i64.invokeExact(
+                handle,
+                uniffiOutErr,
+            ) as Long
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // ffi_uniffi_geometry_rust_future_poll_f32
+    private val MH_ffi_uniffi_geometry_rust_future_poll_f32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_poll_f32",
+        java.lang.foreign.FunctionDescriptor.ofVoid(
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+            java.lang.foreign.ValueLayout.ADDRESS,
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_poll_f32(
+        handle: Long,
+        callback: java.lang.foreign.MemorySegment,
+        callbackData: Long,
+    ) {
+        try {
+            MH_ffi_uniffi_geometry_rust_future_poll_f32.invokeExact(
+                handle,
+                callback,
+                callbackData,
+            )
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+    }
+
+    // ffi_uniffi_geometry_rust_future_cancel_f32
+    private val MH_ffi_uniffi_geometry_rust_future_cancel_f32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_cancel_f32",
+        java.lang.foreign.FunctionDescriptor.ofVoid(
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_cancel_f32(
+        handle: Long,
+    ) {
+        try {
+            MH_ffi_uniffi_geometry_rust_future_cancel_f32.invokeExact(
+                handle,
+            )
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+    }
+
+    // ffi_uniffi_geometry_rust_future_free_f32
+    private val MH_ffi_uniffi_geometry_rust_future_free_f32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_free_f32",
+        java.lang.foreign.FunctionDescriptor.ofVoid(
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_free_f32(
+        handle: Long,
+    ) {
+        try {
+            MH_ffi_uniffi_geometry_rust_future_free_f32.invokeExact(
+                handle,
+            )
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+    }
+
+    // ffi_uniffi_geometry_rust_future_complete_f32
+    private val MH_ffi_uniffi_geometry_rust_future_complete_f32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_complete_f32",
+        java.lang.foreign.FunctionDescriptor.of(
+            java.lang.foreign.ValueLayout.JAVA_FLOAT,
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+            java.lang.foreign.ValueLayout.ADDRESS,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_complete_f32(
+        handle: Long,
+        uniffiOutErr: java.lang.foreign.MemorySegment,
+    ): Float =
+        try {
+            MH_ffi_uniffi_geometry_rust_future_complete_f32.invokeExact(
+                handle,
+                uniffiOutErr,
+            ) as Float
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // ffi_uniffi_geometry_rust_future_poll_f64
+    private val MH_ffi_uniffi_geometry_rust_future_poll_f64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_poll_f64",
+        java.lang.foreign.FunctionDescriptor.ofVoid(
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+            java.lang.foreign.ValueLayout.ADDRESS,
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_poll_f64(
+        handle: Long,
+        callback: java.lang.foreign.MemorySegment,
+        callbackData: Long,
+    ) {
+        try {
+            MH_ffi_uniffi_geometry_rust_future_poll_f64.invokeExact(
+                handle,
+                callback,
+                callbackData,
+            )
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+    }
+
+    // ffi_uniffi_geometry_rust_future_cancel_f64
+    private val MH_ffi_uniffi_geometry_rust_future_cancel_f64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_cancel_f64",
+        java.lang.foreign.FunctionDescriptor.ofVoid(
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_cancel_f64(
+        handle: Long,
+    ) {
+        try {
+            MH_ffi_uniffi_geometry_rust_future_cancel_f64.invokeExact(
+                handle,
+            )
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+    }
+
+    // ffi_uniffi_geometry_rust_future_free_f64
+    private val MH_ffi_uniffi_geometry_rust_future_free_f64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_free_f64",
+        java.lang.foreign.FunctionDescriptor.ofVoid(
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_free_f64(
+        handle: Long,
+    ) {
+        try {
+            MH_ffi_uniffi_geometry_rust_future_free_f64.invokeExact(
+                handle,
+            )
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+    }
+
+    // ffi_uniffi_geometry_rust_future_complete_f64
+    private val MH_ffi_uniffi_geometry_rust_future_complete_f64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_complete_f64",
+        java.lang.foreign.FunctionDescriptor.of(
+            java.lang.foreign.ValueLayout.JAVA_DOUBLE,
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+            java.lang.foreign.ValueLayout.ADDRESS,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_complete_f64(
+        handle: Long,
+        uniffiOutErr: java.lang.foreign.MemorySegment,
+    ): Double =
+        try {
+            MH_ffi_uniffi_geometry_rust_future_complete_f64.invokeExact(
+                handle,
+                uniffiOutErr,
+            ) as Double
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // ffi_uniffi_geometry_rust_future_poll_rust_buffer
+    private val MH_ffi_uniffi_geometry_rust_future_poll_rust_buffer: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_poll_rust_buffer",
+        java.lang.foreign.FunctionDescriptor.ofVoid(
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+            java.lang.foreign.ValueLayout.ADDRESS,
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_poll_rust_buffer(
+        handle: Long,
+        callback: java.lang.foreign.MemorySegment,
+        callbackData: Long,
+    ) {
+        try {
+            MH_ffi_uniffi_geometry_rust_future_poll_rust_buffer.invokeExact(
+                handle,
+                callback,
+                callbackData,
+            )
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+    }
+
+    // ffi_uniffi_geometry_rust_future_cancel_rust_buffer
+    private val MH_ffi_uniffi_geometry_rust_future_cancel_rust_buffer: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_cancel_rust_buffer",
+        java.lang.foreign.FunctionDescriptor.ofVoid(
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_cancel_rust_buffer(
+        handle: Long,
+    ) {
+        try {
+            MH_ffi_uniffi_geometry_rust_future_cancel_rust_buffer.invokeExact(
+                handle,
+            )
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+    }
+
+    // ffi_uniffi_geometry_rust_future_free_rust_buffer
+    private val MH_ffi_uniffi_geometry_rust_future_free_rust_buffer: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_free_rust_buffer",
+        java.lang.foreign.FunctionDescriptor.ofVoid(
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_free_rust_buffer(
+        handle: Long,
+    ) {
+        try {
+            MH_ffi_uniffi_geometry_rust_future_free_rust_buffer.invokeExact(
+                handle,
+            )
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+    }
+
+    // ffi_uniffi_geometry_rust_future_complete_rust_buffer
+    private val MH_ffi_uniffi_geometry_rust_future_complete_rust_buffer: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_complete_rust_buffer",
+        java.lang.foreign.FunctionDescriptor.of(
+            RustBuffer.LAYOUT,
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+            java.lang.foreign.ValueLayout.ADDRESS,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_complete_rust_buffer(
+        allocator: java.lang.foreign.SegmentAllocator,
+        handle: Long,
+        uniffiOutErr: java.lang.foreign.MemorySegment,
+    ): java.lang.foreign.MemorySegment =
+        try {
+            MH_ffi_uniffi_geometry_rust_future_complete_rust_buffer.invokeExact(
+                allocator,
+                handle,
+                uniffiOutErr,
+            ) as java.lang.foreign.MemorySegment
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // ffi_uniffi_geometry_rust_future_poll_void
+    private val MH_ffi_uniffi_geometry_rust_future_poll_void: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_poll_void",
+        java.lang.foreign.FunctionDescriptor.ofVoid(
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+            java.lang.foreign.ValueLayout.ADDRESS,
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_poll_void(
+        handle: Long,
+        callback: java.lang.foreign.MemorySegment,
+        callbackData: Long,
+    ) {
+        try {
+            MH_ffi_uniffi_geometry_rust_future_poll_void.invokeExact(
+                handle,
+                callback,
+                callbackData,
+            )
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+    }
+
+    // ffi_uniffi_geometry_rust_future_cancel_void
+    private val MH_ffi_uniffi_geometry_rust_future_cancel_void: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_cancel_void",
+        java.lang.foreign.FunctionDescriptor.ofVoid(
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_cancel_void(
+        handle: Long,
+    ) {
+        try {
+            MH_ffi_uniffi_geometry_rust_future_cancel_void.invokeExact(
+                handle,
+            )
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+    }
+
+    // ffi_uniffi_geometry_rust_future_free_void
+    private val MH_ffi_uniffi_geometry_rust_future_free_void: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_free_void",
+        java.lang.foreign.FunctionDescriptor.ofVoid(
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_free_void(
+        handle: Long,
+    ) {
+        try {
+            MH_ffi_uniffi_geometry_rust_future_free_void.invokeExact(
+                handle,
+            )
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+    }
+
+    // ffi_uniffi_geometry_rust_future_complete_void
+    private val MH_ffi_uniffi_geometry_rust_future_complete_void: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_rust_future_complete_void",
+        java.lang.foreign.FunctionDescriptor.ofVoid(
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+            java.lang.foreign.ValueLayout.ADDRESS,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_rust_future_complete_void(
+        handle: Long,
+        uniffiOutErr: java.lang.foreign.MemorySegment,
+    ) {
+        try {
+            MH_ffi_uniffi_geometry_rust_future_complete_void.invokeExact(
+                handle,
+                uniffiOutErr,
+            )
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+    }
+
+    // uniffi_uniffi_geometry_checksum_func_gradient
+    private val MH_uniffi_uniffi_geometry_checksum_func_gradient: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_geometry_checksum_func_gradient",
+        java.lang.foreign.FunctionDescriptor.of(
+            java.lang.foreign.ValueLayout.JAVA_SHORT,
+        ),
+    )
+
+    fun uniffi_uniffi_geometry_checksum_func_gradient(
+    ): Short =
+        try {
+            MH_uniffi_uniffi_geometry_checksum_func_gradient.invokeExact(
+            ) as Short
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // uniffi_uniffi_geometry_checksum_func_intersection
+    private val MH_uniffi_uniffi_geometry_checksum_func_intersection: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_geometry_checksum_func_intersection",
+        java.lang.foreign.FunctionDescriptor.of(
+            java.lang.foreign.ValueLayout.JAVA_SHORT,
+        ),
+    )
+
+    fun uniffi_uniffi_geometry_checksum_func_intersection(
+    ): Short =
+        try {
+            MH_uniffi_uniffi_geometry_checksum_func_intersection.invokeExact(
+            ) as Short
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // ffi_uniffi_geometry_uniffi_contract_version
+    private val MH_ffi_uniffi_geometry_uniffi_contract_version: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_geometry_uniffi_contract_version",
+        java.lang.foreign.FunctionDescriptor.of(
+            java.lang.foreign.ValueLayout.JAVA_INT,
+        ),
+    )
+
+    fun ffi_uniffi_geometry_uniffi_contract_version(
+    ): Int =
+        try {
+            MH_ffi_uniffi_geometry_uniffi_contract_version.invokeExact(
+            ) as Int
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    
+
+    // Integrity checks must run after all MethodHandle fields are initialized.
+    init {
+        NamespaceLibrary.uniffiCheckContractApiVersion()
+        // Checksum verification is skipped in this revision; see
+        // NamespaceLibrary.uniffiCheckApiChecksums().
+    }
+}
+
+
+// === FILE: uniffi/geometry/UniffiNullRustCallStatusErrorHandler.kt ===
+package uniffi.geometry
+
+// UniffiRustCallStatusErrorHandler implementation for times when we don't
+// expect a CALL_ERROR.
+internal class UniffiNullRustCallStatusErrorHandler : UniffiRustCallStatusErrorHandler<InternalException> {
+    override fun lift(errorBuf: java.lang.foreign.MemorySegment): InternalException {
+        RustBuffer.free(errorBuf)
+        return InternalException("Unexpected CALL_ERROR")
+    }
+}
+
+
+// === FILE: uniffi/geometry/UniffiRustCallStatus.kt ===
+package uniffi.geometry
+
+object UniffiRustCallStatus {
+    val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
+        java.lang.foreign.ValueLayout.JAVA_BYTE.withName("code"),
+        java.lang.foreign.MemoryLayout.paddingLayout(7),  // 7 bytes padding for alignment before RustBuffer
+        RustBuffer.LAYOUT.withName("error_buf"),
+    )
+
+    private val OFFSET_CODE: Long =
+        LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("code"))
+    private val OFFSET_ERROR_BUF: Long =
+        LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("error_buf"))
+
+    const val UNIFFI_CALL_SUCCESS: Byte = 0
+    const val UNIFFI_CALL_ERROR: Byte = 1
+    const val UNIFFI_CALL_UNEXPECTED_ERROR: Byte = 2
+
+    fun getCode(seg: java.lang.foreign.MemorySegment): Byte =
+        seg.get(java.lang.foreign.ValueLayout.JAVA_BYTE, OFFSET_CODE)
+
+    fun setCode(seg: java.lang.foreign.MemorySegment, value: Byte) {
+        seg.set(java.lang.foreign.ValueLayout.JAVA_BYTE, OFFSET_CODE, value)
+    }
+
+    fun getErrorBuf(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
+        seg.asSlice(OFFSET_ERROR_BUF, RustBuffer.LAYOUT.byteSize())
+
+    fun setErrorBuf(seg: java.lang.foreign.MemorySegment, errorBuf: java.lang.foreign.MemorySegment) {
+        java.lang.foreign.MemorySegment.copy(errorBuf, 0, seg, OFFSET_ERROR_BUF, RustBuffer.LAYOUT.byteSize())
+    }
+
+    fun isSuccess(seg: java.lang.foreign.MemorySegment): Boolean = getCode(seg) == UNIFFI_CALL_SUCCESS
+    fun isError(seg: java.lang.foreign.MemorySegment): Boolean = getCode(seg) == UNIFFI_CALL_ERROR
+    fun isPanic(seg: java.lang.foreign.MemorySegment): Boolean = getCode(seg) == UNIFFI_CALL_UNEXPECTED_ERROR
+
+    /** Allocate a new RustCallStatus in the given arena. */
+    fun allocate(allocator: java.lang.foreign.SegmentAllocator): java.lang.foreign.MemorySegment {
+        val seg = allocator.allocate(LAYOUT)
+        seg.fill(0.toByte())
+        return seg
+    }
+
+    // Slab allocator for RustCallStatus segments used by async callback error handling.
+    // See UniffiSlabAllocator for the design rationale.
+    private val STATUS_ALLOCATOR = UniffiSlabAllocator(LAYOUT, 1024)
+
+    /**
+     * Create a RustCallStatus with the given code and error buffer.
+     * Used by async callback interface error handling.
+     */
+    fun create(code: Byte, errorBuf: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment {
+        val seg = STATUS_ALLOCATOR.allocate(LAYOUT)
+        seg.fill(0.toByte())
+        setCode(seg, code)
+        setErrorBuf(seg, errorBuf)
+        return seg
+    }
+}
+
+
+// === FILE: uniffi/geometry/UniffiRustCallStatusErrorHandler.kt ===
+package uniffi.geometry
+
+interface UniffiRustCallStatusErrorHandler<E : Exception> {
+    fun lift(errorBuf: java.lang.foreign.MemorySegment): E
+}
+
+
+// === FILE: uniffi/geometry/UniffiSlabAllocator.kt ===
+package uniffi.geometry
+
+// Thread-local slab allocator for short-lived native memory segments.
+//
+// Several FFM code paths need to allocate small struct-sized segments
+// (RustBuffer at 24 bytes, RustCallStatus at 32 bytes) that are consumed
+// immediately and never referenced again.
+//
+// Alternatives considered:
+//   - Arena.global(): zero overhead but leaks permanently. At high call rates
+//     this adds up fast (e.g. 100k calls × 24-32 bytes = 2.4-3.2 MB never
+//     reclaimed).
+//   - Arena.ofAuto() per call: correct but creates a new Arena +
+//     PhantomReference per call, adding ~50-100ns of GC pressure to every
+//     call.
+//   - Thread-local reusable segment: zero overhead but causes SIGABRT — the
+//     FFM runtime retains internal references to allocator-provided segments,
+//     so reusing the same segment across calls corrupts FFM's internal state.
+//
+// This slab approach: allocate a batch of slots from one Arena.ofAuto(), then
+// hand out slices. Each call gets a unique slice (avoiding the FFM reuse
+// crash). When the slab is exhausted, a new one is allocated and the old one
+// becomes GC-eligible once all its slices are consumed (immediate — callers
+// read struct fields before the next call). Amortized cost: one Arena + one
+// native malloc per `slots` calls.
+internal class UniffiSlabAllocator(layout: java.lang.foreign.MemoryLayout, slots: Long) :
+    java.lang.foreign.SegmentAllocator {
+    private val slabBytes: Long = layout.byteSize() * slots
+    private val alignment: Long = layout.byteAlignment()
+    private val slab: ThreadLocal<java.lang.foreign.MemorySegment> =
+        ThreadLocal.withInitial { java.lang.foreign.Arena.ofAuto().allocate(slabBytes, alignment) }
+    private val offset: ThreadLocal<LongArray> = ThreadLocal.withInitial { LongArray(1) }
+
+    override fun allocate(byteSize: Long, byteAlignment: Long): java.lang.foreign.MemorySegment {
+        val off = offset.get()
+        var s = slab.get()
+        if (off[0] + byteSize > s.byteSize()) {
+            s = java.lang.foreign.Arena.ofAuto().allocate(slabBytes, alignment)
+            slab.set(s)
+            off[0] = 0
+        }
+        val result = s.asSlice(off[0], byteSize)
+        off[0] += byteSize
+        return result
+    }
+}

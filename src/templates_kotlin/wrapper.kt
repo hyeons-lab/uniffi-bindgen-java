@@ -37,6 +37,26 @@
 {% include "StringHelper.kt" %}
 {% include "ByteArrayHelper.kt" %}
 
+{# Per-type templates. Iterates `iter_local_types()` and includes the
+   matching template for each Type variant, mirroring the Java backend's
+   `Types.java` dispatch. Records and Optional<T> are the only two
+   currently handled — other types still panic at the `AsCodeType for
+   Type` arm in `gen_kotlin/mod.rs`. Whitespace control trims both sides
+   of every loop / match tag so non-matching types (the common case for
+   primitive-only fixtures like arithmetic) emit nothing. #}
+{%- for type_ in ci.iter_local_types() -%}
+{%- match type_ -%}
+{%- when Type::Record { name, module_path } -%}
+{%- let type_name = type_|type_name(ci, config) -%}
+{%- let ffi_converter_name = type_|ffi_converter_name -%}
+{% include "RecordTemplate.kt" %}
+{%- when Type::Optional { inner_type } -%}
+{%- let ffi_converter_name = type_|ffi_converter_name -%}
+{% include "OptionalTemplate.kt" %}
+{%- else -%}
+{%- endmatch -%}
+{%- endfor -%}
+
 {# Only emit the namespace object when the interface has at least one
    top-level function. Empty `object Foo` is legal Kotlin but pointless. #}
 {%- if !ci.function_definitions().is_empty() %}
