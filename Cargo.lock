@@ -1660,6 +1660,7 @@ dependencies = [
  "uniffi-fixture-benchmarks",
  "uniffi-fixture-coverall",
  "uniffi-fixture-ext-types",
+ "uniffi-fixture-flat-enum",
  "uniffi-fixture-futures",
  "uniffi-fixture-primitive-arrays",
  "uniffi-fixture-proc-macro",
@@ -1808,6 +1809,13 @@ dependencies = [
  "anyhow",
  "uniffi",
  "uniffi-fixture-ext-types-lib-one",
+]
+
+[[package]]
+name = "uniffi-fixture-flat-enum"
+version = "0.1.0"
+dependencies = [
+ "uniffi",
 ]
 
 [[package]]
