@@ -363,19 +363,26 @@ impl AsCodeType for Type {
             Type::Optional { inner_type } => {
                 Box::new(compounds::OptionalCodeType::new(*inner_type))
             }
-            Type::Sequence { inner_type } => match inner_type.as_ref() {
-                Type::Int16 | Type::UInt16 => Box::new(compounds::Int16ArrayCodeType),
-                Type::Int32 | Type::UInt32 => Box::new(compounds::Int32ArrayCodeType),
-                Type::Int64 | Type::UInt64 => Box::new(compounds::Int64ArrayCodeType),
-                Type::Float32 => Box::new(compounds::Float32ArrayCodeType),
-                Type::Float64 => Box::new(compounds::Float64ArrayCodeType),
-                Type::Boolean => Box::new(compounds::BooleanArrayCodeType),
-                // Int8/UInt8 fall through to the generic path — byte-
-                // array sequences come in via the separate
-                // `Type::Bytes` → `ByteArray` route. Mirrors the Java
-                // backend's shape.
-                _ => Box::new(compounds::SequenceCodeType::new(*inner_type)),
-            },
+            Type::Sequence { inner_type } => {
+                // Unbox once, match on the owned `Type`. Avoids the
+                // NLL-reliant "borrow from `.as_ref()` then move out of
+                // `*inner_type` in the fallback arm" pattern the Java
+                // backend sidesteps with an explicit `.clone()`.
+                let inner_type = *inner_type;
+                match inner_type {
+                    Type::Int16 | Type::UInt16 => Box::new(compounds::Int16ArrayCodeType),
+                    Type::Int32 | Type::UInt32 => Box::new(compounds::Int32ArrayCodeType),
+                    Type::Int64 | Type::UInt64 => Box::new(compounds::Int64ArrayCodeType),
+                    Type::Float32 => Box::new(compounds::Float32ArrayCodeType),
+                    Type::Float64 => Box::new(compounds::Float64ArrayCodeType),
+                    Type::Boolean => Box::new(compounds::BooleanArrayCodeType),
+                    // Int8/UInt8 fall through to the generic path —
+                    // byte-array sequences come in via the separate
+                    // `Type::Bytes` → `ByteArray` route. Mirrors the
+                    // Java backend's shape.
+                    other => Box::new(compounds::SequenceCodeType::new(other)),
+                }
+            }
             Type::Map {
                 key_type,
                 value_type,
