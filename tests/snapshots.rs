@@ -120,13 +120,13 @@ fn snapshot_arithmetic() -> Result<()> {
     snapshot_fixture("uniffi-example-arithmetic", "arithmetic")
 }
 
-/// Kotlin-side snapshot for the same arithmetic fixture. Captures the
-/// full Kotlin runtime + namespace-function rendering so a change to
-/// either backend without a paired update surfaces as a CI diff (per
-/// the dual-backend maintenance strategy in the project plan). Geometry
-/// + coverall snapshots are Java-only until the Kotlin record / object /
-/// callback support lands (P3f+); for now they panic on
-/// `FfiType::Struct` / non-primitive `AsCodeType` arms.
+/// Kotlin-side snapshot for the arithmetic fixture. Captures the full
+/// Kotlin runtime + namespace-function rendering so a change to either
+/// backend without a paired update surfaces as a CI diff (per the
+/// dual-backend maintenance strategy in the project plan). Post-P3g
+/// this also exercises typed-error generation (`ArithmeticError →
+/// ArithmeticException` + `ArithmeticExceptionErrorHandler`) since the
+/// fixture's `add`/`sub` declare `[Throws=ArithmeticError]`.
 #[test]
 fn snapshot_arithmetic_kotlin() -> Result<()> {
     snapshot_fixture_for(
@@ -159,4 +159,24 @@ fn snapshot_geometry_kotlin() -> Result<()> {
 #[test]
 fn snapshot_coverall() -> Result<()> {
     snapshot_fixture("uniffi-fixture-coverall", "coverall")
+}
+
+/// Kotlin-side snapshot for the in-repo `flat-enum` fixture. P3g adds
+/// flat-enum rendering (`enum class`); this fixture is a deliberately
+/// tiny `enum Animal { Dog, Cat }` plus a round-trip function, so it
+/// isolates the flat-enum codegen path with zero other unsupported
+/// types in the way. Error rendering is covered by
+/// `snapshot_arithmetic_kotlin`, which now sees the `ArithmeticError →
+/// ArithmeticException` typed-error output. The upstream
+/// `uniffi-fixture-enum-types` intentionally *isn't* used here because
+/// it includes sealed-variant enums + objects that would either panic
+/// or render silently wrong until P3h+ lands the remaining types.
+#[test]
+fn snapshot_flat_enum_kotlin() -> Result<()> {
+    snapshot_fixture_for(
+        "uniffi-fixture-flat-enum",
+        "flat_enum_kotlin",
+        Language::Kotlin,
+        "kt",
+    )
 }
