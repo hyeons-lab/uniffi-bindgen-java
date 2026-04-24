@@ -24,7 +24,7 @@ use std::fmt::Debug;
 
 use anyhow::{Context, Result};
 use askama::Template;
-use heck::{ToLowerCamelCase, ToUpperCamelCase};
+use heck::{ToLowerCamelCase, ToShoutySnakeCase, ToUpperCamelCase};
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use uniffi_bindgen::{
@@ -37,6 +37,7 @@ pub use crate::gen_lang::CustomTypeConfig;
 use crate::gen_lang::ExternalPackageResolver;
 
 mod compounds;
+mod enum_;
 mod primitives;
 mod record;
 
@@ -157,10 +158,46 @@ impl KotlinCodeOracle {
     }
 
     /// Kotlin class / data class / object name. UpperCamelCase + reserved-word
-    /// fixup. Mirrors `JavaCodeOracle::class_name` minus the error-suffix
-    /// rewrite, which lands with P3g (typed errors).
-    pub fn class_name(&self, _ci: &ComponentInterface, nm: &str) -> String {
-        fixup_keyword(nm.to_string().to_upper_camel_case())
+    /// fixup. For types marked as errors (`[Error] enum MyError { ... }`),
+    /// rewrite `*Error` → `*Exception` so the Kotlin surface reads as a
+    /// `kotlin.Exception` subclass. Mirrors `JavaCodeOracle::class_name`.
+    pub fn class_name(&self, ci: &ComponentInterface, nm: &str) -> String {
+        let name = nm.to_string().to_upper_camel_case();
+        fixup_keyword(if ci.is_name_used_as_error(nm) {
+            self.convert_error_suffix(&name)
+        } else {
+            name
+        })
+    }
+
+    /// `FooError` → `FooException`. `Error` alone → `Error` (leaves the
+    /// bare suffix untouched; matches the Java backend).
+    fn convert_error_suffix(&self, nm: &str) -> String {
+        match nm.strip_suffix("Error") {
+            Some(stripped) if !stripped.is_empty() => format!("{stripped}Exception"),
+            _ => nm.to_string(),
+        }
+    }
+
+    /// Kotlin enum entry name — SCREAMING_SNAKE_CASE, backtick-escaped if
+    /// a reserved word. Mirrors `JavaCodeOracle::enum_variant_name` modulo
+    /// the reserved-word fixup (Kotlin requires it for identifiers that
+    /// collide with hard keywords even in enum-entry position).
+    pub fn enum_variant_name(&self, nm: &str) -> String {
+        fixup_keyword(nm.to_string().to_shouty_snake_case())
+    }
+
+    /// Error-variant nested-class name. UpperCamelCase'd, then routed
+    /// through `convert_error_suffix` — so a trailing `Error` becomes
+    /// `Exception`, and any other name passes through unchanged. The
+    /// parent `sealed class` already carries the `Exception` suffix;
+    /// variants don't get it added automatically.
+    ///
+    /// Examples: `FooError` → `FooException`, `IntegerOverflow` →
+    /// `IntegerOverflow` (arithmetic's typed error nests as
+    /// `ArithmeticException.IntegerOverflow`, not `...Exception`).
+    pub fn error_variant_name(&self, nm: &str) -> String {
+        fixup_keyword(self.convert_error_suffix(&nm.to_string().to_upper_camel_case()))
     }
 
     /// FFI type label for use in Kotlin method signatures + MethodHandle
@@ -322,6 +359,7 @@ impl AsCodeType for Type {
             Type::Bytes => Box::new(primitives::BytesCodeType),
 
             Type::Record { name, .. } => Box::new(record::RecordCodeType::new(name)),
+            Type::Enum { name, .. } => Box::new(enum_::EnumCodeType::new(name)),
             Type::Optional { inner_type } => {
                 Box::new(compounds::OptionalCodeType::new(*inner_type))
             }
@@ -334,8 +372,8 @@ impl AsCodeType for Type {
             // corresponding template support lands.
             other => panic!(
                 "Kotlin CodeType not implemented for `{:?}` yet \
-                 (P3g+ adds enums, objects, callbacks, custom, \
-                 sequences, maps). See gen_kotlin/mod.rs.",
+                 (P3h+ adds sequences, maps, objects, callbacks, custom). \
+                 See gen_kotlin/mod.rs.",
                 other
             ),
         }
@@ -480,7 +518,7 @@ pub fn generate_bindings(config: &Config, ci: &ComponentInterface) -> Result<Str
 // filters needed by the Kotlin runtime + namespace-function rendering.
 mod filters {
     use askama::Values;
-    use uniffi_bindgen::interface::FfiType;
+    use uniffi_bindgen::interface::{FfiType, Variant};
     use uniffi_meta::AsType;
 
     use super::{AsCodeType, Config, KotlinCodeOracle};
@@ -498,6 +536,26 @@ mod filters {
     /// Kotlin-idiomatic function name. Same casing rules as `var_name`.
     pub(super) fn fn_name<S: AsRef<str>>(nm: S, _v: &dyn Values) -> Result<String, askama::Error> {
         Ok(KotlinCodeOracle.fn_name(nm.as_ref()))
+    }
+
+    /// Flat-enum variant name — SCREAMING_SNAKE_CASE, backtick-escaped if
+    /// the upshouted form collides with a Kotlin reserved word.
+    pub(super) fn variant_name(
+        variant: &Variant,
+        _v: &dyn Values,
+    ) -> Result<String, askama::Error> {
+        Ok(KotlinCodeOracle.enum_variant_name(variant.name()))
+    }
+
+    /// Error-variant class name — UpperCamelCase plus the `*Error →
+    /// *Exception` rewrite when the Rust variant happens to end in
+    /// `Error`. Usually a plain UpperCamelCase since variant names rarely
+    /// carry the suffix (the parent enum does).
+    pub(super) fn error_variant_name(
+        variant: &Variant,
+        _v: &dyn Values,
+    ) -> Result<String, askama::Error> {
+        Ok(KotlinCodeOracle.error_variant_name(variant.name()))
     }
 
     /// User-facing Kotlin type label — `Long`, `Boolean`, `String`,
