@@ -334,3 +334,22 @@ fn snapshot_error_data_kotlin() -> Result<()> {
         "kt",
     )
 }
+
+/// Kotlin-side snapshot for the in-repo `trait-methods-kt` fixture.
+/// P3l-traits adds `#[uniffi::export(Display, Eq, Ord, Hash)]`
+/// proc-macro trait method overrides on Records and Objects. The
+/// fixture exercises one record (`TraitRec`) and one object
+/// (`TraitObj`), both with all four trait exports — so the snapshot
+/// covers every arm of the new `uniffi_trait_impls` macro across
+/// both self-type dispatch paths (`lower(this)` for Records vs
+/// `callWithHandle { uniffiHandle -> ... }` for Objects). Enums and
+/// errors with trait exports are deferred to a follow-up.
+#[test]
+fn snapshot_trait_methods_kotlin() -> Result<()> {
+    snapshot_fixture_for(
+        "uniffi-fixture-trait-methods-kt",
+        "trait_methods_kotlin",
+        Language::Kotlin,
+        "kt",
+    )
+}
