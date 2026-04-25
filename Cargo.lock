@@ -364,7 +364,7 @@ dependencies = [
  "semver",
  "serde",
  "serde_json",
- "thiserror 2.0.12",
+ "thiserror",
 ]
 
 [[package]]
@@ -1494,31 +1494,11 @@ dependencies = [
 
 [[package]]
 name = "thiserror"
-version = "1.0.69"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b6aaf5339b578ea85b50e080feb250a3e8ae8cfcdff9a461c9ec2904bc923f52"
-dependencies = [
- "thiserror-impl 1.0.69",
-]
-
-[[package]]
-name = "thiserror"
 version = "2.0.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "567b8a2dae586314f7be2a752ec7474332959c6460e02bde30d702a66d488708"
 dependencies = [
- "thiserror-impl 2.0.12",
-]
-
-[[package]]
-name = "thiserror-impl"
-version = "1.0.69"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4fee6c4efc90059e10f81e6d42c60a18f76588c3d74cb83a0b242a2b6c7504c1"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
+ "thiserror-impl",
 ]
 
 [[package]]
@@ -1702,7 +1682,7 @@ name = "uniffi-example-arithmetic"
 version = "0.22.0"
 source = "git+https://github.com/mozilla/uniffi-rs.git?tag=v0.31.0#309762f55db3f0548194a9ceba3027fa64b18a93"
 dependencies = [
- "thiserror 2.0.12",
+ "thiserror",
  "uniffi",
 ]
 
@@ -1723,7 +1703,7 @@ version = "0.22.0"
 source = "git+https://github.com/mozilla/uniffi-rs.git?tag=v0.31.0#309762f55db3f0548194a9ceba3027fa64b18a93"
 dependencies = [
  "async-std",
- "thiserror 2.0.12",
+ "thiserror",
  "uniffi",
 ]
 
@@ -1757,7 +1737,7 @@ version = "0.22.0"
 source = "git+https://github.com/mozilla/uniffi-rs.git?tag=v0.31.0#309762f55db3f0548194a9ceba3027fa64b18a93"
 dependencies = [
  "once_cell",
- "thiserror 2.0.12",
+ "thiserror",
  "uniffi",
 ]
 
@@ -1769,7 +1749,7 @@ dependencies = [
  "clap",
  "criterion",
  "regex",
- "thiserror 2.0.12",
+ "thiserror",
  "uniffi",
 ]
 
@@ -1779,7 +1759,7 @@ version = "0.22.0"
 source = "git+https://github.com/mozilla/uniffi-rs.git?tag=v0.31.0#309762f55db3f0548194a9ceba3027fa64b18a93"
 dependencies = [
  "once_cell",
- "thiserror 2.0.12",
+ "thiserror",
  "uniffi",
 ]
 
@@ -1788,7 +1768,7 @@ name = "uniffi-fixture-enum-types"
 version = "0.22.0"
 source = "git+https://github.com/mozilla/uniffi-rs.git?tag=v0.31.0#309762f55db3f0548194a9ceba3027fa64b18a93"
 dependencies = [
- "thiserror 2.0.12",
+ "thiserror",
  "uniffi",
 ]
 
@@ -1796,7 +1776,7 @@ dependencies = [
 name = "uniffi-fixture-error-data"
 version = "0.1.0"
 dependencies = [
- "thiserror 1.0.69",
+ "thiserror",
  "uniffi",
 ]
 
@@ -1823,7 +1803,7 @@ source = "git+https://github.com/mozilla/uniffi-rs.git?tag=v0.31.0#309762f55db3f
 dependencies = [
  "anyhow",
  "bytes",
- "thiserror 2.0.12",
+ "thiserror",
  "uniffi",
 ]
 
@@ -1839,7 +1819,7 @@ source = "git+https://github.com/mozilla/uniffi-rs.git?tag=v0.31.0#309762f55db3f
 dependencies = [
  "anyhow",
  "bytes",
- "thiserror 2.0.12",
+ "thiserror",
  "uniffi",
 ]
 
@@ -1868,7 +1848,7 @@ dependencies = [
  "async-trait",
  "futures",
  "once_cell",
- "thiserror 2.0.12",
+ "thiserror",
  "tokio",
  "uniffi",
 ]
@@ -1886,7 +1866,7 @@ version = "0.22.0"
 source = "git+https://github.com/mozilla/uniffi-rs.git?tag=v0.31.0#309762f55db3f0548194a9ceba3027fa64b18a93"
 dependencies = [
  "lazy_static",
- "thiserror 2.0.12",
+ "thiserror",
  "uniffi",
 ]
 
@@ -1895,7 +1875,7 @@ name = "uniffi-fixture-rename"
 version = "0.22.0"
 source = "git+https://github.com/mozilla/uniffi-rs.git?tag=v0.31.0#309762f55db3f0548194a9ceba3027fa64b18a93"
 dependencies = [
- "thiserror 2.0.12",
+ "thiserror",
  "uniffi",
 ]
 
@@ -1919,7 +1899,7 @@ version = "0.22.0"
 source = "git+https://github.com/mozilla/uniffi-rs.git?tag=v0.31.0#309762f55db3f0548194a9ceba3027fa64b18a93"
 dependencies = [
  "chrono",
- "thiserror 2.0.12",
+ "thiserror",
  "uniffi",
 ]
 
@@ -1929,7 +1909,7 @@ version = "0.22.0"
 source = "git+https://github.com/mozilla/uniffi-rs.git?tag=v0.31.0#309762f55db3f0548194a9ceba3027fa64b18a93"
 dependencies = [
  "once_cell",
- "thiserror 2.0.12",
+ "thiserror",
  "uniffi",
 ]
 

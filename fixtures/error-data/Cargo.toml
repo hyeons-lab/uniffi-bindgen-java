@@ -9,4 +9,4 @@ name = "uniffi_fixture_error_data"
 
 [dependencies]
 uniffi = { git = "https://github.com/mozilla/uniffi-rs.git", tag = "v0.31.0" }
-thiserror = "1"
+thiserror = "2"

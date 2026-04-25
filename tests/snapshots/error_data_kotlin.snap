@@ -8,11 +8,11 @@ package uniffi.error_data
 sealed class ApiException(message: String) : kotlin.Exception(message) {
     class Network(
         val reason: String
-    ) : ApiException("reason=$reason")
+    ) : ApiException("reason=${reason}")
     class Server(
         val code: Int,
         val reason: String
-    ) : ApiException("code=$code, reason=$reason")
+    ) : ApiException("code=${code}, reason=${reason}")
 }
 
 

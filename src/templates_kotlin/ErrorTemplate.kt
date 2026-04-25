@@ -66,11 +66,16 @@ sealed class {{ type_name }}(message: String) : kotlin.Exception(message) {
         {#- Build a `field=value, …` synthetic message so stack traces
            surface the variant's payload. Mirrors the Java backend's
            StringBuilder dance, just inlined as a Kotlin string
-           interpolation. -#}
+           interpolation. The label uses `field_name_unquoted` so a
+           Rust field named `object` shows as `object=…` in the user-
+           visible message rather than leaking backticks; the
+           interpolation uses `${...}` form so backtick-escaped
+           identifiers (e.g. `` `object` ``) parse correctly inside
+           the Kotlin string template. -#}
         {%- if variant.fields().is_empty() -%}
         ""
         {%- else -%}
-        "{% for field in variant.fields() %}{% call kotlin::field_name(field, loop.index) %}=${% call kotlin::field_name(field, loop.index) %}{% if !loop.last %}, {% endif %}{% endfor %}"
+        "{% for field in variant.fields() %}{% call kotlin::field_name_unquoted(field, loop.index) %}=${{ "{" }}{% call kotlin::field_name(field, loop.index) %}}{% if !loop.last %}, {% endif %}{% endfor %}"
         {%- endif -%}
     )
     {%- endfor %}

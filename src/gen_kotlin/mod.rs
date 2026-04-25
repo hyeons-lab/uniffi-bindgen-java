@@ -765,6 +765,16 @@ mod filters {
         Ok(KotlinCodeOracle.fn_name(nm.as_ref()))
     }
 
+    /// Strip the surrounding backticks that `var_name` adds for Kotlin
+    /// reserved words. Used by templates that need to render a name as
+    /// human-readable text rather than a Kotlin identifier — e.g. the
+    /// synthetic `field=value` message attached to non-flat error
+    /// variants, where `` `object`=… `` would leak backticks into the
+    /// user-visible exception message. Mirrors Java's `unquote` filter.
+    pub(super) fn unquote<S: AsRef<str>>(nm: S, _v: &dyn Values) -> Result<String, askama::Error> {
+        Ok(nm.as_ref().trim_matches('`').to_string())
+    }
+
     /// UpperCamelCase class name + reserved-word / error-suffix fixup.
     /// Used by templates that need to stamp a class identifier derived
     /// from a raw uniffi name — e.g. `UniffiCallbackInterfaceImpl`'s
