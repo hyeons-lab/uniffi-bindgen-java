@@ -1660,6 +1660,7 @@ dependencies = [
  "uniffi-fixture-benchmarks",
  "uniffi-fixture-coverall",
  "uniffi-fixture-enum-types",
+ "uniffi-fixture-error-data",
  "uniffi-fixture-ext-types",
  "uniffi-fixture-flat-enum",
  "uniffi-fixture-futures",
@@ -1766,6 +1767,14 @@ dependencies = [
 name = "uniffi-fixture-enum-types"
 version = "0.22.0"
 source = "git+https://github.com/mozilla/uniffi-rs.git?tag=v0.31.0#309762f55db3f0548194a9ceba3027fa64b18a93"
+dependencies = [
+ "thiserror",
+ "uniffi",
+]
+
+[[package]]
+name = "uniffi-fixture-error-data"
+version = "0.1.0"
 dependencies = [
  "thiserror",
  "uniffi",

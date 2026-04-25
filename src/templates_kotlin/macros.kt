@@ -174,6 +174,23 @@ v{{ field_num }}
 {%- endmacro -%}
 
 {#
+// Same as `field_name` but strips the backticks that `var_name`
+// adds for Kotlin reserved words. Use this when rendering a name as
+// human-readable text (e.g. the `field=value` label inside the
+// synthetic message attached to a non-flat error variant). Without
+// it, a Rust field named `object` would surface in the exception
+// message as `` `object`=… ``, leaking the backtick escape into
+// user-visible output. Mirrors Java's `field_name_unquoted`.
+#}
+{%- macro field_name_unquoted(field, field_num) -%}
+{%- if field.name().is_empty() -%}
+v{{ field_num }}
+{%- else -%}
+{{ field.name()|var_name|unquote }}
+{%- endif -%}
+{%- endmacro -%}
+
+{#
 // Argument list as it appears in the Kotlin function signature:
 //   `name: Type, name2: Type2`.
 // Uses the high-level `type_name` filter, not the FFI type — these are
