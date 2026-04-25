@@ -542,6 +542,14 @@ public class TestFixtureFutures {
       // Two-batch approach: batch 1 warms up malloc's free list, batch 2 should reuse
       // freed memory (no RSS growth). With a leak (Arena.global()), batch 2 always
       // allocates fresh native memory, so RSS grows by ~16+ MB between batches.
+      //
+      // Threshold and drain budget: RSS measurements are non-deterministic on coverage
+      // builds — batch deltas observed in the wild range from -9 MB to +10 MB without
+      // any code change, dominated by JVM Cleaner thread timing for `Arena.ofAuto()`
+      // reclamation. We give Cleaner ~2s of `System.gc()` + sleep to drain its queue,
+      // then assert a 16 MB threshold that still catches the original 21 MB
+      // `Arena.global()` leak signal but absorbs the +10 MB noise floor seen on
+      // llvm-cov-instrumented runs.
       {
         var dummyBuf = java.lang.foreign.Arena.ofAuto().allocate(
             uniffi.fixture.futures.RustBuffer.LAYOUT);
@@ -554,7 +562,7 @@ public class TestFixtureFutures {
               uniffi.fixture.futures.UniffiRustCallStatus.UNIFFI_CALL_ERROR,
               dummyBuf);
         }
-        for (int i = 0; i < 5; i++) { System.gc(); Thread.sleep(50); }
+        for (int i = 0; i < 10; i++) { System.gc(); Thread.sleep(200); }
         long rssAfterBatch1 = getProcessRssKb();
 
         // Batch 2: with slab, reuses freed memory; with Arena.global(), leaks ~16 MB more
@@ -563,7 +571,7 @@ public class TestFixtureFutures {
               uniffi.fixture.futures.UniffiRustCallStatus.UNIFFI_CALL_ERROR,
               dummyBuf);
         }
-        for (int i = 0; i < 5; i++) { System.gc(); Thread.sleep(50); }
+        for (int i = 0; i < 10; i++) { System.gc(); Thread.sleep(200); }
         long rssAfterBatch2 = getProcessRssKb();
 
         long growthKb = rssAfterBatch2 - rssAfterBatch1;
@@ -572,7 +580,9 @@ public class TestFixtureFutures {
             rssAfterBatch1, rssAfterBatch2, growthKb, batchSize));
         // With Arena.global(): 500k × ~42 bytes ≈ 21 MB delta (never freed)
         // With slab: delta ≈ 0 (batch 2 reuses freed slabs from batch 1)
-        assert growthKb < 10_000
+        // Threshold 16 MB sits between the noise floor (~10 MB) and the leak signal
+        // (~21 MB), preserving leak detection while absorbing GC-timing variance.
+        assert growthKb < 16_000
             : MessageFormat.format(
                 "create() leaked native memory: {0} KB growth between batches of {1} calls",
                 growthKb, batchSize);
