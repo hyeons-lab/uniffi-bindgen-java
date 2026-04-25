@@ -96,7 +96,12 @@ internal object UniffiCallbackInterface{{ name }} {
                 {%- endif %}
             }
             {%- when None %}
-            val writeReturn = java.util.function.Consumer<Void?> { _ -> }
+            // `Unit` (not `Void?`) so the type parameter unifies with
+            // `makeCall: Supplier<Unit>` — Kotlin lambdas with no
+            // expression-statement final value infer `Unit`, and
+            // `uniffiTraitInterfaceCall<T>(makeCall: Supplier<T>,
+            // writeReturn: Consumer<T>)` requires both sides agree.
+            val writeReturn = java.util.function.Consumer<Unit> { _ -> }
             {%- endmatch %}
 
             {%- match meth.throws_type() %}

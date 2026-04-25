@@ -2,12 +2,16 @@
 // UNIFFI:FILE UniffiHandleMap.kt
 package {{ config.package_name() }}
 
-// Maps odd 64-bit handles to foreign-side objects that Rust references
-// via callback interfaces. Handles are always odd (LSB = 1) to
-// distinguish them from Rust handles (LSB = 0) — the LSB check in
-// `FfiConverter.lift()` routes between the two sides without an
-// additional tag. Thread-safe by construction (ConcurrentHashMap +
-// AtomicLong counter). Mirrors `src/templates/HandleMap.java`.
+// Maps 64-bit handles to foreign-side objects that Rust references
+// via callback interfaces. Handles allocated here are always odd
+// (LSB = 1), reserving odd values for callback-interface handles and
+// keeping them distinct from Rust-owned handles (LSB = 0). The
+// matching LSB-based lift/lower dispatch in `FfiConverter`s for
+// `[Trait, WithForeign]` objects is future work (P3j-c) — pure
+// callback-interface FfiConverters in this revision unconditionally
+// route through the handle map. Thread-safe by construction
+// (ConcurrentHashMap + AtomicLong counter). Mirrors
+// `src/templates/HandleMap.java`.
 internal class UniffiHandleMap<T : Any> {
     private val map = java.util.concurrent.ConcurrentHashMap<Long, T>()
 
