@@ -35,6 +35,14 @@ object Custom_types {
             }
         )
 }
+// === FILE: customtypes/ExampleCustomType.kt ===
+package customtypes
+
+data class ExampleCustomType(
+    val value: String,
+)
+
+
 // === FILE: customtypes/FfiConverter.kt ===
 package customtypes
 
@@ -368,12 +376,7 @@ object FfiConverterOptionalTypeCustomTypesDemo : FfiConverterRustBuffer<CustomTy
             FfiConverterTypeCustomTypesDemo.write(value, buf)
         }
     }
-}// UNIFFI:FILE ExampleCustomType.kt
-package customtypes
-
-data class ExampleCustomType(
-    val value: String,
-)
+}
 
 
 // === FILE: customtypes/FfiConverterRustBuffer.kt ===
@@ -496,6 +499,8 @@ object FfiConverterTypeCustomTypesDemo : FfiConverterRustBuffer<CustomTypesDemo>
 // === FILE: customtypes/FfiConverterTypeExampleCustomType.kt ===
 package customtypes
 
+// FfiConverter delegating to the builtin's serialization. The wrapper
+// just ferries `value` through.
 object FfiConverterTypeExampleCustomType : FfiConverter<ExampleCustomType, java.lang.foreign.MemorySegment> {
     override fun lift(value: java.lang.foreign.MemorySegment): ExampleCustomType =
         ExampleCustomType(FfiConverterString.lift(value))
@@ -518,6 +523,8 @@ object FfiConverterTypeExampleCustomType : FfiConverter<ExampleCustomType, java.
 // === FILE: customtypes/FfiConverterTypeHandle.kt ===
 package customtypes
 
+// FfiConverter delegating to the builtin's serialization. The wrapper
+// just ferries `value` through.
 object FfiConverterTypeHandle : FfiConverter<Handle, Long> {
     override fun lift(value: Long): Handle =
         Handle(FfiConverterLong.lift(value))
@@ -540,6 +547,8 @@ object FfiConverterTypeHandle : FfiConverter<Handle, Long> {
 // === FILE: customtypes/FfiConverterTypeTimeIntervalMs.kt ===
 package customtypes
 
+// FfiConverter delegating to the builtin's serialization. The wrapper
+// just ferries `value` through.
 object FfiConverterTypeTimeIntervalMs : FfiConverter<TimeIntervalMs, Long> {
     override fun lift(value: Long): TimeIntervalMs =
         TimeIntervalMs(FfiConverterLong.lift(value))
@@ -562,6 +571,8 @@ object FfiConverterTypeTimeIntervalMs : FfiConverter<TimeIntervalMs, Long> {
 // === FILE: customtypes/FfiConverterTypeTimeIntervalSecDbl.kt ===
 package customtypes
 
+// FfiConverter delegating to the builtin's serialization. The wrapper
+// just ferries `value` through.
 object FfiConverterTypeTimeIntervalSecDbl : FfiConverter<TimeIntervalSecDbl, Double> {
     override fun lift(value: Double): TimeIntervalSecDbl =
         TimeIntervalSecDbl(FfiConverterDouble.lift(value))
@@ -584,6 +595,8 @@ object FfiConverterTypeTimeIntervalSecDbl : FfiConverter<TimeIntervalSecDbl, Dou
 // === FILE: customtypes/FfiConverterTypeTimeIntervalSecFlt.kt ===
 package customtypes
 
+// FfiConverter delegating to the builtin's serialization. The wrapper
+// just ferries `value` through.
 object FfiConverterTypeTimeIntervalSecFlt : FfiConverter<TimeIntervalSecFlt, Float> {
     override fun lift(value: Float): TimeIntervalSecFlt =
         TimeIntervalSecFlt(FfiConverterFloat.lift(value))
@@ -601,8 +614,6 @@ object FfiConverterTypeTimeIntervalSecFlt : FfiConverter<TimeIntervalSecFlt, Flo
         FfiConverterFloat.write(value.value, buf)
     }
 }
-
-
 
 
 // === FILE: customtypes/FfiConverterTypeUrl.kt ===
@@ -654,8 +665,6 @@ object FfiConverterTypeUrl : FfiConverter<Url, java.lang.foreign.MemorySegment> 
         }
     }
 }
-
-
 
 // === FILE: customtypes/ForeignBytes.kt ===
 package customtypes

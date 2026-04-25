@@ -1,21 +1,52 @@
 
 {%- let ffi_type = builtin|ffi_type %}
-{%- match config.custom_types.get(name.as_str()) %}
-{%- when None %}
-{#- No user-provided config: auto-generate a `data class <Name>(val
-   value: <Builtin>)` newtype wrapper plus a delegating
-   FfiConverter. -#}
+{%- let custom_cfg = config.custom_types.get(name.as_str()) %}
 
 // UNIFFI:FILE {{ type_name }}.kt
 package {{ config.package_name() }}
+{%- match custom_cfg %}
+{%- when Some(custom_type_config) %}
+{%- match custom_type_config.imports %}
+{%- when Some(imports) %}
+{%- for import_name in imports %}
+import {{ import_name }}
+{%- endfor %}
+{%- else %}
+{%- endmatch %}
+{%- when None %}
+{%- endmatch %}
 
 data class {{ type_name }}(
-    val value: {{ builtin|type_name(ci, config) }},
+    val value:
+{%- match custom_cfg -%}
+{%- when Some(custom_type_config) -%}
+{%- match custom_type_config.type_name -%}
+{%- when Some(concrete_type_name) %} {{ concrete_type_name }},
+{%- when None %} {{ builtin|type_name(ci, config) }},
+{%- endmatch -%}
+{%- when None %} {{ builtin|type_name(ci, config) }},
+{%- endmatch %}
 )
 
 // UNIFFI:FILE {{ ffi_converter_name }}.kt
 package {{ config.package_name() }}
+{%- match custom_cfg %}
+{%- when Some(custom_type_config) %}
+{%- match custom_type_config.imports %}
+{%- when Some(imports) %}
+{%- for import_name in imports %}
+import {{ import_name }}
+{%- endfor %}
+{%- else %}
+{%- endmatch %}
+{%- when None %}
+{%- endmatch %}
 
+{%- match custom_cfg %}
+{%- when None %}
+
+// FfiConverter delegating to the builtin's serialization. The wrapper
+// just ferries `value` through.
 object {{ ffi_converter_name }} : FfiConverter<{{ type_name }}, {{ ffi_type.borrow()|ffi_type_name }}> {
     override fun lift(value: {{ ffi_type.borrow()|ffi_type_name }}): {{ type_name }} =
         {{ type_name }}({{ builtin|lift_fn }}(value))
@@ -34,40 +65,6 @@ object {{ ffi_converter_name }} : FfiConverter<{{ type_name }}, {{ ffi_type.borr
     }
 }
 {%- when Some(custom_type_config) %}
-{#- User-provided config: optionally override the wrapper type name
-   and inject lift/lower expression templates. Imports the caller's
-   target type if configured. -#}
-
-{%- match custom_type_config.type_name %}
-{%- when Some(concrete_type_name) %}
-
-// UNIFFI:FILE {{ type_name }}.kt
-package {{ config.package_name() }}
-
-{%- match custom_type_config.imports %}
-{%- when Some(imports) %}
-{%- for import_name in imports %}
-import {{ import_name }}
-{%- endfor %}
-{%- else %}
-{%- endmatch %}
-
-data class {{ type_name }}(
-    val value: {{ concrete_type_name }},
-)
-{%- else %}
-{%- endmatch %}
-
-// UNIFFI:FILE {{ ffi_converter_name }}.kt
-package {{ config.package_name() }}
-
-{%- match custom_type_config.imports %}
-{%- when Some(imports) %}
-{%- for import_name in imports %}
-import {{ import_name }}
-{%- endfor %}
-{%- else %}
-{%- endmatch %}
 
 // FfiConverter with user-supplied lift/lower expressions.
 object {{ ffi_converter_name }} : FfiConverter<{{ type_name }}, {{ ffi_type.borrow()|ffi_type_name }}> {
@@ -114,5 +111,3 @@ object {{ ffi_converter_name }} : FfiConverter<{{ type_name }}, {{ ffi_type.borr
     }
 }
 {%- endmatch %}
-
-
