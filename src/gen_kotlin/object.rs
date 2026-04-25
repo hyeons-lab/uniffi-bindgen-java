@@ -4,12 +4,15 @@
 
 //! `CodeType` impl for UniFFI objects (interfaces), rendered as Kotlin
 //! handle-based wrapper classes. Mirrors `gen_java/object.rs`
-//! structurally. The Java backend carries an `ObjectImpl` field for
-//! callback-interface dispatch; the Kotlin backend tracks that too so
-//! the `AsCodeType` arm can route correctly once P3j lands. Until then
-//! `ObjectTemplate.kt` only renders the no-callback-interface case, and
-//! any object with `imp.has_callback_interface()` will surface loudly
-//! (unsupported type in `gen_kotlin/mod.rs`).
+//! structurally. The `imp` field captures whether the object was
+//! declared `[Trait, WithForeign]` — `imp.has_callback_interface()`
+//! flips two bits of behavior:
+//!   * `initialization_fn` returns `Some(...)` so the object's vtable
+//!     gets registered with Rust at `UniffiLib.init` time (P3j-c).
+//!   * `ObjectTemplate.kt` emits a separate `interface <Name>` and
+//!     a `class <Name>Impl` wrapper, with the FfiConverter doing
+//!     LSB-tagged lift/lower dispatch between Rust handles (even)
+//!     and foreign-implementor handles (odd).
 
 use super::{CodeType, Config, KotlinCodeOracle};
 use uniffi_bindgen::{ComponentInterface, interface::ObjectImpl};
@@ -17,7 +20,6 @@ use uniffi_bindgen::{ComponentInterface, interface::ObjectImpl};
 #[derive(Debug)]
 pub struct ObjectCodeType {
     name: String,
-    #[allow(dead_code)] // Consumed in P3j when callback-interface dispatch lands.
     imp: ObjectImpl,
 }
 
@@ -34,5 +36,15 @@ impl CodeType for ObjectCodeType {
 
     fn canonical_name(&self) -> String {
         format!("Type{}", self.name)
+    }
+
+    fn initialization_fn(&self) -> Option<String> {
+        // `[Trait, WithForeign]` objects need the same vtable
+        // registration at library init that pure callback interfaces
+        // do — the Rust side has to know how to dispatch back to a
+        // foreign implementor.
+        self.imp
+            .has_callback_interface()
+            .then(|| format!("UniffiCallbackInterface{}.register", self.name))
     }
 }

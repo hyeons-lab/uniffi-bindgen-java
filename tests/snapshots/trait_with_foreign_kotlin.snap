@@ -2,8 +2,131 @@
 source: tests/snapshots.rs
 expression: combined
 ---
-// === FILE: uniffi/sprites/FfiConverter.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/Counter.kt ===
+package uniffi.trait_with_foreign
+
+interface Counter {
+    fun nextValue(): Int
+}
+
+
+// === FILE: uniffi/trait_with_foreign/CounterImpl.kt ===
+package uniffi.trait_with_foreign
+
+// Object wrapper over a Rust `Arc<T>`. Uses a handle-based protocol
+// for cross-FFI lifecycle: the `AtomicLong` call counter + `AtomicBoolean`
+// closed flag together implement an in-flight-call guard so close()
+// and concurrent method calls can't race into a use-after-free on the
+// Rust side.
+//
+// Structure mirrors `src/templates/ObjectTemplate.java` verbatim at
+// the protocol level — same handshake, same Cleaner integration.
+// `[Trait, WithForeign]` objects (when has_callback_interface is true)
+// implement an additional Kotlin interface so foreign-side
+// implementations can substitute for the Rust wrapper transparently;
+// in that case methods are emitted with `override`.
+class CounterImpl internal constructor(
+    @Suppress("UNUSED_PARAMETER") phantom: UniffiWithHandle,
+    internal val handle: Long,
+) : AutoCloseable, Counter {
+    private val wasDestroyed = java.util.concurrent.atomic.AtomicBoolean(false)
+    private val callCounter = java.util.concurrent.atomic.AtomicLong(1L)
+    // NoHandle wrappers (handle == 0) don't register a cleaner: there's
+    // no Rust peer to free, and registering would just queue a dead
+    // Cleanable. Real wrappers register; `cleanable` is nullable so
+    // `close()` can tolerate either shape.
+    private val cleanable: UniffiCleaner.Cleanable? =
+        if (handle != 0L) UniffiLib.CLEANER.register(this, UniffiCleanAction(handle)) else null
+
+    /**
+     * Test-only constructor for instantiating a fake wrapper with no
+     * connected Rust peer. Any method call on a fake object will fail.
+     */
+    constructor(@Suppress("UNUSED_PARAMETER") noHandle: NoHandle) : this(UniffiWithHandle, 0L)
+
+    override fun close() {
+        // Single-shot. Subsequent close() calls are silent no-ops.
+        if (wasDestroyed.compareAndSet(false, true)) {
+            // Match the initial count of 1 given at creation time.
+            if (callCounter.decrementAndGet() == 0L) {
+                cleanable?.clean()
+            }
+        }
+    }
+
+    /**
+     * Run [block] with the live Rust handle, holding the wrapper alive
+     * for the duration of the call. Throws `IllegalStateException` if
+     * the wrapper has already been destroyed.
+     *
+     * Uses a CAS retry loop on the call counter so concurrent method
+     * calls can run without taking a lock; see the comment block in
+     * `src/templates/ObjectTemplate.java` for the full correctness
+     * argument.
+     */
+    inline fun <R> callWithHandle(block: (Long) -> R): R {
+        // Check and increment the call counter. Retries on CAS failure
+        // under concurrent updates.
+        var c: Long
+        do {
+            c = callCounter.get()
+            check(c != 0L) { "CounterImpl object has already been destroyed" }
+            check(c != Long.MAX_VALUE) { "CounterImpl call counter would overflow" }
+        } while (!callCounter.compareAndSet(c, c + 1L))
+        try {
+            return block(uniffiCloneHandle())
+        } finally {
+            if (callCounter.decrementAndGet() == 0L) {
+                cleanable?.clean()
+            }
+        }
+    }
+
+    internal fun uniffiCloneHandle(): Long =
+        UniffiHelpers.uniffiRustCall { _allocator, _status ->
+            if (handle == 0L) {
+                throw NullPointerException()
+            }
+            UniffiLib.uniffi_uniffi_fixture_trait_with_foreign_fn_clone_counter(handle, _status)
+        }
+
+    // IMPORTANT: NOT `inner class`. A Kotlin `inner class` would capture
+    // an implicit reference to the outer wrapper, which would keep the
+    // wrapper strongly reachable as long as the Cleaner holds the
+    // `Runnable` alive — meaning the wrapper could never become
+    // phantom-reachable, the cleaner would never fire, and every
+    // forgotten `close()` would leak the Rust handle. Keeping this as a
+    // nested class means the Runnable only references the primitive
+    // `handle` Long it was constructed with, which is exactly what the
+    // Cleaner contract requires.
+    private class UniffiCleanAction(private val handle: Long) : Runnable {
+        override fun run() {
+            // handle == 0 is defense-in-depth: `cleanable` is only
+            // registered when handle != 0, so this branch shouldn't
+            // be reachable in practice. Leaving the guard in case the
+            // class is ever instantiated directly (e.g. by tests).
+            if (handle != 0L) {
+                UniffiHelpers.uniffiRustCall { _allocator, _status ->
+                    UniffiLib.uniffi_uniffi_fixture_trait_with_foreign_fn_free_counter(handle, _status)
+                }
+            }
+        }
+    }
+
+    
+    
+    override fun nextValue(): Int =
+        callWithHandle { uniffiHandle ->
+            UniffiHelpers.uniffiRustCallInt { _, _status ->
+                UniffiLib.uniffi_uniffi_fixture_trait_with_foreign_fn_method_counter_next_value(uniffiHandle, _status)
+            }
+        }
+    
+}
+
+
+// === FILE: uniffi/trait_with_foreign/FfiConverter.kt ===
+package uniffi.trait_with_foreign
 
 // The FfiConverter interface handles converter types to and from the FFI.
 //
@@ -67,8 +190,8 @@ interface FfiConverter<T, FfiType> {
 }
 
 
-// === FILE: uniffi/sprites/FfiConverterBoolean.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/FfiConverterBoolean.kt ===
+package uniffi.trait_with_foreign
 
 object FfiConverterBoolean : FfiConverter<Boolean, Byte> {
     override fun lift(value: Byte): Boolean = value.toInt() != 0
@@ -81,8 +204,8 @@ object FfiConverterBoolean : FfiConverter<Boolean, Byte> {
 }
 
 
-// === FILE: uniffi/sprites/FfiConverterBooleanArray.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/FfiConverterBooleanArray.kt ===
+package uniffi.trait_with_foreign
 
 object FfiConverterBooleanArray : FfiConverterRustBuffer<BooleanArray> {
     override fun read(buf: java.nio.ByteBuffer): BooleanArray {
@@ -106,9 +229,8 @@ object FfiConverterBooleanArray : FfiConverterRustBuffer<BooleanArray> {
 
 
 
-
-// === FILE: uniffi/sprites/FfiConverterByte.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/FfiConverterByte.kt ===
+package uniffi.trait_with_foreign
 
 object FfiConverterByte : FfiConverter<Byte, Byte> {
     override fun lift(value: Byte): Byte = value
@@ -121,8 +243,8 @@ object FfiConverterByte : FfiConverter<Byte, Byte> {
 }
 
 
-// === FILE: uniffi/sprites/FfiConverterByteArray.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/FfiConverterByteArray.kt ===
+package uniffi.trait_with_foreign
 
 object FfiConverterByteArray : FfiConverterRustBuffer<ByteArray> {
     override fun read(buf: java.nio.ByteBuffer): ByteArray {
@@ -141,8 +263,41 @@ object FfiConverterByteArray : FfiConverterRustBuffer<ByteArray> {
 }
 
 
-// === FILE: uniffi/sprites/FfiConverterDouble.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/FfiConverterCallbackInterface.kt ===
+package uniffi.trait_with_foreign
+
+// Base FfiConverter for callback interfaces (foreign-implemented
+// traits that Rust invokes via the vtable). Handles route through
+// `UniffiHandleMap` — Rust never owns these objects, just references
+// them by odd handle. Mirrors `src/templates/CallbackInterfaceRuntime.java`.
+internal abstract class FfiConverterCallbackInterface<CallbackInterface : Any>
+    : FfiConverter<CallbackInterface, Long> {
+
+    @JvmField internal val handleMap: UniffiHandleMap<CallbackInterface> = UniffiHandleMap()
+
+    fun drop(handle: Long) {
+        handleMap.remove(handle)
+    }
+
+    override fun lift(value: Long): CallbackInterface = handleMap.get(value)
+
+    override fun read(buf: java.nio.ByteBuffer): CallbackInterface = lift(buf.getLong())
+
+    override fun lower(value: CallbackInterface): Long = handleMap.insert(value)
+
+    override fun allocationSize(value: CallbackInterface): Long = 8L
+
+    override fun write(value: CallbackInterface, buf: java.nio.ByteBuffer) {
+        buf.putLong(lower(value))
+    }
+}
+
+// Contains loading, initialization code, and the FFI Function declarations
+// using Java FFM (Foreign Function & Memory API).
+
+
+// === FILE: uniffi/trait_with_foreign/FfiConverterDouble.kt ===
+package uniffi.trait_with_foreign
 
 object FfiConverterDouble : FfiConverter<Double, Double> {
     override fun lift(value: Double): Double = value
@@ -155,8 +310,8 @@ object FfiConverterDouble : FfiConverter<Double, Double> {
 }
 
 
-// === FILE: uniffi/sprites/FfiConverterFloat.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/FfiConverterFloat.kt ===
+package uniffi.trait_with_foreign
 
 object FfiConverterFloat : FfiConverter<Float, Float> {
     override fun lift(value: Float): Float = value
@@ -169,8 +324,8 @@ object FfiConverterFloat : FfiConverter<Float, Float> {
 }
 
 
-// === FILE: uniffi/sprites/FfiConverterFloat32Array.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/FfiConverterFloat32Array.kt ===
+package uniffi.trait_with_foreign
 
 object FfiConverterFloat32Array : FfiConverterRustBuffer<FloatArray> {
     override fun read(buf: java.nio.ByteBuffer): FloatArray {
@@ -191,8 +346,8 @@ object FfiConverterFloat32Array : FfiConverterRustBuffer<FloatArray> {
 }
 
 
-// === FILE: uniffi/sprites/FfiConverterFloat64Array.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/FfiConverterFloat64Array.kt ===
+package uniffi.trait_with_foreign
 
 object FfiConverterFloat64Array : FfiConverterRustBuffer<DoubleArray> {
     override fun read(buf: java.nio.ByteBuffer): DoubleArray {
@@ -213,8 +368,8 @@ object FfiConverterFloat64Array : FfiConverterRustBuffer<DoubleArray> {
 }
 
 
-// === FILE: uniffi/sprites/FfiConverterInt.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/FfiConverterInt.kt ===
+package uniffi.trait_with_foreign
 
 object FfiConverterInt : FfiConverter<Int, Int> {
     override fun lift(value: Int): Int = value
@@ -227,8 +382,8 @@ object FfiConverterInt : FfiConverter<Int, Int> {
 }
 
 
-// === FILE: uniffi/sprites/FfiConverterInt16Array.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/FfiConverterInt16Array.kt ===
+package uniffi.trait_with_foreign
 
 object FfiConverterInt16Array : FfiConverterRustBuffer<ShortArray> {
     override fun read(buf: java.nio.ByteBuffer): ShortArray {
@@ -249,8 +404,8 @@ object FfiConverterInt16Array : FfiConverterRustBuffer<ShortArray> {
 }
 
 
-// === FILE: uniffi/sprites/FfiConverterInt32Array.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/FfiConverterInt32Array.kt ===
+package uniffi.trait_with_foreign
 
 object FfiConverterInt32Array : FfiConverterRustBuffer<IntArray> {
     override fun read(buf: java.nio.ByteBuffer): IntArray {
@@ -271,8 +426,8 @@ object FfiConverterInt32Array : FfiConverterRustBuffer<IntArray> {
 }
 
 
-// === FILE: uniffi/sprites/FfiConverterInt64Array.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/FfiConverterInt64Array.kt ===
+package uniffi.trait_with_foreign
 
 object FfiConverterInt64Array : FfiConverterRustBuffer<LongArray> {
     override fun read(buf: java.nio.ByteBuffer): LongArray {
@@ -293,8 +448,8 @@ object FfiConverterInt64Array : FfiConverterRustBuffer<LongArray> {
 }
 
 
-// === FILE: uniffi/sprites/FfiConverterLong.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/FfiConverterLong.kt ===
+package uniffi.trait_with_foreign
 
 object FfiConverterLong : FfiConverter<Long, Long> {
     override fun lift(value: Long): Long = value
@@ -307,39 +462,8 @@ object FfiConverterLong : FfiConverter<Long, Long> {
 }
 
 
-// === FILE: uniffi/sprites/FfiConverterOptionalTypePoint.kt ===
-package uniffi.sprites
-
-// Kotlin uses its type system to express nullability directly via `T?`,
-// so the `lift` / `lower` boundary handles a null sentinel byte without
-// any wrapper class on the Kotlin side.
-object FfiConverterOptionalTypePoint : FfiConverterRustBuffer<Point?> {
-    override fun read(buf: java.nio.ByteBuffer): Point? {
-        if (buf.get() == 0.toByte()) {
-            return null
-        }
-        return FfiConverterTypePoint.read(buf)
-    }
-
-    override fun allocationSize(value: Point?): Long {
-        if (value == null) {
-            return 1L
-        }
-        return 1L + FfiConverterTypePoint.allocationSize(value)
-    }
-
-    override fun write(value: Point?, buf: java.nio.ByteBuffer) {
-        if (value == null) {
-            buf.put(0.toByte())
-        } else {
-            buf.put(1.toByte())
-            FfiConverterTypePoint.write(value, buf)
-        }
-    }
-}
-
-// === FILE: uniffi/sprites/FfiConverterRustBuffer.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/FfiConverterRustBuffer.kt ===
+package uniffi.trait_with_foreign
 
 // FfiConverter that uses `RustBuffer` as the FfiType.
 interface FfiConverterRustBuffer<T> : FfiConverter<T, java.lang.foreign.MemorySegment> {
@@ -348,8 +472,8 @@ interface FfiConverterRustBuffer<T> : FfiConverter<T, java.lang.foreign.MemorySe
 }
 
 
-// === FILE: uniffi/sprites/FfiConverterShort.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/FfiConverterShort.kt ===
+package uniffi.trait_with_foreign
 
 object FfiConverterShort : FfiConverter<Short, Short> {
     override fun lift(value: Short): Short = value
@@ -362,8 +486,8 @@ object FfiConverterShort : FfiConverter<Short, Short> {
 }
 
 
-// === FILE: uniffi/sprites/FfiConverterString.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/FfiConverterString.kt ===
+package uniffi.trait_with_foreign
 
 object FfiConverterString : FfiConverter<String, java.lang.foreign.MemorySegment> {
     // Note: we don't inherit from FfiConverterRustBuffer because we use a
@@ -422,75 +546,42 @@ object FfiConverterString : FfiConverter<String, java.lang.foreign.MemorySegment
 }
 
 
-// === FILE: uniffi/sprites/FfiConverterTypePoint.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/FfiConverterTypeCounter.kt ===
+package uniffi.trait_with_foreign
+// LSB-tagged FfiConverter for `[Trait, WithForeign]` objects. Rust-side
+// instances are wrapped by `CounterImpl` and carry even
+// handles (LSB = 0); Kotlin-side implementations of the Counter
+// trait get registered in the per-FfiConverter `handleMap` and carry
+// odd handles (LSB = 1). `lift` / `lower` dispatch on the LSB to route
+// to the right side without an extra type tag.
+internal object FfiConverterTypeCounter : FfiConverter<Counter, Long> {
+    @JvmField internal val handleMap: UniffiHandleMap<Counter> = UniffiHandleMap()
 
-object FfiConverterTypePoint : FfiConverterRustBuffer<Point> {
-    override fun read(buf: java.nio.ByteBuffer): Point {
-        return Point(
-            FfiConverterDouble.read(buf),
-            FfiConverterDouble.read(buf)
-        )
-    }
+    override fun lower(value: Counter): Long =
+        if (value is CounterImpl) {
+            value.uniffiCloneHandle()
+        } else {
+            handleMap.insert(value)
+        }
 
-    override fun allocationSize(value: Point): Long {
-        return (
-            FfiConverterDouble.allocationSize(value.x) +
-            FfiConverterDouble.allocationSize(value.y)
-        )
-    }
+    override fun lift(value: Long): Counter =
+        if ((value and 1L) == 0L) {
+            CounterImpl(UniffiWithHandle, value)
+        } else {
+            handleMap.remove(value)
+        }
 
-    override fun write(value: Point, buf: java.nio.ByteBuffer) {
-        FfiConverterDouble.write(value.x, buf)
-        FfiConverterDouble.write(value.y, buf)
-    }
-}
+    override fun read(buf: java.nio.ByteBuffer): Counter = lift(buf.getLong())
 
-// === FILE: uniffi/sprites/FfiConverterTypeSprite.kt ===
-package uniffi.sprites
-// FfiConverter routes `Sprite` across the FFI as an 8-byte
-// handle. No callback-interface support — pure Rust-owned object.
-object FfiConverterTypeSprite : FfiConverter<Sprite, Long> {
-    override fun lower(value: Sprite): Long = value.uniffiCloneHandle()
+    override fun allocationSize(value: Counter): Long = 8L
 
-    override fun lift(value: Long): Sprite =
-        Sprite(UniffiWithHandle, value)
-
-    override fun read(buf: java.nio.ByteBuffer): Sprite = lift(buf.getLong())
-
-    override fun allocationSize(value: Sprite): Long = 8L
-
-    override fun write(value: Sprite, buf: java.nio.ByteBuffer) {
+    override fun write(value: Counter, buf: java.nio.ByteBuffer) {
         buf.putLong(lower(value))
     }
 }
 
-// === FILE: uniffi/sprites/FfiConverterTypeVector.kt ===
-package uniffi.sprites
-
-object FfiConverterTypeVector : FfiConverterRustBuffer<Vector> {
-    override fun read(buf: java.nio.ByteBuffer): Vector {
-        return Vector(
-            FfiConverterDouble.read(buf),
-            FfiConverterDouble.read(buf)
-        )
-    }
-
-    override fun allocationSize(value: Vector): Long {
-        return (
-            FfiConverterDouble.allocationSize(value.dx) +
-            FfiConverterDouble.allocationSize(value.dy)
-        )
-    }
-
-    override fun write(value: Vector, buf: java.nio.ByteBuffer) {
-        FfiConverterDouble.write(value.dx, buf)
-        FfiConverterDouble.write(value.dy, buf)
-    }
-}
-
-// === FILE: uniffi/sprites/ForeignBytes.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/ForeignBytes.kt ===
+package uniffi.trait_with_foreign
 
 // Helper for safely passing byte references into the rust code.
 //
@@ -525,14 +616,14 @@ object ForeignBytes {
 }
 
 
-// === FILE: uniffi/sprites/InternalException.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/InternalException.kt ===
+package uniffi.trait_with_foreign
 
 open class InternalException(message: String) : RuntimeException(message)
 
 
-// === FILE: uniffi/sprites/NamespaceLibrary.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/NamespaceLibrary.kt ===
+package uniffi.trait_with_foreign
 
 internal object NamespaceLibrary {
     @Synchronized
@@ -541,11 +632,11 @@ internal object NamespaceLibrary {
         if (libOverride != null) {
             return libOverride
         }
-        return "uniffi_sprites-CARGO_BUILD_HASH"
+        return "uniffi_fixture_trait_with_foreign"
     }
 
     fun loadLibrary(): java.lang.foreign.SymbolLookup {
-        val name = findLibraryName("sprites")
+        val name = findLibraryName("trait_with_foreign")
         if (name.startsWith("/") || // Unix absolute path
             name.startsWith("\\\\") || // Windows UNC path
             (name.length > 2 && name[1] == ':') // Windows drive path (e.g. C:\)
@@ -559,7 +650,7 @@ internal object NamespaceLibrary {
 
     fun uniffiCheckContractApiVersion() {
         val bindingsContractVersion = 30
-        val scaffoldingContractVersion = UniffiLib.ffi_uniffi_sprites_uniffi_contract_version()
+        val scaffoldingContractVersion = UniffiLib.ffi_uniffi_fixture_trait_with_foreign_uniffi_contract_version()
         if (bindingsContractVersion != scaffoldingContractVersion) {
             throw RuntimeException("UniFFI contract version mismatch: try cleaning and rebuilding your project")
         }
@@ -578,17 +669,8 @@ internal object NamespaceLibrary {
 }
 
 
-// === FILE: uniffi/sprites/Point.kt ===
-package uniffi.sprites
-
-data class Point(
-    val x: Double,
-    val y: Double
-)
-
-
-// === FILE: uniffi/sprites/RustBuffer.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/RustBuffer.kt ===
+package uniffi.trait_with_foreign
 
 /**
  * Helper for safely working with byte buffers returned from the Rust code.
@@ -632,7 +714,7 @@ object RustBuffer {
 
     fun alloc(size: Long): java.lang.foreign.MemorySegment {
         val buffer = UniffiHelpers.uniffiRustCall { allocator, status ->
-            UniffiLib.ffi_uniffi_sprites_rustbuffer_alloc(allocator, size, status)
+            UniffiLib.ffi_uniffi_fixture_trait_with_foreign_rustbuffer_alloc(allocator, size, status)
         }
         if (getData(buffer) == java.lang.foreign.MemorySegment.NULL && size > 0) {
             throw RuntimeException("RustBuffer.alloc() returned null data pointer (size=$size)")
@@ -642,7 +724,7 @@ object RustBuffer {
 
     fun free(buffer: java.lang.foreign.MemorySegment) {
         UniffiHelpers.uniffiRustCallVoid { _, status ->
-            UniffiLib.ffi_uniffi_sprites_rustbuffer_free(buffer, status)
+            UniffiLib.ffi_uniffi_fixture_trait_with_foreign_rustbuffer_free(buffer, status)
         }
     }
 
@@ -666,175 +748,27 @@ object RustBuffer {
 }
 
 
-// === FILE: uniffi/sprites/Sprite.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/Trait_with_foreign.kt ===
+package uniffi.trait_with_foreign
 
-// Object wrapper over a Rust `Arc<T>`. Uses a handle-based protocol
-// for cross-FFI lifecycle: the `AtomicLong` call counter + `AtomicBoolean`
-// closed flag together implement an in-flight-call guard so close()
-// and concurrent method calls can't race into a use-after-free on the
-// Rust side.
-//
-// Structure mirrors `src/templates/ObjectTemplate.java` verbatim at
-// the protocol level — same handshake, same Cleaner integration.
-// `[Trait, WithForeign]` objects (when has_callback_interface is true)
-// implement an additional Kotlin interface so foreign-side
-// implementations can substitute for the Rust wrapper transparently;
-// in that case methods are emitted with `override`.
-class Sprite internal constructor(
-    @Suppress("UNUSED_PARAMETER") phantom: UniffiWithHandle,
-    internal val handle: Long,
-) : AutoCloseable {
-    private val wasDestroyed = java.util.concurrent.atomic.AtomicBoolean(false)
-    private val callCounter = java.util.concurrent.atomic.AtomicLong(1L)
-    // NoHandle wrappers (handle == 0) don't register a cleaner: there's
-    // no Rust peer to free, and registering would just queue a dead
-    // Cleanable. Real wrappers register; `cleanable` is nullable so
-    // `close()` can tolerate either shape.
-    private val cleanable: UniffiCleaner.Cleanable? =
-        if (handle != 0L) UniffiLib.CLEANER.register(this, UniffiCleanAction(handle)) else null
-
-    /**
-     * Test-only constructor for instantiating a fake wrapper with no
-     * connected Rust peer. Any method call on a fake object will fail.
-     */
-    constructor(@Suppress("UNUSED_PARAMETER") noHandle: NoHandle) : this(UniffiWithHandle, 0L)
-    constructor(initialPosition: Point?) : this(
-        UniffiWithHandle,
-        UniffiHelpers.uniffiRustCall { _allocator, _status ->
-            UniffiLib.uniffi_uniffi_sprites_fn_constructor_sprite_new(FfiConverterOptionalTypePoint.lower(initialPosition), _status)
-        },
-    )
-
-    override fun close() {
-        // Single-shot. Subsequent close() calls are silent no-ops.
-        if (wasDestroyed.compareAndSet(false, true)) {
-            // Match the initial count of 1 given at creation time.
-            if (callCounter.decrementAndGet() == 0L) {
-                cleanable?.clean()
-            }
-        }
-    }
-
-    /**
-     * Run [block] with the live Rust handle, holding the wrapper alive
-     * for the duration of the call. Throws `IllegalStateException` if
-     * the wrapper has already been destroyed.
-     *
-     * Uses a CAS retry loop on the call counter so concurrent method
-     * calls can run without taking a lock; see the comment block in
-     * `src/templates/ObjectTemplate.java` for the full correctness
-     * argument.
-     */
-    inline fun <R> callWithHandle(block: (Long) -> R): R {
-        // Check and increment the call counter. Retries on CAS failure
-        // under concurrent updates.
-        var c: Long
-        do {
-            c = callCounter.get()
-            check(c != 0L) { "Sprite object has already been destroyed" }
-            check(c != Long.MAX_VALUE) { "Sprite call counter would overflow" }
-        } while (!callCounter.compareAndSet(c, c + 1L))
-        try {
-            return block(uniffiCloneHandle())
-        } finally {
-            if (callCounter.decrementAndGet() == 0L) {
-                cleanable?.clean()
-            }
-        }
-    }
-
-    internal fun uniffiCloneHandle(): Long =
-        UniffiHelpers.uniffiRustCall { _allocator, _status ->
-            if (handle == 0L) {
-                throw NullPointerException()
-            }
-            UniffiLib.uniffi_uniffi_sprites_fn_clone_sprite(handle, _status)
-        }
-
-    // IMPORTANT: NOT `inner class`. A Kotlin `inner class` would capture
-    // an implicit reference to the outer wrapper, which would keep the
-    // wrapper strongly reachable as long as the Cleaner holds the
-    // `Runnable` alive — meaning the wrapper could never become
-    // phantom-reachable, the cleaner would never fire, and every
-    // forgotten `close()` would leak the Rust handle. Keeping this as a
-    // nested class means the Runnable only references the primitive
-    // `handle` Long it was constructed with, which is exactly what the
-    // Cleaner contract requires.
-    private class UniffiCleanAction(private val handle: Long) : Runnable {
-        override fun run() {
-            // handle == 0 is defense-in-depth: `cleanable` is only
-            // registered when handle != 0, so this branch shouldn't
-            // be reachable in practice. Leaving the guard in case the
-            // class is ever instantiated directly (e.g. by tests).
-            if (handle != 0L) {
-                UniffiHelpers.uniffiRustCall { _allocator, _status ->
-                    UniffiLib.uniffi_uniffi_sprites_fn_free_sprite(handle, _status)
-                }
-            }
-        }
-    }
-
-    
-    
-    fun getPosition(): Point =
-        FfiConverterTypePoint.lift(
-            callWithHandle { uniffiHandle ->
-                UniffiHelpers.uniffiRustCall { _allocator, _status ->
-                    UniffiLib.uniffi_uniffi_sprites_fn_method_sprite_get_position(_allocator, uniffiHandle, _status)
-                }
-            }
-        )
-    
-    
-    fun moveBy(direction: Vector) {
-        callWithHandle { uniffiHandle ->
-            UniffiHelpers.uniffiRustCallVoid { _, _status ->
-                UniffiLib.uniffi_uniffi_sprites_fn_method_sprite_move_by(uniffiHandle, FfiConverterTypeVector.lower(direction), _status)
-            }
-        }
-    }
-    
-    
-    fun moveTo(position: Point) {
-        callWithHandle { uniffiHandle ->
-            UniffiHelpers.uniffiRustCallVoid { _, _status ->
-                UniffiLib.uniffi_uniffi_sprites_fn_method_sprite_move_to(uniffiHandle, FfiConverterTypePoint.lower(position), _status)
-            }
-        }
-    }
-    
-    companion object {
-        
-        
-        @JvmStatic
-        fun newRelativeTo(reference: Point, direction: Vector): Sprite =
-            Sprite(
-                UniffiWithHandle,
-                UniffiHelpers.uniffiRustCall { _allocator, _status ->
-                    UniffiLib.uniffi_uniffi_sprites_fn_constructor_sprite_new_relative_to(FfiConverterTypePoint.lower(reference), FfiConverterTypeVector.lower(direction), _status)
-                },
-            )
-        
-    }
-}
+object Trait_with_foreign {
 
 
-// === FILE: uniffi/sprites/Sprites.kt ===
-package uniffi.sprites
-
-object Sprites {
-
-
-    fun translate(position: Point, direction: Vector): Point =
-        FfiConverterTypePoint.lift(
+    fun makeRustCounter(start: Int): Counter =
+        FfiConverterTypeCounter.lift(
             UniffiHelpers.uniffiRustCall { _allocator, _status ->
-                UniffiLib.uniffi_uniffi_sprites_fn_func_translate(_allocator, FfiConverterTypePoint.lower(position), FfiConverterTypeVector.lower(direction), _status)
+                UniffiLib.uniffi_uniffi_fixture_trait_with_foreign_fn_func_make_rust_counter(start, _status)
             }
         )
+
+
+    fun useCounter(counter: Counter): Int =
+        UniffiHelpers.uniffiRustCallInt { _, _status ->
+            UniffiLib.uniffi_uniffi_fixture_trait_with_foreign_fn_func_use_counter(FfiConverterTypeCounter.lower(counter), _status)
+        }
 }
-// === FILE: uniffi/sprites/UniffiBackpressureCleaner.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/UniffiBackpressureCleaner.kt ===
+package uniffi.trait_with_foreign
 
 // PhantomReference + ReferenceQueue with opportunistic inline draining.
 // Behavior matches the Java `UniffiBackpressureCleaner`:
@@ -952,8 +886,8 @@ internal class UniffiBackpressureCleaner : UniffiCleaner {
 }
 
 
-// === FILE: uniffi/sprites/UniffiCallbackInterfaceClone.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/UniffiCallbackInterfaceClone.kt ===
+package uniffi.trait_with_foreign
 
 internal object UniffiCallbackInterfaceClone {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -985,8 +919,118 @@ internal object UniffiCallbackInterfaceClone {
 }
 
 
-// === FILE: uniffi/sprites/UniffiCallbackInterfaceFree.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/UniffiCallbackInterfaceCounter.kt ===
+package uniffi.trait_with_foreign
+
+// Vtable assembly + per-method upcall stubs for callback interfaces.
+// Each stub pulls the foreign-side object out of the handle map,
+// invokes the requested method, and writes the result back into the
+// Rust-provided out-param buffer. Mirrors `src/templates/
+// CallbackInterfaceImpl.java`, minus the async and error-in-callback
+// paths — those land with P3k / P3l respectively.
+internal object UniffiCallbackInterfaceCounter {
+    internal val vtable: java.lang.foreign.MemorySegment
+
+    init {
+        // Arena.global() is load-bearing: vtables and upcall stubs
+        // must outlive every FFI call they participate in. Auto arenas
+        // would be reclaimable once a reference escapes into a struct,
+        // producing use-after-free with delightful debugging traces.
+        vtable = java.lang.foreign.Arena.global().allocate(UniffiVTableCallbackInterfaceCounter.LAYOUT)
+        UniffiVTableCallbackInterfaceCounter.setuniffiFree(
+            vtable,
+            UniffiCallbackInterfaceFree.toUpcallStub(UniffiFree, java.lang.foreign.Arena.global()),
+        )
+        UniffiVTableCallbackInterfaceCounter.setuniffiClone(
+            vtable,
+            UniffiCallbackInterfaceClone.toUpcallStub(UniffiClone, java.lang.foreign.Arena.global()),
+        )
+        UniffiVTableCallbackInterfaceCounter.setnextValue(
+            vtable,
+            UniffiCallbackInterfaceCounterMethod0.toUpcallStub(NextValueCallback, java.lang.foreign.Arena.global()),
+        )
+    }
+
+    // Registers the vtable with Rust. Called from UniffiLib init via
+    // the generator-collected `initialization_fns()` list.
+    fun register() {
+        UniffiLib.uniffi_uniffi_fixture_trait_with_foreign_fn_init_callback_vtable_counter(vtable)
+    }
+
+    internal object NextValueCallback : UniffiCallbackInterfaceCounterMethod0.Fn {
+        override fun callback(
+            uniffiHandle: Long,
+            uniffiOutReturn: java.lang.foreign.MemorySegment,
+            uniffiCallStatus: java.lang.foreign.MemorySegment,
+        ) {
+            val uniffiCallStatusReinterpreted = uniffiCallStatus.reinterpret(UniffiRustCallStatus.LAYOUT.byteSize())
+            val uniffiObj = FfiConverterTypeCounter.handleMap.get(uniffiHandle)
+            val makeCall = java.util.function.Supplier {
+                uniffiObj.nextValue(
+                )
+            }
+            val writeReturn = java.util.function.Consumer<Int> { uniffiValue ->
+                val outReturn = uniffiOutReturn.reinterpret(java.lang.foreign.ValueLayout.JAVA_INT.byteSize())
+                outReturn.set(java.lang.foreign.ValueLayout.JAVA_INT_UNALIGNED, 0L, FfiConverterInt.lower(uniffiValue))
+            }
+            UniffiHelpers.uniffiTraitInterfaceCall(uniffiCallStatusReinterpreted, makeCall, writeReturn)
+        }
+    }
+
+    // Free — Rust drops the handle; we remove from the map.
+    internal object UniffiFree : UniffiCallbackInterfaceFree.Fn {
+        override fun callback(handle: Long) {
+            FfiConverterTypeCounter.handleMap.remove(handle)
+        }
+    }
+
+    // Clone — Rust wants another reference; we clone in the map.
+    internal object UniffiClone : UniffiCallbackInterfaceClone.Fn {
+        override fun callback(handle: Long): Long =
+            FfiConverterTypeCounter.handleMap.clone(handle)
+    }
+}
+
+
+// === FILE: uniffi/trait_with_foreign/UniffiCallbackInterfaceCounterMethod0.kt ===
+package uniffi.trait_with_foreign
+
+internal object UniffiCallbackInterfaceCounterMethod0 {
+    val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
+        java.lang.foreign.FunctionDescriptor.ofVoid(java.lang.foreign.ValueLayout.JAVA_LONG, java.lang.foreign.ValueLayout.ADDRESS, java.lang.foreign.ValueLayout.ADDRESS)
+
+    fun interface Fn {
+        fun callback(
+            uniffiHandle: Long,
+            uniffiOutReturn: java.lang.foreign.MemorySegment,
+            uniffiCallStatus: java.lang.foreign.MemorySegment
+        )
+    }
+
+    fun toUpcallStub(fn: Fn, arena: java.lang.foreign.Arena): java.lang.foreign.MemorySegment {
+        try {
+            val handle = java.lang.invoke.MethodHandles.lookup()
+                .findVirtual(
+                    Fn::class.java,
+                    "callback",
+                    java.lang.invoke.MethodType.methodType(
+                        Void.TYPE,
+                        Long::class.javaPrimitiveType ?: Long::class.java,
+                        java.lang.foreign.MemorySegment::class.javaPrimitiveType ?: java.lang.foreign.MemorySegment::class.java
+                        ,java.lang.foreign.MemorySegment::class.java
+                    ),
+                )
+                .bindTo(fn)
+            return java.lang.foreign.Linker.nativeLinker().upcallStub(handle, DESCRIPTOR, arena)
+        } catch (e: ReflectiveOperationException) {
+            throw AssertionError("Failed to create upcall stub", e)
+        }
+    }
+}
+
+
+// === FILE: uniffi/trait_with_foreign/UniffiCallbackInterfaceFree.kt ===
+package uniffi.trait_with_foreign
 
 internal object UniffiCallbackInterfaceFree {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -1018,8 +1062,8 @@ internal object UniffiCallbackInterfaceFree {
 }
 
 
-// === FILE: uniffi/sprites/UniffiCleaner.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/UniffiCleaner.kt ===
+package uniffi.trait_with_foreign
 
 // Cleaner for Object finalization. Uses a PhantomReference-backed
 // implementation with opportunistic inline draining to provide
@@ -1041,8 +1085,8 @@ internal interface UniffiCleaner {
 }
 
 
-// === FILE: uniffi/sprites/UniffiForeignFutureCompleteF32.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/UniffiForeignFutureCompleteF32.kt ===
+package uniffi.trait_with_foreign
 
 internal object UniffiForeignFutureCompleteF32 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -1076,8 +1120,8 @@ internal object UniffiForeignFutureCompleteF32 {
 }
 
 
-// === FILE: uniffi/sprites/UniffiForeignFutureCompleteF64.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/UniffiForeignFutureCompleteF64.kt ===
+package uniffi.trait_with_foreign
 
 internal object UniffiForeignFutureCompleteF64 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -1111,8 +1155,8 @@ internal object UniffiForeignFutureCompleteF64 {
 }
 
 
-// === FILE: uniffi/sprites/UniffiForeignFutureCompleteI16.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/UniffiForeignFutureCompleteI16.kt ===
+package uniffi.trait_with_foreign
 
 internal object UniffiForeignFutureCompleteI16 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -1146,8 +1190,8 @@ internal object UniffiForeignFutureCompleteI16 {
 }
 
 
-// === FILE: uniffi/sprites/UniffiForeignFutureCompleteI32.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/UniffiForeignFutureCompleteI32.kt ===
+package uniffi.trait_with_foreign
 
 internal object UniffiForeignFutureCompleteI32 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -1181,8 +1225,8 @@ internal object UniffiForeignFutureCompleteI32 {
 }
 
 
-// === FILE: uniffi/sprites/UniffiForeignFutureCompleteI64.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/UniffiForeignFutureCompleteI64.kt ===
+package uniffi.trait_with_foreign
 
 internal object UniffiForeignFutureCompleteI64 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -1216,8 +1260,8 @@ internal object UniffiForeignFutureCompleteI64 {
 }
 
 
-// === FILE: uniffi/sprites/UniffiForeignFutureCompleteI8.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/UniffiForeignFutureCompleteI8.kt ===
+package uniffi.trait_with_foreign
 
 internal object UniffiForeignFutureCompleteI8 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -1251,8 +1295,8 @@ internal object UniffiForeignFutureCompleteI8 {
 }
 
 
-// === FILE: uniffi/sprites/UniffiForeignFutureCompleteRustBuffer.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/UniffiForeignFutureCompleteRustBuffer.kt ===
+package uniffi.trait_with_foreign
 
 internal object UniffiForeignFutureCompleteRustBuffer {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -1286,8 +1330,8 @@ internal object UniffiForeignFutureCompleteRustBuffer {
 }
 
 
-// === FILE: uniffi/sprites/UniffiForeignFutureCompleteU16.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/UniffiForeignFutureCompleteU16.kt ===
+package uniffi.trait_with_foreign
 
 internal object UniffiForeignFutureCompleteU16 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -1321,8 +1365,8 @@ internal object UniffiForeignFutureCompleteU16 {
 }
 
 
-// === FILE: uniffi/sprites/UniffiForeignFutureCompleteU32.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/UniffiForeignFutureCompleteU32.kt ===
+package uniffi.trait_with_foreign
 
 internal object UniffiForeignFutureCompleteU32 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -1356,8 +1400,8 @@ internal object UniffiForeignFutureCompleteU32 {
 }
 
 
-// === FILE: uniffi/sprites/UniffiForeignFutureCompleteU64.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/UniffiForeignFutureCompleteU64.kt ===
+package uniffi.trait_with_foreign
 
 internal object UniffiForeignFutureCompleteU64 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -1391,8 +1435,8 @@ internal object UniffiForeignFutureCompleteU64 {
 }
 
 
-// === FILE: uniffi/sprites/UniffiForeignFutureCompleteU8.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/UniffiForeignFutureCompleteU8.kt ===
+package uniffi.trait_with_foreign
 
 internal object UniffiForeignFutureCompleteU8 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -1426,8 +1470,8 @@ internal object UniffiForeignFutureCompleteU8 {
 }
 
 
-// === FILE: uniffi/sprites/UniffiForeignFutureCompleteVoid.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/UniffiForeignFutureCompleteVoid.kt ===
+package uniffi.trait_with_foreign
 
 internal object UniffiForeignFutureCompleteVoid {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -1461,8 +1505,8 @@ internal object UniffiForeignFutureCompleteVoid {
 }
 
 
-// === FILE: uniffi/sprites/UniffiForeignFutureDroppedCallback.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/UniffiForeignFutureDroppedCallback.kt ===
+package uniffi.trait_with_foreign
 
 internal object UniffiForeignFutureDroppedCallback {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -1494,8 +1538,8 @@ internal object UniffiForeignFutureDroppedCallback {
 }
 
 
-// === FILE: uniffi/sprites/UniffiForeignFutureDroppedCallbackStruct.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/UniffiForeignFutureDroppedCallbackStruct.kt ===
+package uniffi.trait_with_foreign
 
 internal object UniffiForeignFutureDroppedCallbackStruct {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -1527,8 +1571,8 @@ internal object UniffiForeignFutureDroppedCallbackStruct {
 }
 
 
-// === FILE: uniffi/sprites/UniffiForeignFutureResultF32.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/UniffiForeignFutureResultF32.kt ===
+package uniffi.trait_with_foreign
 
 internal object UniffiForeignFutureResultF32 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -1561,8 +1605,8 @@ internal object UniffiForeignFutureResultF32 {
 }
 
 
-// === FILE: uniffi/sprites/UniffiForeignFutureResultF64.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/UniffiForeignFutureResultF64.kt ===
+package uniffi.trait_with_foreign
 
 internal object UniffiForeignFutureResultF64 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -1594,8 +1638,8 @@ internal object UniffiForeignFutureResultF64 {
 }
 
 
-// === FILE: uniffi/sprites/UniffiForeignFutureResultI16.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/UniffiForeignFutureResultI16.kt ===
+package uniffi.trait_with_foreign
 
 internal object UniffiForeignFutureResultI16 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -1628,8 +1672,8 @@ internal object UniffiForeignFutureResultI16 {
 }
 
 
-// === FILE: uniffi/sprites/UniffiForeignFutureResultI32.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/UniffiForeignFutureResultI32.kt ===
+package uniffi.trait_with_foreign
 
 internal object UniffiForeignFutureResultI32 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -1662,8 +1706,8 @@ internal object UniffiForeignFutureResultI32 {
 }
 
 
-// === FILE: uniffi/sprites/UniffiForeignFutureResultI64.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/UniffiForeignFutureResultI64.kt ===
+package uniffi.trait_with_foreign
 
 internal object UniffiForeignFutureResultI64 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -1695,8 +1739,8 @@ internal object UniffiForeignFutureResultI64 {
 }
 
 
-// === FILE: uniffi/sprites/UniffiForeignFutureResultI8.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/UniffiForeignFutureResultI8.kt ===
+package uniffi.trait_with_foreign
 
 internal object UniffiForeignFutureResultI8 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -1729,8 +1773,8 @@ internal object UniffiForeignFutureResultI8 {
 }
 
 
-// === FILE: uniffi/sprites/UniffiForeignFutureResultRustBuffer.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/UniffiForeignFutureResultRustBuffer.kt ===
+package uniffi.trait_with_foreign
 
 internal object UniffiForeignFutureResultRustBuffer {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -1762,8 +1806,8 @@ internal object UniffiForeignFutureResultRustBuffer {
 }
 
 
-// === FILE: uniffi/sprites/UniffiForeignFutureResultU16.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/UniffiForeignFutureResultU16.kt ===
+package uniffi.trait_with_foreign
 
 internal object UniffiForeignFutureResultU16 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -1796,8 +1840,8 @@ internal object UniffiForeignFutureResultU16 {
 }
 
 
-// === FILE: uniffi/sprites/UniffiForeignFutureResultU32.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/UniffiForeignFutureResultU32.kt ===
+package uniffi.trait_with_foreign
 
 internal object UniffiForeignFutureResultU32 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -1830,8 +1874,8 @@ internal object UniffiForeignFutureResultU32 {
 }
 
 
-// === FILE: uniffi/sprites/UniffiForeignFutureResultU64.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/UniffiForeignFutureResultU64.kt ===
+package uniffi.trait_with_foreign
 
 internal object UniffiForeignFutureResultU64 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -1863,8 +1907,8 @@ internal object UniffiForeignFutureResultU64 {
 }
 
 
-// === FILE: uniffi/sprites/UniffiForeignFutureResultU8.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/UniffiForeignFutureResultU8.kt ===
+package uniffi.trait_with_foreign
 
 internal object UniffiForeignFutureResultU8 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -1897,8 +1941,8 @@ internal object UniffiForeignFutureResultU8 {
 }
 
 
-// === FILE: uniffi/sprites/UniffiForeignFutureResultVoid.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/UniffiForeignFutureResultVoid.kt ===
+package uniffi.trait_with_foreign
 
 internal object UniffiForeignFutureResultVoid {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -1921,8 +1965,48 @@ internal object UniffiForeignFutureResultVoid {
 }
 
 
-// === FILE: uniffi/sprites/UniffiHelpers.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/UniffiHandleMap.kt ===
+package uniffi.trait_with_foreign
+
+// Maps 64-bit handles to foreign-side objects that Rust references
+// via callback interfaces. Handles allocated here are always odd
+// (LSB = 1), reserving odd values for callback-interface handles and
+// keeping them distinct from Rust-owned handles (LSB = 0). The
+// matching LSB-based lift/lower dispatch in `FfiConverter`s for
+// `[Trait, WithForeign]` objects is future work (P3j-c) — pure
+// callback-interface FfiConverters in this revision unconditionally
+// route through the handle map. Thread-safe by construction
+// (ConcurrentHashMap + AtomicLong counter). Mirrors
+// `src/templates/HandleMap.java`.
+internal class UniffiHandleMap<T : Any> {
+    private val map = java.util.concurrent.ConcurrentHashMap<Long, T>()
+
+    // Start at 1, increment by 2 → all handles are odd.
+    private val counter = java.util.concurrent.atomic.AtomicLong(1L)
+
+    fun size(): Int = map.size
+
+    // Insert and return a fresh odd handle.
+    fun insert(obj: T): Long {
+        val handle = counter.getAndAdd(2L)
+        map[handle] = obj
+        return handle
+    }
+
+    fun get(handle: Long): T =
+        map[handle] ?: throw InternalException("UniffiHandleMap.get: Invalid handle")
+
+    // Single-use — removes from the map and returns the object.
+    fun remove(handle: Long): T =
+        map.remove(handle) ?: throw InternalException("UniffiHandleMap: Invalid handle")
+
+    // Clone a handle: insert the same object again under a new handle.
+    fun clone(handle: Long): Long = insert(get(handle))
+}
+
+
+// === FILE: uniffi/trait_with_foreign/UniffiHelpers.kt ===
+package uniffi.trait_with_foreign
 
 // Helpers for calling Rust.
 //
@@ -2196,8 +2280,8 @@ object UniffiHelpers {
     }
 }
 
-// === FILE: uniffi/sprites/UniffiInitializer.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/UniffiInitializer.kt ===
+package uniffi.trait_with_foreign
 
 /**
  * Ensures the native library is initialized.
@@ -2219,8 +2303,8 @@ object UniffiInitializer {
 // doesn't exist yet).
 
 
-// === FILE: uniffi/sprites/UniffiLib.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/UniffiLib.kt ===
+package uniffi.trait_with_foreign
 
 // FFM-based library binding. Each FFI function gets a `MethodHandle` field
 // + a wrapper function that performs the `invokeExact` call. The loop
@@ -2246,9 +2330,9 @@ internal object UniffiLib {
             .map { s -> LINKER.downcallHandle(s, descriptor) }
             .orElseThrow { RuntimeException("Missing FFI symbol: $name") }
 
-    // uniffi_uniffi_sprites_fn_clone_sprite
-    private val MH_uniffi_uniffi_sprites_fn_clone_sprite: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "uniffi_uniffi_sprites_fn_clone_sprite",
+    // uniffi_uniffi_fixture_trait_with_foreign_fn_clone_counter
+    private val MH_uniffi_uniffi_fixture_trait_with_foreign_fn_clone_counter: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_fixture_trait_with_foreign_fn_clone_counter",
         java.lang.foreign.FunctionDescriptor.of(
             java.lang.foreign.ValueLayout.JAVA_LONG,
             java.lang.foreign.ValueLayout.JAVA_LONG,
@@ -2256,12 +2340,12 @@ internal object UniffiLib {
         ),
     )
 
-    fun uniffi_uniffi_sprites_fn_clone_sprite(
+    fun uniffi_uniffi_fixture_trait_with_foreign_fn_clone_counter(
         handle: Long,
         uniffiOutErr: java.lang.foreign.MemorySegment,
     ): Long =
         try {
-            MH_uniffi_uniffi_sprites_fn_clone_sprite.invokeExact(
+            MH_uniffi_uniffi_fixture_trait_with_foreign_fn_clone_counter.invokeExact(
                 handle,
                 uniffiOutErr,
             ) as Long
@@ -2269,21 +2353,21 @@ internal object UniffiLib {
             throw AssertionError("invokeExact failed", ex)
         }
 
-    // uniffi_uniffi_sprites_fn_free_sprite
-    private val MH_uniffi_uniffi_sprites_fn_free_sprite: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "uniffi_uniffi_sprites_fn_free_sprite",
+    // uniffi_uniffi_fixture_trait_with_foreign_fn_free_counter
+    private val MH_uniffi_uniffi_fixture_trait_with_foreign_fn_free_counter: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_fixture_trait_with_foreign_fn_free_counter",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
             java.lang.foreign.ValueLayout.ADDRESS,
         ),
     )
 
-    fun uniffi_uniffi_sprites_fn_free_sprite(
+    fun uniffi_uniffi_fixture_trait_with_foreign_fn_free_counter(
         handle: Long,
         uniffiOutErr: java.lang.foreign.MemorySegment,
     ) {
         try {
-            MH_uniffi_uniffi_sprites_fn_free_sprite.invokeExact(
+            MH_uniffi_uniffi_fixture_trait_with_foreign_fn_free_counter.invokeExact(
                 handle,
                 uniffiOutErr,
             )
@@ -2292,163 +2376,98 @@ internal object UniffiLib {
         }
     }
 
-    // uniffi_uniffi_sprites_fn_constructor_sprite_new
-    private val MH_uniffi_uniffi_sprites_fn_constructor_sprite_new: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "uniffi_uniffi_sprites_fn_constructor_sprite_new",
-        java.lang.foreign.FunctionDescriptor.of(
-            java.lang.foreign.ValueLayout.JAVA_LONG,
-            RustBuffer.LAYOUT,
-            java.lang.foreign.ValueLayout.ADDRESS,
-        ),
-    )
-
-    fun uniffi_uniffi_sprites_fn_constructor_sprite_new(
-        initialPosition: java.lang.foreign.MemorySegment,
-        uniffiOutErr: java.lang.foreign.MemorySegment,
-    ): Long =
-        try {
-            MH_uniffi_uniffi_sprites_fn_constructor_sprite_new.invokeExact(
-                initialPosition,
-                uniffiOutErr,
-            ) as Long
-        } catch (ex: Throwable) {
-            throw AssertionError("invokeExact failed", ex)
-        }
-
-    // uniffi_uniffi_sprites_fn_constructor_sprite_new_relative_to
-    private val MH_uniffi_uniffi_sprites_fn_constructor_sprite_new_relative_to: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "uniffi_uniffi_sprites_fn_constructor_sprite_new_relative_to",
-        java.lang.foreign.FunctionDescriptor.of(
-            java.lang.foreign.ValueLayout.JAVA_LONG,
-            RustBuffer.LAYOUT,
-            RustBuffer.LAYOUT,
-            java.lang.foreign.ValueLayout.ADDRESS,
-        ),
-    )
-
-    fun uniffi_uniffi_sprites_fn_constructor_sprite_new_relative_to(
-        reference: java.lang.foreign.MemorySegment,
-        direction: java.lang.foreign.MemorySegment,
-        uniffiOutErr: java.lang.foreign.MemorySegment,
-    ): Long =
-        try {
-            MH_uniffi_uniffi_sprites_fn_constructor_sprite_new_relative_to.invokeExact(
-                reference,
-                direction,
-                uniffiOutErr,
-            ) as Long
-        } catch (ex: Throwable) {
-            throw AssertionError("invokeExact failed", ex)
-        }
-
-    // uniffi_uniffi_sprites_fn_method_sprite_get_position
-    private val MH_uniffi_uniffi_sprites_fn_method_sprite_get_position: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "uniffi_uniffi_sprites_fn_method_sprite_get_position",
-        java.lang.foreign.FunctionDescriptor.of(
-            RustBuffer.LAYOUT,
-            java.lang.foreign.ValueLayout.JAVA_LONG,
-            java.lang.foreign.ValueLayout.ADDRESS,
-        ),
-    )
-
-    fun uniffi_uniffi_sprites_fn_method_sprite_get_position(
-        allocator: java.lang.foreign.SegmentAllocator,
-        ptr: Long,
-        uniffiOutErr: java.lang.foreign.MemorySegment,
-    ): java.lang.foreign.MemorySegment =
-        try {
-            MH_uniffi_uniffi_sprites_fn_method_sprite_get_position.invokeExact(
-                allocator,
-                ptr,
-                uniffiOutErr,
-            ) as java.lang.foreign.MemorySegment
-        } catch (ex: Throwable) {
-            throw AssertionError("invokeExact failed", ex)
-        }
-
-    // uniffi_uniffi_sprites_fn_method_sprite_move_by
-    private val MH_uniffi_uniffi_sprites_fn_method_sprite_move_by: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "uniffi_uniffi_sprites_fn_method_sprite_move_by",
+    // uniffi_uniffi_fixture_trait_with_foreign_fn_init_callback_vtable_counter
+    private val MH_uniffi_uniffi_fixture_trait_with_foreign_fn_init_callback_vtable_counter: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_fixture_trait_with_foreign_fn_init_callback_vtable_counter",
         java.lang.foreign.FunctionDescriptor.ofVoid(
-            java.lang.foreign.ValueLayout.JAVA_LONG,
-            RustBuffer.LAYOUT,
             java.lang.foreign.ValueLayout.ADDRESS,
         ),
     )
 
-    fun uniffi_uniffi_sprites_fn_method_sprite_move_by(
-        ptr: Long,
-        direction: java.lang.foreign.MemorySegment,
-        uniffiOutErr: java.lang.foreign.MemorySegment,
+    fun uniffi_uniffi_fixture_trait_with_foreign_fn_init_callback_vtable_counter(
+        vtable: java.lang.foreign.MemorySegment,
     ) {
         try {
-            MH_uniffi_uniffi_sprites_fn_method_sprite_move_by.invokeExact(
-                ptr,
-                direction,
-                uniffiOutErr,
+            MH_uniffi_uniffi_fixture_trait_with_foreign_fn_init_callback_vtable_counter.invokeExact(
+                vtable,
             )
         } catch (ex: Throwable) {
             throw AssertionError("invokeExact failed", ex)
         }
     }
 
-    // uniffi_uniffi_sprites_fn_method_sprite_move_to
-    private val MH_uniffi_uniffi_sprites_fn_method_sprite_move_to: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "uniffi_uniffi_sprites_fn_method_sprite_move_to",
-        java.lang.foreign.FunctionDescriptor.ofVoid(
+    // uniffi_uniffi_fixture_trait_with_foreign_fn_method_counter_next_value
+    private val MH_uniffi_uniffi_fixture_trait_with_foreign_fn_method_counter_next_value: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_fixture_trait_with_foreign_fn_method_counter_next_value",
+        java.lang.foreign.FunctionDescriptor.of(
+            java.lang.foreign.ValueLayout.JAVA_INT,
             java.lang.foreign.ValueLayout.JAVA_LONG,
-            RustBuffer.LAYOUT,
             java.lang.foreign.ValueLayout.ADDRESS,
         ),
     )
 
-    fun uniffi_uniffi_sprites_fn_method_sprite_move_to(
+    fun uniffi_uniffi_fixture_trait_with_foreign_fn_method_counter_next_value(
         ptr: Long,
-        position: java.lang.foreign.MemorySegment,
         uniffiOutErr: java.lang.foreign.MemorySegment,
-    ) {
+    ): Int =
         try {
-            MH_uniffi_uniffi_sprites_fn_method_sprite_move_to.invokeExact(
+            MH_uniffi_uniffi_fixture_trait_with_foreign_fn_method_counter_next_value.invokeExact(
                 ptr,
-                position,
                 uniffiOutErr,
-            )
+            ) as Int
         } catch (ex: Throwable) {
             throw AssertionError("invokeExact failed", ex)
         }
-    }
 
-    // uniffi_uniffi_sprites_fn_func_translate
-    private val MH_uniffi_uniffi_sprites_fn_func_translate: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "uniffi_uniffi_sprites_fn_func_translate",
+    // uniffi_uniffi_fixture_trait_with_foreign_fn_func_make_rust_counter
+    private val MH_uniffi_uniffi_fixture_trait_with_foreign_fn_func_make_rust_counter: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_fixture_trait_with_foreign_fn_func_make_rust_counter",
         java.lang.foreign.FunctionDescriptor.of(
-            RustBuffer.LAYOUT,
-            RustBuffer.LAYOUT,
-            RustBuffer.LAYOUT,
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+            java.lang.foreign.ValueLayout.JAVA_INT,
             java.lang.foreign.ValueLayout.ADDRESS,
         ),
     )
 
-    fun uniffi_uniffi_sprites_fn_func_translate(
-        allocator: java.lang.foreign.SegmentAllocator,
-        position: java.lang.foreign.MemorySegment,
-        direction: java.lang.foreign.MemorySegment,
+    fun uniffi_uniffi_fixture_trait_with_foreign_fn_func_make_rust_counter(
+        start: Int,
         uniffiOutErr: java.lang.foreign.MemorySegment,
-    ): java.lang.foreign.MemorySegment =
+    ): Long =
         try {
-            MH_uniffi_uniffi_sprites_fn_func_translate.invokeExact(
-                allocator,
-                position,
-                direction,
+            MH_uniffi_uniffi_fixture_trait_with_foreign_fn_func_make_rust_counter.invokeExact(
+                start,
                 uniffiOutErr,
-            ) as java.lang.foreign.MemorySegment
+            ) as Long
         } catch (ex: Throwable) {
             throw AssertionError("invokeExact failed", ex)
         }
 
-    // ffi_uniffi_sprites_rustbuffer_alloc
-    private val MH_ffi_uniffi_sprites_rustbuffer_alloc: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rustbuffer_alloc",
+    // uniffi_uniffi_fixture_trait_with_foreign_fn_func_use_counter
+    private val MH_uniffi_uniffi_fixture_trait_with_foreign_fn_func_use_counter: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_fixture_trait_with_foreign_fn_func_use_counter",
+        java.lang.foreign.FunctionDescriptor.of(
+            java.lang.foreign.ValueLayout.JAVA_INT,
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+            java.lang.foreign.ValueLayout.ADDRESS,
+        ),
+    )
+
+    fun uniffi_uniffi_fixture_trait_with_foreign_fn_func_use_counter(
+        counter: Long,
+        uniffiOutErr: java.lang.foreign.MemorySegment,
+    ): Int =
+        try {
+            MH_uniffi_uniffi_fixture_trait_with_foreign_fn_func_use_counter.invokeExact(
+                counter,
+                uniffiOutErr,
+            ) as Int
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // ffi_uniffi_fixture_trait_with_foreign_rustbuffer_alloc
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rustbuffer_alloc: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rustbuffer_alloc",
         java.lang.foreign.FunctionDescriptor.of(
             RustBuffer.LAYOUT,
             java.lang.foreign.ValueLayout.JAVA_LONG,
@@ -2456,13 +2475,13 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_uniffi_sprites_rustbuffer_alloc(
+    fun ffi_uniffi_fixture_trait_with_foreign_rustbuffer_alloc(
         allocator: java.lang.foreign.SegmentAllocator,
         size: Long,
         uniffiOutErr: java.lang.foreign.MemorySegment,
     ): java.lang.foreign.MemorySegment =
         try {
-            MH_ffi_uniffi_sprites_rustbuffer_alloc.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rustbuffer_alloc.invokeExact(
                 allocator,
                 size,
                 uniffiOutErr,
@@ -2471,9 +2490,9 @@ internal object UniffiLib {
             throw AssertionError("invokeExact failed", ex)
         }
 
-    // ffi_uniffi_sprites_rustbuffer_from_bytes
-    private val MH_ffi_uniffi_sprites_rustbuffer_from_bytes: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rustbuffer_from_bytes",
+    // ffi_uniffi_fixture_trait_with_foreign_rustbuffer_from_bytes
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rustbuffer_from_bytes: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rustbuffer_from_bytes",
         java.lang.foreign.FunctionDescriptor.of(
             RustBuffer.LAYOUT,
             ForeignBytes.LAYOUT,
@@ -2481,13 +2500,13 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_uniffi_sprites_rustbuffer_from_bytes(
+    fun ffi_uniffi_fixture_trait_with_foreign_rustbuffer_from_bytes(
         allocator: java.lang.foreign.SegmentAllocator,
         bytes: java.lang.foreign.MemorySegment,
         uniffiOutErr: java.lang.foreign.MemorySegment,
     ): java.lang.foreign.MemorySegment =
         try {
-            MH_ffi_uniffi_sprites_rustbuffer_from_bytes.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rustbuffer_from_bytes.invokeExact(
                 allocator,
                 bytes,
                 uniffiOutErr,
@@ -2496,21 +2515,21 @@ internal object UniffiLib {
             throw AssertionError("invokeExact failed", ex)
         }
 
-    // ffi_uniffi_sprites_rustbuffer_free
-    private val MH_ffi_uniffi_sprites_rustbuffer_free: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rustbuffer_free",
+    // ffi_uniffi_fixture_trait_with_foreign_rustbuffer_free
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rustbuffer_free: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rustbuffer_free",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             RustBuffer.LAYOUT,
             java.lang.foreign.ValueLayout.ADDRESS,
         ),
     )
 
-    fun ffi_uniffi_sprites_rustbuffer_free(
+    fun ffi_uniffi_fixture_trait_with_foreign_rustbuffer_free(
         buf: java.lang.foreign.MemorySegment,
         uniffiOutErr: java.lang.foreign.MemorySegment,
     ) {
         try {
-            MH_ffi_uniffi_sprites_rustbuffer_free.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rustbuffer_free.invokeExact(
                 buf,
                 uniffiOutErr,
             )
@@ -2519,9 +2538,9 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_uniffi_sprites_rustbuffer_reserve
-    private val MH_ffi_uniffi_sprites_rustbuffer_reserve: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rustbuffer_reserve",
+    // ffi_uniffi_fixture_trait_with_foreign_rustbuffer_reserve
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rustbuffer_reserve: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rustbuffer_reserve",
         java.lang.foreign.FunctionDescriptor.of(
             RustBuffer.LAYOUT,
             RustBuffer.LAYOUT,
@@ -2530,14 +2549,14 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_uniffi_sprites_rustbuffer_reserve(
+    fun ffi_uniffi_fixture_trait_with_foreign_rustbuffer_reserve(
         allocator: java.lang.foreign.SegmentAllocator,
         buf: java.lang.foreign.MemorySegment,
         additional: Long,
         uniffiOutErr: java.lang.foreign.MemorySegment,
     ): java.lang.foreign.MemorySegment =
         try {
-            MH_ffi_uniffi_sprites_rustbuffer_reserve.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rustbuffer_reserve.invokeExact(
                 allocator,
                 buf,
                 additional,
@@ -2547,9 +2566,9 @@ internal object UniffiLib {
             throw AssertionError("invokeExact failed", ex)
         }
 
-    // ffi_uniffi_sprites_rust_future_poll_u8
-    private val MH_ffi_uniffi_sprites_rust_future_poll_u8: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_poll_u8",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_u8
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_u8: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_u8",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
             java.lang.foreign.ValueLayout.ADDRESS,
@@ -2557,13 +2576,13 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_poll_u8(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_u8(
         handle: Long,
         callback: java.lang.foreign.MemorySegment,
         callbackData: Long,
     ) {
         try {
-            MH_ffi_uniffi_sprites_rust_future_poll_u8.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_u8.invokeExact(
                 handle,
                 callback,
                 callbackData,
@@ -2573,19 +2592,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_uniffi_sprites_rust_future_cancel_u8
-    private val MH_ffi_uniffi_sprites_rust_future_cancel_u8: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_cancel_u8",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_u8
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_u8: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_u8",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_cancel_u8(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_u8(
         handle: Long,
     ) {
         try {
-            MH_ffi_uniffi_sprites_rust_future_cancel_u8.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_u8.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -2593,19 +2612,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_uniffi_sprites_rust_future_free_u8
-    private val MH_ffi_uniffi_sprites_rust_future_free_u8: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_free_u8",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_free_u8
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_free_u8: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_free_u8",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_free_u8(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_free_u8(
         handle: Long,
     ) {
         try {
-            MH_ffi_uniffi_sprites_rust_future_free_u8.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_free_u8.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -2613,9 +2632,9 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_uniffi_sprites_rust_future_complete_u8
-    private val MH_ffi_uniffi_sprites_rust_future_complete_u8: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_complete_u8",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_u8
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_u8: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_u8",
         java.lang.foreign.FunctionDescriptor.of(
             java.lang.foreign.ValueLayout.JAVA_BYTE,
             java.lang.foreign.ValueLayout.JAVA_LONG,
@@ -2623,12 +2642,12 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_complete_u8(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_u8(
         handle: Long,
         uniffiOutErr: java.lang.foreign.MemorySegment,
     ): Byte =
         try {
-            MH_ffi_uniffi_sprites_rust_future_complete_u8.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_u8.invokeExact(
                 handle,
                 uniffiOutErr,
             ) as Byte
@@ -2636,9 +2655,9 @@ internal object UniffiLib {
             throw AssertionError("invokeExact failed", ex)
         }
 
-    // ffi_uniffi_sprites_rust_future_poll_i8
-    private val MH_ffi_uniffi_sprites_rust_future_poll_i8: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_poll_i8",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_i8
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_i8: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_i8",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
             java.lang.foreign.ValueLayout.ADDRESS,
@@ -2646,13 +2665,13 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_poll_i8(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_i8(
         handle: Long,
         callback: java.lang.foreign.MemorySegment,
         callbackData: Long,
     ) {
         try {
-            MH_ffi_uniffi_sprites_rust_future_poll_i8.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_i8.invokeExact(
                 handle,
                 callback,
                 callbackData,
@@ -2662,19 +2681,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_uniffi_sprites_rust_future_cancel_i8
-    private val MH_ffi_uniffi_sprites_rust_future_cancel_i8: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_cancel_i8",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_i8
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_i8: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_i8",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_cancel_i8(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_i8(
         handle: Long,
     ) {
         try {
-            MH_ffi_uniffi_sprites_rust_future_cancel_i8.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_i8.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -2682,19 +2701,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_uniffi_sprites_rust_future_free_i8
-    private val MH_ffi_uniffi_sprites_rust_future_free_i8: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_free_i8",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_free_i8
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_free_i8: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_free_i8",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_free_i8(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_free_i8(
         handle: Long,
     ) {
         try {
-            MH_ffi_uniffi_sprites_rust_future_free_i8.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_free_i8.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -2702,9 +2721,9 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_uniffi_sprites_rust_future_complete_i8
-    private val MH_ffi_uniffi_sprites_rust_future_complete_i8: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_complete_i8",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_i8
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_i8: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_i8",
         java.lang.foreign.FunctionDescriptor.of(
             java.lang.foreign.ValueLayout.JAVA_BYTE,
             java.lang.foreign.ValueLayout.JAVA_LONG,
@@ -2712,12 +2731,12 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_complete_i8(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_i8(
         handle: Long,
         uniffiOutErr: java.lang.foreign.MemorySegment,
     ): Byte =
         try {
-            MH_ffi_uniffi_sprites_rust_future_complete_i8.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_i8.invokeExact(
                 handle,
                 uniffiOutErr,
             ) as Byte
@@ -2725,9 +2744,9 @@ internal object UniffiLib {
             throw AssertionError("invokeExact failed", ex)
         }
 
-    // ffi_uniffi_sprites_rust_future_poll_u16
-    private val MH_ffi_uniffi_sprites_rust_future_poll_u16: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_poll_u16",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_u16
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_u16: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_u16",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
             java.lang.foreign.ValueLayout.ADDRESS,
@@ -2735,13 +2754,13 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_poll_u16(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_u16(
         handle: Long,
         callback: java.lang.foreign.MemorySegment,
         callbackData: Long,
     ) {
         try {
-            MH_ffi_uniffi_sprites_rust_future_poll_u16.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_u16.invokeExact(
                 handle,
                 callback,
                 callbackData,
@@ -2751,19 +2770,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_uniffi_sprites_rust_future_cancel_u16
-    private val MH_ffi_uniffi_sprites_rust_future_cancel_u16: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_cancel_u16",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_u16
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_u16: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_u16",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_cancel_u16(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_u16(
         handle: Long,
     ) {
         try {
-            MH_ffi_uniffi_sprites_rust_future_cancel_u16.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_u16.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -2771,19 +2790,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_uniffi_sprites_rust_future_free_u16
-    private val MH_ffi_uniffi_sprites_rust_future_free_u16: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_free_u16",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_free_u16
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_free_u16: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_free_u16",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_free_u16(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_free_u16(
         handle: Long,
     ) {
         try {
-            MH_ffi_uniffi_sprites_rust_future_free_u16.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_free_u16.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -2791,9 +2810,9 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_uniffi_sprites_rust_future_complete_u16
-    private val MH_ffi_uniffi_sprites_rust_future_complete_u16: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_complete_u16",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_u16
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_u16: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_u16",
         java.lang.foreign.FunctionDescriptor.of(
             java.lang.foreign.ValueLayout.JAVA_SHORT,
             java.lang.foreign.ValueLayout.JAVA_LONG,
@@ -2801,12 +2820,12 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_complete_u16(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_u16(
         handle: Long,
         uniffiOutErr: java.lang.foreign.MemorySegment,
     ): Short =
         try {
-            MH_ffi_uniffi_sprites_rust_future_complete_u16.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_u16.invokeExact(
                 handle,
                 uniffiOutErr,
             ) as Short
@@ -2814,9 +2833,9 @@ internal object UniffiLib {
             throw AssertionError("invokeExact failed", ex)
         }
 
-    // ffi_uniffi_sprites_rust_future_poll_i16
-    private val MH_ffi_uniffi_sprites_rust_future_poll_i16: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_poll_i16",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_i16
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_i16: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_i16",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
             java.lang.foreign.ValueLayout.ADDRESS,
@@ -2824,13 +2843,13 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_poll_i16(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_i16(
         handle: Long,
         callback: java.lang.foreign.MemorySegment,
         callbackData: Long,
     ) {
         try {
-            MH_ffi_uniffi_sprites_rust_future_poll_i16.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_i16.invokeExact(
                 handle,
                 callback,
                 callbackData,
@@ -2840,19 +2859,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_uniffi_sprites_rust_future_cancel_i16
-    private val MH_ffi_uniffi_sprites_rust_future_cancel_i16: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_cancel_i16",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_i16
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_i16: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_i16",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_cancel_i16(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_i16(
         handle: Long,
     ) {
         try {
-            MH_ffi_uniffi_sprites_rust_future_cancel_i16.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_i16.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -2860,19 +2879,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_uniffi_sprites_rust_future_free_i16
-    private val MH_ffi_uniffi_sprites_rust_future_free_i16: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_free_i16",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_free_i16
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_free_i16: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_free_i16",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_free_i16(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_free_i16(
         handle: Long,
     ) {
         try {
-            MH_ffi_uniffi_sprites_rust_future_free_i16.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_free_i16.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -2880,9 +2899,9 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_uniffi_sprites_rust_future_complete_i16
-    private val MH_ffi_uniffi_sprites_rust_future_complete_i16: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_complete_i16",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_i16
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_i16: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_i16",
         java.lang.foreign.FunctionDescriptor.of(
             java.lang.foreign.ValueLayout.JAVA_SHORT,
             java.lang.foreign.ValueLayout.JAVA_LONG,
@@ -2890,12 +2909,12 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_complete_i16(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_i16(
         handle: Long,
         uniffiOutErr: java.lang.foreign.MemorySegment,
     ): Short =
         try {
-            MH_ffi_uniffi_sprites_rust_future_complete_i16.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_i16.invokeExact(
                 handle,
                 uniffiOutErr,
             ) as Short
@@ -2903,9 +2922,9 @@ internal object UniffiLib {
             throw AssertionError("invokeExact failed", ex)
         }
 
-    // ffi_uniffi_sprites_rust_future_poll_u32
-    private val MH_ffi_uniffi_sprites_rust_future_poll_u32: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_poll_u32",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_u32
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_u32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_u32",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
             java.lang.foreign.ValueLayout.ADDRESS,
@@ -2913,13 +2932,13 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_poll_u32(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_u32(
         handle: Long,
         callback: java.lang.foreign.MemorySegment,
         callbackData: Long,
     ) {
         try {
-            MH_ffi_uniffi_sprites_rust_future_poll_u32.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_u32.invokeExact(
                 handle,
                 callback,
                 callbackData,
@@ -2929,19 +2948,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_uniffi_sprites_rust_future_cancel_u32
-    private val MH_ffi_uniffi_sprites_rust_future_cancel_u32: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_cancel_u32",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_u32
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_u32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_u32",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_cancel_u32(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_u32(
         handle: Long,
     ) {
         try {
-            MH_ffi_uniffi_sprites_rust_future_cancel_u32.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_u32.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -2949,19 +2968,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_uniffi_sprites_rust_future_free_u32
-    private val MH_ffi_uniffi_sprites_rust_future_free_u32: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_free_u32",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_free_u32
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_free_u32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_free_u32",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_free_u32(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_free_u32(
         handle: Long,
     ) {
         try {
-            MH_ffi_uniffi_sprites_rust_future_free_u32.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_free_u32.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -2969,9 +2988,9 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_uniffi_sprites_rust_future_complete_u32
-    private val MH_ffi_uniffi_sprites_rust_future_complete_u32: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_complete_u32",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_u32
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_u32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_u32",
         java.lang.foreign.FunctionDescriptor.of(
             java.lang.foreign.ValueLayout.JAVA_INT,
             java.lang.foreign.ValueLayout.JAVA_LONG,
@@ -2979,12 +2998,12 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_complete_u32(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_u32(
         handle: Long,
         uniffiOutErr: java.lang.foreign.MemorySegment,
     ): Int =
         try {
-            MH_ffi_uniffi_sprites_rust_future_complete_u32.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_u32.invokeExact(
                 handle,
                 uniffiOutErr,
             ) as Int
@@ -2992,9 +3011,9 @@ internal object UniffiLib {
             throw AssertionError("invokeExact failed", ex)
         }
 
-    // ffi_uniffi_sprites_rust_future_poll_i32
-    private val MH_ffi_uniffi_sprites_rust_future_poll_i32: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_poll_i32",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_i32
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_i32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_i32",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
             java.lang.foreign.ValueLayout.ADDRESS,
@@ -3002,13 +3021,13 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_poll_i32(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_i32(
         handle: Long,
         callback: java.lang.foreign.MemorySegment,
         callbackData: Long,
     ) {
         try {
-            MH_ffi_uniffi_sprites_rust_future_poll_i32.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_i32.invokeExact(
                 handle,
                 callback,
                 callbackData,
@@ -3018,19 +3037,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_uniffi_sprites_rust_future_cancel_i32
-    private val MH_ffi_uniffi_sprites_rust_future_cancel_i32: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_cancel_i32",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_i32
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_i32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_i32",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_cancel_i32(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_i32(
         handle: Long,
     ) {
         try {
-            MH_ffi_uniffi_sprites_rust_future_cancel_i32.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_i32.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -3038,19 +3057,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_uniffi_sprites_rust_future_free_i32
-    private val MH_ffi_uniffi_sprites_rust_future_free_i32: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_free_i32",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_free_i32
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_free_i32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_free_i32",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_free_i32(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_free_i32(
         handle: Long,
     ) {
         try {
-            MH_ffi_uniffi_sprites_rust_future_free_i32.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_free_i32.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -3058,9 +3077,9 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_uniffi_sprites_rust_future_complete_i32
-    private val MH_ffi_uniffi_sprites_rust_future_complete_i32: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_complete_i32",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_i32
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_i32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_i32",
         java.lang.foreign.FunctionDescriptor.of(
             java.lang.foreign.ValueLayout.JAVA_INT,
             java.lang.foreign.ValueLayout.JAVA_LONG,
@@ -3068,12 +3087,12 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_complete_i32(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_i32(
         handle: Long,
         uniffiOutErr: java.lang.foreign.MemorySegment,
     ): Int =
         try {
-            MH_ffi_uniffi_sprites_rust_future_complete_i32.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_i32.invokeExact(
                 handle,
                 uniffiOutErr,
             ) as Int
@@ -3081,9 +3100,9 @@ internal object UniffiLib {
             throw AssertionError("invokeExact failed", ex)
         }
 
-    // ffi_uniffi_sprites_rust_future_poll_u64
-    private val MH_ffi_uniffi_sprites_rust_future_poll_u64: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_poll_u64",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_u64
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_u64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_u64",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
             java.lang.foreign.ValueLayout.ADDRESS,
@@ -3091,13 +3110,13 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_poll_u64(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_u64(
         handle: Long,
         callback: java.lang.foreign.MemorySegment,
         callbackData: Long,
     ) {
         try {
-            MH_ffi_uniffi_sprites_rust_future_poll_u64.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_u64.invokeExact(
                 handle,
                 callback,
                 callbackData,
@@ -3107,19 +3126,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_uniffi_sprites_rust_future_cancel_u64
-    private val MH_ffi_uniffi_sprites_rust_future_cancel_u64: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_cancel_u64",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_u64
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_u64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_u64",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_cancel_u64(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_u64(
         handle: Long,
     ) {
         try {
-            MH_ffi_uniffi_sprites_rust_future_cancel_u64.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_u64.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -3127,19 +3146,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_uniffi_sprites_rust_future_free_u64
-    private val MH_ffi_uniffi_sprites_rust_future_free_u64: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_free_u64",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_free_u64
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_free_u64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_free_u64",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_free_u64(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_free_u64(
         handle: Long,
     ) {
         try {
-            MH_ffi_uniffi_sprites_rust_future_free_u64.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_free_u64.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -3147,9 +3166,9 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_uniffi_sprites_rust_future_complete_u64
-    private val MH_ffi_uniffi_sprites_rust_future_complete_u64: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_complete_u64",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_u64
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_u64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_u64",
         java.lang.foreign.FunctionDescriptor.of(
             java.lang.foreign.ValueLayout.JAVA_LONG,
             java.lang.foreign.ValueLayout.JAVA_LONG,
@@ -3157,12 +3176,12 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_complete_u64(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_u64(
         handle: Long,
         uniffiOutErr: java.lang.foreign.MemorySegment,
     ): Long =
         try {
-            MH_ffi_uniffi_sprites_rust_future_complete_u64.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_u64.invokeExact(
                 handle,
                 uniffiOutErr,
             ) as Long
@@ -3170,9 +3189,9 @@ internal object UniffiLib {
             throw AssertionError("invokeExact failed", ex)
         }
 
-    // ffi_uniffi_sprites_rust_future_poll_i64
-    private val MH_ffi_uniffi_sprites_rust_future_poll_i64: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_poll_i64",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_i64
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_i64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_i64",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
             java.lang.foreign.ValueLayout.ADDRESS,
@@ -3180,13 +3199,13 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_poll_i64(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_i64(
         handle: Long,
         callback: java.lang.foreign.MemorySegment,
         callbackData: Long,
     ) {
         try {
-            MH_ffi_uniffi_sprites_rust_future_poll_i64.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_i64.invokeExact(
                 handle,
                 callback,
                 callbackData,
@@ -3196,19 +3215,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_uniffi_sprites_rust_future_cancel_i64
-    private val MH_ffi_uniffi_sprites_rust_future_cancel_i64: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_cancel_i64",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_i64
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_i64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_i64",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_cancel_i64(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_i64(
         handle: Long,
     ) {
         try {
-            MH_ffi_uniffi_sprites_rust_future_cancel_i64.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_i64.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -3216,19 +3235,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_uniffi_sprites_rust_future_free_i64
-    private val MH_ffi_uniffi_sprites_rust_future_free_i64: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_free_i64",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_free_i64
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_free_i64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_free_i64",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_free_i64(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_free_i64(
         handle: Long,
     ) {
         try {
-            MH_ffi_uniffi_sprites_rust_future_free_i64.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_free_i64.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -3236,9 +3255,9 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_uniffi_sprites_rust_future_complete_i64
-    private val MH_ffi_uniffi_sprites_rust_future_complete_i64: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_complete_i64",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_i64
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_i64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_i64",
         java.lang.foreign.FunctionDescriptor.of(
             java.lang.foreign.ValueLayout.JAVA_LONG,
             java.lang.foreign.ValueLayout.JAVA_LONG,
@@ -3246,12 +3265,12 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_complete_i64(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_i64(
         handle: Long,
         uniffiOutErr: java.lang.foreign.MemorySegment,
     ): Long =
         try {
-            MH_ffi_uniffi_sprites_rust_future_complete_i64.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_i64.invokeExact(
                 handle,
                 uniffiOutErr,
             ) as Long
@@ -3259,9 +3278,9 @@ internal object UniffiLib {
             throw AssertionError("invokeExact failed", ex)
         }
 
-    // ffi_uniffi_sprites_rust_future_poll_f32
-    private val MH_ffi_uniffi_sprites_rust_future_poll_f32: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_poll_f32",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_f32
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_f32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_f32",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
             java.lang.foreign.ValueLayout.ADDRESS,
@@ -3269,13 +3288,13 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_poll_f32(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_f32(
         handle: Long,
         callback: java.lang.foreign.MemorySegment,
         callbackData: Long,
     ) {
         try {
-            MH_ffi_uniffi_sprites_rust_future_poll_f32.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_f32.invokeExact(
                 handle,
                 callback,
                 callbackData,
@@ -3285,19 +3304,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_uniffi_sprites_rust_future_cancel_f32
-    private val MH_ffi_uniffi_sprites_rust_future_cancel_f32: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_cancel_f32",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_f32
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_f32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_f32",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_cancel_f32(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_f32(
         handle: Long,
     ) {
         try {
-            MH_ffi_uniffi_sprites_rust_future_cancel_f32.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_f32.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -3305,19 +3324,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_uniffi_sprites_rust_future_free_f32
-    private val MH_ffi_uniffi_sprites_rust_future_free_f32: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_free_f32",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_free_f32
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_free_f32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_free_f32",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_free_f32(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_free_f32(
         handle: Long,
     ) {
         try {
-            MH_ffi_uniffi_sprites_rust_future_free_f32.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_free_f32.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -3325,9 +3344,9 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_uniffi_sprites_rust_future_complete_f32
-    private val MH_ffi_uniffi_sprites_rust_future_complete_f32: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_complete_f32",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_f32
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_f32: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_f32",
         java.lang.foreign.FunctionDescriptor.of(
             java.lang.foreign.ValueLayout.JAVA_FLOAT,
             java.lang.foreign.ValueLayout.JAVA_LONG,
@@ -3335,12 +3354,12 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_complete_f32(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_f32(
         handle: Long,
         uniffiOutErr: java.lang.foreign.MemorySegment,
     ): Float =
         try {
-            MH_ffi_uniffi_sprites_rust_future_complete_f32.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_f32.invokeExact(
                 handle,
                 uniffiOutErr,
             ) as Float
@@ -3348,9 +3367,9 @@ internal object UniffiLib {
             throw AssertionError("invokeExact failed", ex)
         }
 
-    // ffi_uniffi_sprites_rust_future_poll_f64
-    private val MH_ffi_uniffi_sprites_rust_future_poll_f64: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_poll_f64",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_f64
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_f64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_f64",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
             java.lang.foreign.ValueLayout.ADDRESS,
@@ -3358,13 +3377,13 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_poll_f64(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_f64(
         handle: Long,
         callback: java.lang.foreign.MemorySegment,
         callbackData: Long,
     ) {
         try {
-            MH_ffi_uniffi_sprites_rust_future_poll_f64.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_f64.invokeExact(
                 handle,
                 callback,
                 callbackData,
@@ -3374,19 +3393,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_uniffi_sprites_rust_future_cancel_f64
-    private val MH_ffi_uniffi_sprites_rust_future_cancel_f64: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_cancel_f64",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_f64
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_f64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_f64",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_cancel_f64(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_f64(
         handle: Long,
     ) {
         try {
-            MH_ffi_uniffi_sprites_rust_future_cancel_f64.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_f64.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -3394,19 +3413,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_uniffi_sprites_rust_future_free_f64
-    private val MH_ffi_uniffi_sprites_rust_future_free_f64: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_free_f64",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_free_f64
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_free_f64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_free_f64",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_free_f64(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_free_f64(
         handle: Long,
     ) {
         try {
-            MH_ffi_uniffi_sprites_rust_future_free_f64.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_free_f64.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -3414,9 +3433,9 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_uniffi_sprites_rust_future_complete_f64
-    private val MH_ffi_uniffi_sprites_rust_future_complete_f64: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_complete_f64",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_f64
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_f64: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_f64",
         java.lang.foreign.FunctionDescriptor.of(
             java.lang.foreign.ValueLayout.JAVA_DOUBLE,
             java.lang.foreign.ValueLayout.JAVA_LONG,
@@ -3424,12 +3443,12 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_complete_f64(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_f64(
         handle: Long,
         uniffiOutErr: java.lang.foreign.MemorySegment,
     ): Double =
         try {
-            MH_ffi_uniffi_sprites_rust_future_complete_f64.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_f64.invokeExact(
                 handle,
                 uniffiOutErr,
             ) as Double
@@ -3437,9 +3456,9 @@ internal object UniffiLib {
             throw AssertionError("invokeExact failed", ex)
         }
 
-    // ffi_uniffi_sprites_rust_future_poll_rust_buffer
-    private val MH_ffi_uniffi_sprites_rust_future_poll_rust_buffer: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_poll_rust_buffer",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_rust_buffer
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_rust_buffer: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_rust_buffer",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
             java.lang.foreign.ValueLayout.ADDRESS,
@@ -3447,13 +3466,13 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_poll_rust_buffer(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_rust_buffer(
         handle: Long,
         callback: java.lang.foreign.MemorySegment,
         callbackData: Long,
     ) {
         try {
-            MH_ffi_uniffi_sprites_rust_future_poll_rust_buffer.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_rust_buffer.invokeExact(
                 handle,
                 callback,
                 callbackData,
@@ -3463,19 +3482,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_uniffi_sprites_rust_future_cancel_rust_buffer
-    private val MH_ffi_uniffi_sprites_rust_future_cancel_rust_buffer: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_cancel_rust_buffer",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_rust_buffer
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_rust_buffer: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_rust_buffer",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_cancel_rust_buffer(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_rust_buffer(
         handle: Long,
     ) {
         try {
-            MH_ffi_uniffi_sprites_rust_future_cancel_rust_buffer.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_rust_buffer.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -3483,19 +3502,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_uniffi_sprites_rust_future_free_rust_buffer
-    private val MH_ffi_uniffi_sprites_rust_future_free_rust_buffer: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_free_rust_buffer",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_free_rust_buffer
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_free_rust_buffer: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_free_rust_buffer",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_free_rust_buffer(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_free_rust_buffer(
         handle: Long,
     ) {
         try {
-            MH_ffi_uniffi_sprites_rust_future_free_rust_buffer.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_free_rust_buffer.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -3503,9 +3522,9 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_uniffi_sprites_rust_future_complete_rust_buffer
-    private val MH_ffi_uniffi_sprites_rust_future_complete_rust_buffer: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_complete_rust_buffer",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_rust_buffer
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_rust_buffer: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_rust_buffer",
         java.lang.foreign.FunctionDescriptor.of(
             RustBuffer.LAYOUT,
             java.lang.foreign.ValueLayout.JAVA_LONG,
@@ -3513,13 +3532,13 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_complete_rust_buffer(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_rust_buffer(
         allocator: java.lang.foreign.SegmentAllocator,
         handle: Long,
         uniffiOutErr: java.lang.foreign.MemorySegment,
     ): java.lang.foreign.MemorySegment =
         try {
-            MH_ffi_uniffi_sprites_rust_future_complete_rust_buffer.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_rust_buffer.invokeExact(
                 allocator,
                 handle,
                 uniffiOutErr,
@@ -3528,9 +3547,9 @@ internal object UniffiLib {
             throw AssertionError("invokeExact failed", ex)
         }
 
-    // ffi_uniffi_sprites_rust_future_poll_void
-    private val MH_ffi_uniffi_sprites_rust_future_poll_void: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_poll_void",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_void
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_void: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_void",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
             java.lang.foreign.ValueLayout.ADDRESS,
@@ -3538,13 +3557,13 @@ internal object UniffiLib {
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_poll_void(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_void(
         handle: Long,
         callback: java.lang.foreign.MemorySegment,
         callbackData: Long,
     ) {
         try {
-            MH_ffi_uniffi_sprites_rust_future_poll_void.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_poll_void.invokeExact(
                 handle,
                 callback,
                 callbackData,
@@ -3554,19 +3573,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_uniffi_sprites_rust_future_cancel_void
-    private val MH_ffi_uniffi_sprites_rust_future_cancel_void: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_cancel_void",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_void
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_void: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_void",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_cancel_void(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_void(
         handle: Long,
     ) {
         try {
-            MH_ffi_uniffi_sprites_rust_future_cancel_void.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_cancel_void.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -3574,19 +3593,19 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_uniffi_sprites_rust_future_free_void
-    private val MH_ffi_uniffi_sprites_rust_future_free_void: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_free_void",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_free_void
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_free_void: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_free_void",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_free_void(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_free_void(
         handle: Long,
     ) {
         try {
-            MH_ffi_uniffi_sprites_rust_future_free_void.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_free_void.invokeExact(
                 handle,
             )
         } catch (ex: Throwable) {
@@ -3594,21 +3613,21 @@ internal object UniffiLib {
         }
     }
 
-    // ffi_uniffi_sprites_rust_future_complete_void
-    private val MH_ffi_uniffi_sprites_rust_future_complete_void: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_rust_future_complete_void",
+    // ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_void
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_void: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_void",
         java.lang.foreign.FunctionDescriptor.ofVoid(
             java.lang.foreign.ValueLayout.JAVA_LONG,
             java.lang.foreign.ValueLayout.ADDRESS,
         ),
     )
 
-    fun ffi_uniffi_sprites_rust_future_complete_void(
+    fun ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_void(
         handle: Long,
         uniffiOutErr: java.lang.foreign.MemorySegment,
     ) {
         try {
-            MH_ffi_uniffi_sprites_rust_future_complete_void.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_rust_future_complete_void.invokeExact(
                 handle,
                 uniffiOutErr,
             )
@@ -3617,120 +3636,69 @@ internal object UniffiLib {
         }
     }
 
-    // uniffi_uniffi_sprites_checksum_func_translate
-    private val MH_uniffi_uniffi_sprites_checksum_func_translate: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "uniffi_uniffi_sprites_checksum_func_translate",
+    // uniffi_uniffi_fixture_trait_with_foreign_checksum_func_make_rust_counter
+    private val MH_uniffi_uniffi_fixture_trait_with_foreign_checksum_func_make_rust_counter: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_fixture_trait_with_foreign_checksum_func_make_rust_counter",
         java.lang.foreign.FunctionDescriptor.of(
             java.lang.foreign.ValueLayout.JAVA_SHORT,
         ),
     )
 
-    fun uniffi_uniffi_sprites_checksum_func_translate(
+    fun uniffi_uniffi_fixture_trait_with_foreign_checksum_func_make_rust_counter(
     ): Short =
         try {
-            MH_uniffi_uniffi_sprites_checksum_func_translate.invokeExact(
+            MH_uniffi_uniffi_fixture_trait_with_foreign_checksum_func_make_rust_counter.invokeExact(
             ) as Short
         } catch (ex: Throwable) {
             throw AssertionError("invokeExact failed", ex)
         }
 
-    // uniffi_uniffi_sprites_checksum_method_sprite_get_position
-    private val MH_uniffi_uniffi_sprites_checksum_method_sprite_get_position: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "uniffi_uniffi_sprites_checksum_method_sprite_get_position",
+    // uniffi_uniffi_fixture_trait_with_foreign_checksum_func_use_counter
+    private val MH_uniffi_uniffi_fixture_trait_with_foreign_checksum_func_use_counter: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_fixture_trait_with_foreign_checksum_func_use_counter",
         java.lang.foreign.FunctionDescriptor.of(
             java.lang.foreign.ValueLayout.JAVA_SHORT,
         ),
     )
 
-    fun uniffi_uniffi_sprites_checksum_method_sprite_get_position(
+    fun uniffi_uniffi_fixture_trait_with_foreign_checksum_func_use_counter(
     ): Short =
         try {
-            MH_uniffi_uniffi_sprites_checksum_method_sprite_get_position.invokeExact(
+            MH_uniffi_uniffi_fixture_trait_with_foreign_checksum_func_use_counter.invokeExact(
             ) as Short
         } catch (ex: Throwable) {
             throw AssertionError("invokeExact failed", ex)
         }
 
-    // uniffi_uniffi_sprites_checksum_method_sprite_move_by
-    private val MH_uniffi_uniffi_sprites_checksum_method_sprite_move_by: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "uniffi_uniffi_sprites_checksum_method_sprite_move_by",
+    // uniffi_uniffi_fixture_trait_with_foreign_checksum_method_counter_next_value
+    private val MH_uniffi_uniffi_fixture_trait_with_foreign_checksum_method_counter_next_value: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_fixture_trait_with_foreign_checksum_method_counter_next_value",
         java.lang.foreign.FunctionDescriptor.of(
             java.lang.foreign.ValueLayout.JAVA_SHORT,
         ),
     )
 
-    fun uniffi_uniffi_sprites_checksum_method_sprite_move_by(
+    fun uniffi_uniffi_fixture_trait_with_foreign_checksum_method_counter_next_value(
     ): Short =
         try {
-            MH_uniffi_uniffi_sprites_checksum_method_sprite_move_by.invokeExact(
+            MH_uniffi_uniffi_fixture_trait_with_foreign_checksum_method_counter_next_value.invokeExact(
             ) as Short
         } catch (ex: Throwable) {
             throw AssertionError("invokeExact failed", ex)
         }
 
-    // uniffi_uniffi_sprites_checksum_method_sprite_move_to
-    private val MH_uniffi_uniffi_sprites_checksum_method_sprite_move_to: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "uniffi_uniffi_sprites_checksum_method_sprite_move_to",
-        java.lang.foreign.FunctionDescriptor.of(
-            java.lang.foreign.ValueLayout.JAVA_SHORT,
-        ),
-    )
-
-    fun uniffi_uniffi_sprites_checksum_method_sprite_move_to(
-    ): Short =
-        try {
-            MH_uniffi_uniffi_sprites_checksum_method_sprite_move_to.invokeExact(
-            ) as Short
-        } catch (ex: Throwable) {
-            throw AssertionError("invokeExact failed", ex)
-        }
-
-    // uniffi_uniffi_sprites_checksum_constructor_sprite_new
-    private val MH_uniffi_uniffi_sprites_checksum_constructor_sprite_new: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "uniffi_uniffi_sprites_checksum_constructor_sprite_new",
-        java.lang.foreign.FunctionDescriptor.of(
-            java.lang.foreign.ValueLayout.JAVA_SHORT,
-        ),
-    )
-
-    fun uniffi_uniffi_sprites_checksum_constructor_sprite_new(
-    ): Short =
-        try {
-            MH_uniffi_uniffi_sprites_checksum_constructor_sprite_new.invokeExact(
-            ) as Short
-        } catch (ex: Throwable) {
-            throw AssertionError("invokeExact failed", ex)
-        }
-
-    // uniffi_uniffi_sprites_checksum_constructor_sprite_new_relative_to
-    private val MH_uniffi_uniffi_sprites_checksum_constructor_sprite_new_relative_to: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "uniffi_uniffi_sprites_checksum_constructor_sprite_new_relative_to",
-        java.lang.foreign.FunctionDescriptor.of(
-            java.lang.foreign.ValueLayout.JAVA_SHORT,
-        ),
-    )
-
-    fun uniffi_uniffi_sprites_checksum_constructor_sprite_new_relative_to(
-    ): Short =
-        try {
-            MH_uniffi_uniffi_sprites_checksum_constructor_sprite_new_relative_to.invokeExact(
-            ) as Short
-        } catch (ex: Throwable) {
-            throw AssertionError("invokeExact failed", ex)
-        }
-
-    // ffi_uniffi_sprites_uniffi_contract_version
-    private val MH_ffi_uniffi_sprites_uniffi_contract_version: java.lang.invoke.MethodHandle = findDowncallHandle(
-        "ffi_uniffi_sprites_uniffi_contract_version",
+    // ffi_uniffi_fixture_trait_with_foreign_uniffi_contract_version
+    private val MH_ffi_uniffi_fixture_trait_with_foreign_uniffi_contract_version: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "ffi_uniffi_fixture_trait_with_foreign_uniffi_contract_version",
         java.lang.foreign.FunctionDescriptor.of(
             java.lang.foreign.ValueLayout.JAVA_INT,
         ),
     )
 
-    fun ffi_uniffi_sprites_uniffi_contract_version(
+    fun ffi_uniffi_fixture_trait_with_foreign_uniffi_contract_version(
     ): Int =
         try {
-            MH_ffi_uniffi_sprites_uniffi_contract_version.invokeExact(
+            MH_ffi_uniffi_fixture_trait_with_foreign_uniffi_contract_version.invokeExact(
             ) as Int
         } catch (ex: Throwable) {
             throw AssertionError("invokeExact failed", ex)
@@ -3745,12 +3713,13 @@ internal object UniffiLib {
         NamespaceLibrary.uniffiCheckContractApiVersion()
         // Checksum verification is skipped in this revision; see
         // NamespaceLibrary.uniffiCheckApiChecksums().
+        UniffiCallbackInterfaceCounter.register()
     }
 }
 
 
-// === FILE: uniffi/sprites/UniffiMarkers.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/UniffiMarkers.kt ===
+package uniffi.trait_with_foreign
 
 // Marker singleton used to disambiguate the FFI-handle-wrapping
 // constructor from user-facing constructors. The Java backend's
@@ -3762,12 +3731,8 @@ internal object UniffiWithHandle
 // with no live Rust handle. Parallel to the Java `NoHandle` class.
 object NoHandle
 
-// Contains loading, initialization code, and the FFI Function declarations
-// using Java FFM (Foreign Function & Memory API).
-
-
-// === FILE: uniffi/sprites/UniffiNullRustCallStatusErrorHandler.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/UniffiNullRustCallStatusErrorHandler.kt ===
+package uniffi.trait_with_foreign
 
 // UniffiRustCallStatusErrorHandler implementation for times when we don't
 // expect a CALL_ERROR.
@@ -3779,8 +3744,8 @@ internal class UniffiNullRustCallStatusErrorHandler : UniffiRustCallStatusErrorH
 }
 
 
-// === FILE: uniffi/sprites/UniffiRustCallStatus.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/UniffiRustCallStatus.kt ===
+package uniffi.trait_with_foreign
 
 object UniffiRustCallStatus {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -3841,16 +3806,16 @@ object UniffiRustCallStatus {
 }
 
 
-// === FILE: uniffi/sprites/UniffiRustCallStatusErrorHandler.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/UniffiRustCallStatusErrorHandler.kt ===
+package uniffi.trait_with_foreign
 
 interface UniffiRustCallStatusErrorHandler<E : Exception> {
     fun lift(errorBuf: java.lang.foreign.MemorySegment): E
 }
 
 
-// === FILE: uniffi/sprites/UniffiRustFutureContinuationCallback.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/UniffiRustFutureContinuationCallback.kt ===
+package uniffi.trait_with_foreign
 
 internal object UniffiRustFutureContinuationCallback {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -3884,8 +3849,8 @@ internal object UniffiRustFutureContinuationCallback {
 }
 
 
-// === FILE: uniffi/sprites/UniffiSlabAllocator.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/UniffiSlabAllocator.kt ===
+package uniffi.trait_with_foreign
 
 // Thread-local slab allocator for short-lived native memory segments.
 //
@@ -3933,10 +3898,43 @@ internal class UniffiSlabAllocator(layout: java.lang.foreign.MemoryLayout, slots
 }
 
 
-// === FILE: uniffi/sprites/Vector.kt ===
-package uniffi.sprites
+// === FILE: uniffi/trait_with_foreign/UniffiVTableCallbackInterfaceCounter.kt ===
+package uniffi.trait_with_foreign
 
-data class Vector(
-    val dx: Double,
-    val dy: Double
-)
+internal object UniffiVTableCallbackInterfaceCounter {
+    val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
+        java.lang.foreign.ValueLayout.ADDRESS.withName("uniffiFree"),
+        java.lang.foreign.ValueLayout.ADDRESS.withName("uniffiClone"),
+        java.lang.foreign.ValueLayout.ADDRESS.withName("nextValue")
+    )
+    private val OFFSET_uniffiFree: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("uniffiFree"))
+    private val OFFSET_uniffiClone: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("uniffiClone"))
+    private val OFFSET_nextValue: Long = LAYOUT.byteOffset(java.lang.foreign.MemoryLayout.PathElement.groupElement("nextValue"))
+
+    fun getuniffiFree(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
+        seg.get(java.lang.foreign.ValueLayout.ADDRESS_UNALIGNED, OFFSET_uniffiFree) as java.lang.foreign.MemorySegment
+
+    fun setuniffiFree(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
+        seg.set(java.lang.foreign.ValueLayout.ADDRESS_UNALIGNED, OFFSET_uniffiFree, value)
+    }
+
+    fun getuniffiClone(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
+        seg.get(java.lang.foreign.ValueLayout.ADDRESS_UNALIGNED, OFFSET_uniffiClone) as java.lang.foreign.MemorySegment
+
+    fun setuniffiClone(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
+        seg.set(java.lang.foreign.ValueLayout.ADDRESS_UNALIGNED, OFFSET_uniffiClone, value)
+    }
+
+    fun getnextValue(seg: java.lang.foreign.MemorySegment): java.lang.foreign.MemorySegment =
+        seg.get(java.lang.foreign.ValueLayout.ADDRESS_UNALIGNED, OFFSET_nextValue) as java.lang.foreign.MemorySegment
+
+    fun setnextValue(seg: java.lang.foreign.MemorySegment, value: java.lang.foreign.MemorySegment) {
+        seg.set(java.lang.foreign.ValueLayout.ADDRESS_UNALIGNED, OFFSET_nextValue, value)
+    }
+
+    fun allocate(allocator: java.lang.foreign.SegmentAllocator): java.lang.foreign.MemorySegment {
+        val seg = allocator.allocate(LAYOUT)
+        seg.fill(0.toByte())
+        return seg
+    }
+}
