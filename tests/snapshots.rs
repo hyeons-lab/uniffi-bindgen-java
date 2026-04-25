@@ -272,3 +272,23 @@ fn snapshot_trait_with_foreign_kotlin() -> Result<()> {
         "kt",
     )
 }
+
+/// Kotlin-side snapshot for the upstream `custom-types` example. P3k
+/// adds `Type::Custom` codegen — user-defined newtype wrappers
+/// around a builtin (e.g. `custom Handle<Int64>` → `data class
+/// Handle(val value: Long)`). The example fixture exercises several
+/// custom types (Handle, Url, TimeIntervalMs, TimeIntervalSecDbl)
+/// without user-supplied lift/lower config, so the auto-generated
+/// wrapper + delegating FfiConverter branch is exercised end-to-end.
+/// Config-driven custom types (with user-supplied `type_name`,
+/// `imports`, `lift`, `lower`) are validated by kotlinc-compiling a
+/// TOML-configured binding — deferred to manual verification.
+#[test]
+fn snapshot_custom_types_kotlin() -> Result<()> {
+    snapshot_fixture_for(
+        "uniffi-example-custom-types",
+        "custom_types_kotlin",
+        Language::Kotlin,
+        "kt",
+    )
+}
