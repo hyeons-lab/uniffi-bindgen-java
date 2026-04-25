@@ -191,6 +191,74 @@ v{{ field_num }}
 {%- endmacro -%}
 
 {#
+// Macro for `#[uniffi::export(Display, Eq, Ord, Hash)]` proc-macro
+// trait method overrides on Records and Objects. Mirrors Java's
+// `uniffi_trait_impls` shape but uses Kotlin idioms — single-expression
+// bodies, smart-cast `is` checks, and `.toInt()` for the Int-returning
+// `hashCode` / `compareTo` overrides (Rust returns u64 / i8).
+//
+// Each FFI call routes through `trait_ffi_call` which dispatches on the
+// trait method's `self_type()`:
+//   - Object self → wrap in `callWithHandle { uniffiHandle -> ... }`
+//   - Record self → call `lower(this)` directly (no handle protocol)
+//
+// Display takes precedence over Debug for `toString()` — same priority
+// as the Java backend.
+#}
+{%- macro uniffi_trait_impls(uniffi_trait_methods) %}
+{%- if let Some(fmt) = uniffi_trait_methods.display_fmt.as_ref().or(uniffi_trait_methods.debug_fmt.as_ref()) %}
+
+    override fun toString(): String =
+        {{ fmt.return_type().unwrap()|lift_fn }}({% call trait_ffi_call(fmt) %})
+{%- endif %}
+{%- if let Some(eq) = uniffi_trait_methods.eq_eq.as_ref() %}
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is {{ eq.object_name()|class_name(ci) }}) return false
+        return {{ eq.return_type().unwrap()|lift_fn }}({% call trait_ffi_call(eq) %})
+    }
+{%- endif %}
+{%- if let Some(hash) = uniffi_trait_methods.hash_hash.as_ref() %}
+
+    override fun hashCode(): Int =
+        {{ hash.return_type().unwrap()|lift_fn }}({% call trait_ffi_call(hash) %}).toInt()
+{%- endif %}
+{%- if let Some(cmp) = uniffi_trait_methods.ord_cmp.as_ref() %}
+
+    override fun compareTo(other: {{ cmp.object_name()|class_name(ci) }}): Int =
+        {{ cmp.return_type().unwrap()|lift_fn }}({% call trait_ffi_call(cmp) %}).toInt()
+{%- endif %}
+{%- endmacro %}
+
+{#
+// Inner FFI-call wrapper for `uniffi_trait_impls`. Branches on the
+// trait method's `self_type()`:
+//   - `Type::Object` self → `callWithHandle { uniffiHandle -> ... }`
+//     (matches the existing Object-method protocol).
+//   - Other self (Record / Enum) → `lower(this)` directly as the first
+//     FFI argument.
+// The trailing `arg_list_lowered` covers the second arg for `eq_eq` /
+// `ord_cmp` (uniffi names it `other`, which lines up with the Kotlin
+// override's parameter name post smart-cast).
+#}
+{%- macro trait_ffi_call(func) -%}
+{%- match func.self_type() -%}
+{%- when Some with (Type::Object { .. }) -%}
+callWithHandle { uniffiHandle ->
+            UniffiHelpers.uniffiRustCall { _allocator, _status ->
+                UniffiLib.{{ func.ffi_func().name() }}(uniffiHandle{% if !func.arguments().is_empty() %}, {% call arg_list_lowered(func) %}{% endif %}, _status)
+            }
+        }
+{%- when Some with (t) -%}
+UniffiHelpers.uniffiRustCall { _allocator, _status ->
+            UniffiLib.{{ func.ffi_func().name() }}({{ t|lower_fn }}(this){% if !func.arguments().is_empty() %}, {% call arg_list_lowered(func) %}{% endif %}, _status)
+        }
+{%- when None -%}
+{%- endmatch -%}
+{%- endmacro -%}
+
+{#
 // Argument list as it appears in the Kotlin function signature:
 //   `name: Type, name2: Type2`.
 // Uses the high-level `type_name` filter, not the FFI type — these are

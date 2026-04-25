@@ -1,0 +1,11 @@
+[package]
+name = "uniffi-fixture-trait-methods-kt"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "uniffi_fixture_trait_methods_kt"
+
+[dependencies]
+uniffi = { git = "https://github.com/mozilla/uniffi-rs.git", tag = "v0.31.0" }
