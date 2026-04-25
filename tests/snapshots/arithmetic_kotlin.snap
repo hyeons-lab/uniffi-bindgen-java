@@ -38,6 +38,7 @@ object Arithmetic {
 // === FILE: org/mozilla/uniffi/example/arithmetic/ArithmeticException.kt ===
 package org.mozilla.uniffi.example.arithmetic
 
+
 sealed class ArithmeticException(message: String) : kotlin.Exception(message) {
     class IntegerOverflow(message: String) : ArithmeticException(message)
 }

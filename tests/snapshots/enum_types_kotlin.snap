@@ -5,6 +5,7 @@ expression: combined
 // === FILE: uniffi/enum_types/Animal.kt ===
 package uniffi.enum_types
 
+
 enum class Animal {
     DOG,
     CAT
@@ -28,6 +29,7 @@ sealed class AnimalEnum {
 // === FILE: uniffi/enum_types/AnimalLargeUInt.kt ===
 package uniffi.enum_types
 
+
 enum class AnimalLargeUInt {
     DOG,
     CAT
@@ -50,6 +52,7 @@ sealed class AnimalNamedEnum {
 
 // === FILE: uniffi/enum_types/AnimalNoReprInt.kt ===
 package uniffi.enum_types
+
 
 enum class AnimalNoReprInt {
     DOG,
@@ -195,6 +198,7 @@ data class AnimalRecord(
 // === FILE: uniffi/enum_types/AnimalSignedInt.kt ===
 package uniffi.enum_types
 
+
 enum class AnimalSignedInt {
     DOG,
     CAT,
@@ -206,6 +210,7 @@ enum class AnimalSignedInt {
 
 // === FILE: uniffi/enum_types/AnimalUInt.kt ===
 package uniffi.enum_types
+
 
 enum class AnimalUInt {
     DOG,

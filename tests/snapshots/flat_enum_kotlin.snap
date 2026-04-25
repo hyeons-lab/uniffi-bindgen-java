@@ -5,6 +5,7 @@ expression: combined
 // === FILE: uniffi/flat_enum/Animal.kt ===
 package uniffi.flat_enum
 
+
 enum class Animal {
     DOG,
     CAT

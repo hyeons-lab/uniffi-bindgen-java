@@ -1,13 +1,23 @@
 
 {%- let e = ci.get_enum_definition(name).unwrap() %}
+{%- let uniffi_trait_methods = e.uniffi_trait_methods() %}
+{%- let has_trait_impls = uniffi_trait_methods.display_fmt.is_some() || uniffi_trait_methods.debug_fmt.is_some() || uniffi_trait_methods.eq_eq.is_some() || uniffi_trait_methods.hash_hash.is_some() || uniffi_trait_methods.ord_cmp.is_some() %}
 {% if e.is_flat() %}
 // UNIFFI:FILE {{ type_name }}.kt
 package {{ config.package_name() }}
 
-sealed class {{ type_name }}(message: String) : kotlin.Exception(message) {
+{# Flat error: variants carry no fields; their body just delegates
+   `message` to the parent. Trait overrides (Display/Eq/Hash/Ord)
+   sit at the parent class level — variants are plain classes
+   with no auto-generated equals/hashCode, so they inherit the
+   parent's overrides cleanly. #}
+sealed class {{ type_name }}(message: String) : kotlin.Exception(message){% if uniffi_trait_methods.ord_cmp.is_some() %}, Comparable<{{ type_name }}>{% endif %} {
     {%- for variant in e.variants() %}
     class {{ variant|error_variant_name }}(message: String) : {{ type_name }}(message)
     {%- endfor %}
+{%- if has_trait_impls %}
+    {% call kotlin::uniffi_trait_impls(uniffi_trait_methods) %}
+{%- endif %}
 }
 
 // UNIFFI:FILE {{ type_name }}ErrorHandler.kt
@@ -56,7 +66,7 @@ object {{ ffi_converter_name }} : FfiConverterRustBuffer<{{ type_name }}> {
 // UNIFFI:FILE {{ type_name }}.kt
 package {{ config.package_name() }}
 
-sealed class {{ type_name }}(message: String) : kotlin.Exception(message) {
+sealed class {{ type_name }}(message: String) : kotlin.Exception(message){% if uniffi_trait_methods.ord_cmp.is_some() %}, Comparable<{{ type_name }}>{% endif %} {
     {%- for variant in e.variants() %}
     class {{ variant|error_variant_name }}(
         {%- for field in variant.fields() %}
@@ -79,6 +89,9 @@ sealed class {{ type_name }}(message: String) : kotlin.Exception(message) {
         {%- endif -%}
     )
     {%- endfor %}
+{%- if has_trait_impls %}
+    {% call kotlin::uniffi_trait_impls(uniffi_trait_methods) %}
+{%- endif %}
 }
 
 // UNIFFI:FILE {{ type_name }}ErrorHandler.kt
