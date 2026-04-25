@@ -36,6 +36,7 @@ use uniffi_meta::{AsType, Type};
 pub use crate::gen_lang::CustomTypeConfig;
 use crate::gen_lang::ExternalPackageResolver;
 
+mod callback_interface;
 mod compounds;
 mod enum_;
 mod object;
@@ -461,6 +462,17 @@ trait CodeType: Debug {
     fn ffi_converter_name(&self) -> String {
         format!("FfiConverter{}", self.canonical_name())
     }
+
+    /// Optional zero-arg function that must run at library init time —
+    /// e.g. `UniffiCallbackInterfaceFoo.register` for a callback
+    /// interface. Collected via `iter_local_types()` by
+    /// `KotlinWrapper::initialization_fns()` and called in order from
+    /// `UniffiLib`'s `init {}` block. Default `None`; only
+    /// callback-interface (and the object-with-callback-interface
+    /// flavor, P3j-c) types override.
+    fn initialization_fn(&self) -> Option<String> {
+        None
+    }
 }
 
 /// Bridge from any `Type`-like value (the high-level UDL type, an
@@ -513,6 +525,9 @@ impl AsCodeType for Type {
                 value_type,
             } => Box::new(compounds::MapCodeType::new(*key_type, *value_type)),
             Type::Object { name, imp, .. } => Box::new(object::ObjectCodeType::new(name, imp)),
+            Type::CallbackInterface { name, .. } => {
+                Box::new(callback_interface::CallbackInterfaceCodeType::new(name))
+            }
 
             // Non-primitive types land in later phases. Panicking with a
             // clear message at codegen time matches the P3d
@@ -522,7 +537,7 @@ impl AsCodeType for Type {
             // corresponding template support lands.
             other => panic!(
                 "Kotlin CodeType not implemented for `{:?}` yet \
-                 (P3j+ adds callbacks, custom). \
+                 (P3k+ adds custom types and async). \
                  See gen_kotlin/mod.rs.",
                 other
             ),
@@ -558,6 +573,12 @@ impl AsCodeType for &'_ Field {
 }
 
 impl AsCodeType for &'_ Box<Type> {
+    fn as_codetype(&self) -> Box<dyn CodeType> {
+        self.as_type().as_codetype()
+    }
+}
+
+impl AsCodeType for &'_ uniffi_bindgen::interface::CallbackInterface {
     fn as_codetype(&self) -> Box<dyn CodeType> {
         self.as_type().as_codetype()
     }
@@ -651,6 +672,21 @@ impl<'a> KotlinWrapper<'a> {
             None => String::new(),
         }
     }
+
+    /// Ordered list of zero-arg `UniffiCallbackInterface<Name>.register`
+    /// calls that `UniffiLib`'s `init {}` block must invoke so every
+    /// callback interface's vtable gets wired into Rust before user
+    /// code can hand off a foreign implementation. Collected by
+    /// walking `iter_local_types()` and asking each CodeType for its
+    /// `initialization_fn()` — `None` for everything except callback
+    /// interfaces (and, in a later phase, objects that carry a
+    /// callback interface implementation).
+    pub fn initialization_fns(&self) -> Vec<String> {
+        self.ci
+            .iter_local_types()
+            .filter_map(|t| t.clone().as_codetype().initialization_fn())
+            .collect()
+    }
 }
 
 /// Generate Kotlin bindings as a single string. Split by `split_and_write`
@@ -698,6 +734,18 @@ mod filters {
     /// Kotlin-idiomatic function name. Same casing rules as `var_name`.
     pub(super) fn fn_name<S: AsRef<str>>(nm: S, _v: &dyn Values) -> Result<String, askama::Error> {
         Ok(KotlinCodeOracle.fn_name(nm.as_ref()))
+    }
+
+    /// UpperCamelCase class name + reserved-word / error-suffix fixup.
+    /// Used by templates that need to stamp a class identifier derived
+    /// from a raw uniffi name — e.g. `UniffiCallbackInterfaceImpl`'s
+    /// per-method `{{ meth.name()|class_name(ci) }}Callback` helpers.
+    pub(super) fn class_name<S: AsRef<str>>(
+        nm: S,
+        _v: &dyn Values,
+        ci: &ComponentInterface,
+    ) -> Result<String, askama::Error> {
+        Ok(KotlinCodeOracle.class_name(ci, nm.as_ref()))
     }
 
     /// Flat-enum variant name — SCREAMING_SNAKE_CASE, backtick-escaped if
