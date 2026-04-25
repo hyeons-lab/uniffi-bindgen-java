@@ -2,6 +2,7 @@
 {%- let obj = ci.get_object_definition(name).unwrap() %}
 {%- let methods = obj.methods() %}
 {%- let (interface_name, impl_class_name) = obj|object_names(ci) %}
+{%- let uniffi_trait_methods = obj.uniffi_trait_methods() %}
 
 {%- if obj.has_callback_interface() %}
 {#- `[Trait, WithForeign]`: emit `interface <Name>` for the user-facing
@@ -30,7 +31,7 @@ package {{ config.package_name() }}
 class {{ impl_class_name }} internal constructor(
     @Suppress("UNUSED_PARAMETER") phantom: UniffiWithHandle,
     internal val handle: Long,
-) : AutoCloseable{% if obj.has_callback_interface() %}, {{ interface_name }}{% endif %} {
+) : AutoCloseable{% if obj.has_callback_interface() %}, {{ interface_name }}{% endif %}{% if uniffi_trait_methods.ord_cmp.is_some() %}, Comparable<{{ impl_class_name }}>{% endif %} {
     private val wasDestroyed = java.util.concurrent.atomic.AtomicBoolean(false)
     private val callCounter = java.util.concurrent.atomic.AtomicLong(1L)
     // NoHandle wrappers (handle == 0) don't register a cleaner: there's
@@ -153,6 +154,11 @@ class {{ impl_class_name }} internal constructor(
         {% endfor %}
     }
     {%- endif %}
+    {#- `#[uniffi::export(Eq, Ord, Hash, Display, Debug)]` proc-macro
+       trait overrides. Each override routes through a Rust-side FFI
+       call wrapped in `callWithHandle` so the in-flight-call counter
+       holds the wrapper alive across the trait method's roundtrip. -#}
+    {% call kotlin::uniffi_trait_impls(uniffi_trait_methods) %}
 }
 
 {%- if obj.has_callback_interface() %}
