@@ -188,11 +188,16 @@ internal object UniffiLib {
 
     {% endfor %}
 
-    // Integrity checks must run after all MethodHandle fields are initialized.
+    // Integrity checks + callback-interface vtable registrations.
+    // Must run after all MethodHandle fields are initialized (class-init
+    // proceeds in textual order).
     init {
         NamespaceLibrary.uniffiCheckContractApiVersion()
         // Checksum verification is skipped in this revision; see
         // NamespaceLibrary.uniffiCheckApiChecksums().
+        {%- for init_fn in self.initialization_fns() %}
+        {{ init_fn }}()
+        {%- endfor %}
     }
 }
 
