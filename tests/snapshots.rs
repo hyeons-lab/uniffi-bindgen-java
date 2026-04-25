@@ -313,3 +313,24 @@ fn snapshot_enum_types_kotlin() -> Result<()> {
         "kt",
     )
 }
+
+/// Kotlin-side snapshot for the in-repo `error-data` fixture. P3l
+/// adds associated-data error codegen — `[Error] interface MyError`
+/// (or `#[derive(uniffi::Error)] pub enum` with field-bearing
+/// variants) renders as a `sealed class` extending
+/// `kotlin.Exception`, with per-variant nested classes carrying
+/// fields. The fixture has two variants — one with a single
+/// `String` field, one with `i32 + String` — so single- and
+/// multi-field paths both surface in the snapshot. The
+/// `try_call(network_failure)` namespace function returns a
+/// `Result<String, ApiError>` so `@Throws(ApiError::class)` and the
+/// error-handler routing both render alongside.
+#[test]
+fn snapshot_error_data_kotlin() -> Result<()> {
+    snapshot_fixture_for(
+        "uniffi-fixture-error-data",
+        "error_data_kotlin",
+        Language::Kotlin,
+        "kt",
+    )
+}
