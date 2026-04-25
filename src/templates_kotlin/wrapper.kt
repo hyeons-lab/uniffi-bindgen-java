@@ -110,6 +110,10 @@
 {%- let type_name = type_|type_name(ci, config) -%}
 {%- let ffi_converter_name = type_|ffi_converter_name -%}
 {% include "CallbackInterfaceTemplate.kt" %}
+{%- when Type::Custom { name, module_path, builtin } -%}
+{%- let type_name = type_|type_name(ci, config) -%}
+{%- let ffi_converter_name = type_|ffi_converter_name -%}
+{% include "CustomTypeTemplate.kt" %}
 {%- else -%}
 {%- endmatch -%}
 {%- endfor -%}
