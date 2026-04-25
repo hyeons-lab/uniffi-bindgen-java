@@ -27,6 +27,17 @@
 {% include "UniffiCleaner.kt" %}
 {%- endif %}
 
+{%- if ci.has_callback_definitions() %}
+{#- Callback-interface runtime: UniffiHandleMap (odd-handle
+    ConcurrentHashMap) + FfiConverterCallbackInterface (abstract
+    base class that routes lift/lower through the handle map). Only
+    emitted when the interface has at least one callback interface
+    or `[Trait, WithForeign]` object; parallel to the Java backend's
+    `include_once_check("CallbackInterfaceRuntime.java")` dance. -#}
+{% include "HandleMap.kt" %}
+{% include "CallbackInterfaceRuntime.kt" %}
+{%- endif %}
+
 // Contains loading, initialization code, and the FFI Function declarations
 // using Java FFM (Foreign Function & Memory API).
 {% include "NamespaceLibraryTemplate.kt" %}
@@ -95,6 +106,10 @@
 {%- let type_name = type_|type_name(ci, config) -%}
 {%- let ffi_converter_name = type_|ffi_converter_name -%}
 {% include "ObjectTemplate.kt" %}
+{%- when Type::CallbackInterface { name, module_path } -%}
+{%- let type_name = type_|type_name(ci, config) -%}
+{%- let ffi_converter_name = type_|ffi_converter_name -%}
+{% include "CallbackInterfaceTemplate.kt" %}
 {%- else -%}
 {%- endmatch -%}
 {%- endfor -%}

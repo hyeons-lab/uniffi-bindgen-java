@@ -233,3 +233,20 @@ fn snapshot_sprites_kotlin() -> Result<()> {
         "kt",
     )
 }
+
+/// Kotlin-side snapshot for the in-repo `simple-callback` fixture.
+/// P3j-b adds `Type::CallbackInterface` codegen — foreign-implemented
+/// traits with a vtable of upcall stubs. This fixture is deliberately
+/// tiny: one pure `callback_interface` trait (`Greeter` with a single
+/// sync, non-throwing method) plus a namespace function that takes an
+/// instance and invokes it. No errors, no async, no
+/// `[Trait, WithForeign]` — those land in later phases.
+#[test]
+fn snapshot_simple_callback_kotlin() -> Result<()> {
+    snapshot_fixture_for(
+        "uniffi-fixture-simple-callback",
+        "simple_callback_kotlin",
+        Language::Kotlin,
+        "kt",
+    )
+}
