@@ -11,12 +11,40 @@ enum class Animal {
 }
 
 
+// === FILE: uniffi/enum_types/AnimalEnum.kt ===
+package uniffi.enum_types
+
+sealed class AnimalEnum {
+    object None : AnimalEnum()
+    data class Dog(
+        val v1: AnimalObject
+    ) : AnimalEnum()
+    data class Cat(
+        val v1: AnimalRecord
+    ) : AnimalEnum()
+}
+
+
 // === FILE: uniffi/enum_types/AnimalLargeUInt.kt ===
 package uniffi.enum_types
 
 enum class AnimalLargeUInt {
     DOG,
     CAT
+}
+
+
+// === FILE: uniffi/enum_types/AnimalNamedEnum.kt ===
+package uniffi.enum_types
+
+sealed class AnimalNamedEnum {
+    object None : AnimalNamedEnum()
+    data class Dog(
+        val `object`: AnimalObject
+    ) : AnimalNamedEnum()
+    data class Cat(
+        val record: AnimalRecord
+    ) : AnimalNamedEnum()
 }
 
 
@@ -633,19 +661,7 @@ object FfiConverterTypeAnimal : FfiConverterRustBuffer<Animal> {
     override fun write(value: Animal, buf: java.nio.ByteBuffer) {
         buf.putInt(value.ordinal + 1)
     }
-}// UNIFFI:FILE AnimalEnum.kt
-package uniffi.enum_types
-
-sealed class AnimalEnum {
-    object None : AnimalEnum()
-    data class Dog(
-        val v1: AnimalObject
-    ) : AnimalEnum()
-    data class Cat(
-        val v1: AnimalRecord
-    ) : AnimalEnum()
 }
-
 
 // === FILE: uniffi/enum_types/FfiConverterTypeAnimalEnum.kt ===
 package uniffi.enum_types
@@ -695,6 +711,7 @@ object FfiConverterTypeAnimalEnum : FfiConverterRustBuffer<AnimalEnum> {
     }
 }
 
+
 // === FILE: uniffi/enum_types/FfiConverterTypeAnimalLargeUInt.kt ===
 package uniffi.enum_types
 
@@ -712,19 +729,7 @@ object FfiConverterTypeAnimalLargeUInt : FfiConverterRustBuffer<AnimalLargeUInt>
     override fun write(value: AnimalLargeUInt, buf: java.nio.ByteBuffer) {
         buf.putInt(value.ordinal + 1)
     }
-}// UNIFFI:FILE AnimalNamedEnum.kt
-package uniffi.enum_types
-
-sealed class AnimalNamedEnum {
-    object None : AnimalNamedEnum()
-    data class Dog(
-        val `object`: AnimalObject
-    ) : AnimalNamedEnum()
-    data class Cat(
-        val record: AnimalRecord
-    ) : AnimalNamedEnum()
 }
-
 
 // === FILE: uniffi/enum_types/FfiConverterTypeAnimalNamedEnum.kt ===
 package uniffi.enum_types
@@ -774,6 +779,7 @@ object FfiConverterTypeAnimalNamedEnum : FfiConverterRustBuffer<AnimalNamedEnum>
     }
 }
 
+
 // === FILE: uniffi/enum_types/FfiConverterTypeAnimalNoReprInt.kt ===
 package uniffi.enum_types
 
@@ -792,6 +798,7 @@ object FfiConverterTypeAnimalNoReprInt : FfiConverterRustBuffer<AnimalNoReprInt>
         buf.putInt(value.ordinal + 1)
     }
 }
+
 
 // === FILE: uniffi/enum_types/FfiConverterTypeAnimalObject.kt ===
 package uniffi.enum_types
@@ -852,6 +859,7 @@ object FfiConverterTypeAnimalSignedInt : FfiConverterRustBuffer<AnimalSignedInt>
     }
 }
 
+
 // === FILE: uniffi/enum_types/FfiConverterTypeAnimalUInt.kt ===
 package uniffi.enum_types
 
@@ -869,16 +877,7 @@ object FfiConverterTypeAnimalUInt : FfiConverterRustBuffer<AnimalUInt> {
     override fun write(value: AnimalUInt, buf: java.nio.ByteBuffer) {
         buf.putInt(value.ordinal + 1)
     }
-}// UNIFFI:FILE NamedEnumWithDefaults.kt
-package uniffi.enum_types
-
-sealed class NamedEnumWithDefaults {
-    data class I(
-        val d: Byte,
-        val e: Byte
-    ) : NamedEnumWithDefaults()
 }
-
 
 // === FILE: uniffi/enum_types/FfiConverterTypeNamedEnumWithDefaults.kt ===
 package uniffi.enum_types
@@ -912,6 +911,7 @@ object FfiConverterTypeNamedEnumWithDefaults : FfiConverterRustBuffer<NamedEnumW
         }
     }
 }
+
 
 // === FILE: uniffi/enum_types/ForeignBytes.kt ===
 package uniffi.enum_types
@@ -953,6 +953,17 @@ object ForeignBytes {
 package uniffi.enum_types
 
 open class InternalException(message: String) : RuntimeException(message)
+
+
+// === FILE: uniffi/enum_types/NamedEnumWithDefaults.kt ===
+package uniffi.enum_types
+
+sealed class NamedEnumWithDefaults {
+    data class I(
+        val d: Byte,
+        val e: Byte
+    ) : NamedEnumWithDefaults()
+}
 
 
 // === FILE: uniffi/enum_types/NamespaceLibrary.kt ===

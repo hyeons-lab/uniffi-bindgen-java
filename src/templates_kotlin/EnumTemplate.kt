@@ -29,7 +29,7 @@ object {{ ffi_converter_name }} : FfiConverterRustBuffer<{{ type_name }}> {
         buf.putInt(value.ordinal + 1)
     }
 }
-{%- else %}
+{% else %}
 {#- Non-flat (associated-data) enum: render as `sealed class` with
    per-variant nested types. Variants with fields → `data class`;
    variants without fields → `object` (singleton, gives value
@@ -37,8 +37,11 @@ object {{ ffi_converter_name }} : FfiConverterRustBuffer<{{ type_name }}> {
    reads the discriminant + each variant's fields, writes the
    discriminant followed by each variant's fields in declaration
    order. Mirrors the Java backend's `sealed interface` / record
-   shape; Kotlin uses `sealed class` with classes inside since data
-   classes in Kotlin can't extend a `sealed interface` directly. -#}
+   shape. A Kotlin `sealed interface` would also be implementable
+   by `data class` variants, but `sealed class` is preferred here
+   so the parent type can carry future shared state (cleaner for
+   error-as-object in P3l-errors, where the parent extends
+   `kotlin.Exception(message)` and the variants delegate). -#}
 // UNIFFI:FILE {{ type_name }}.kt
 package {{ config.package_name() }}
 
@@ -97,4 +100,4 @@ object {{ ffi_converter_name }} : FfiConverterRustBuffer<{{ type_name }}> {
         }
     }
 }
-{%- endif %}
+{% endif %}

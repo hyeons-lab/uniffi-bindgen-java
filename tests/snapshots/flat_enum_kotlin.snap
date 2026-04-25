@@ -418,6 +418,7 @@ object FfiConverterTypeAnimal : FfiConverterRustBuffer<Animal> {
     }
 }
 
+
 // === FILE: uniffi/flat_enum/Flat_enum.kt ===
 package uniffi.flat_enum
 
