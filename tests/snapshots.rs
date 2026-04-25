@@ -250,3 +250,25 @@ fn snapshot_simple_callback_kotlin() -> Result<()> {
         "kt",
     )
 }
+
+/// Kotlin-side snapshot for the in-repo `trait-with-foreign` fixture.
+/// P3j-c adds `[Trait, WithForeign]` object codegen — trait objects
+/// implementable in either Rust or Kotlin. Exercises:
+///   * `interface Counter` user-facing trait declaration.
+///   * `class CounterImpl(handle: Long) : Counter, AutoCloseable` —
+///     Rust-side wrapper; methods rendered with `override`.
+///   * `FfiConverterTypeCounter` with LSB-tagged lift/lower —
+///     even handles return `CounterImpl`, odd handles route through
+///     a per-FfiConverter `handleMap`.
+///   * `UniffiCallbackInterfaceCounter.register()` invoked at
+///     `UniffiLib.init` time so Rust knows how to dispatch back to a
+///     Kotlin implementor.
+#[test]
+fn snapshot_trait_with_foreign_kotlin() -> Result<()> {
+    snapshot_fixture_for(
+        "uniffi-fixture-trait-with-foreign",
+        "trait_with_foreign_kotlin",
+        Language::Kotlin,
+        "kt",
+    )
+}

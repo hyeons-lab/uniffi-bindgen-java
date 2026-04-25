@@ -1,7 +1,18 @@
 
 {%- let obj = ci.get_object_definition(name).unwrap() %}
 {%- let methods = obj.methods() %}
-// UNIFFI:FILE {{ type_name }}.kt
+{%- let (interface_name, impl_class_name) = obj|object_names(ci) %}
+
+{%- if obj.has_callback_interface() %}
+{#- `[Trait, WithForeign]`: emit `interface <Name>` for the user-facing
+   trait declaration. The Rust-side wrapper class (below) implements it,
+   and foreign Kotlin classes can implement it directly to inject their
+   own implementation; the FfiConverter's LSB dispatch routes between
+   the two. -#}
+{% include "Interface.kt" %}
+{%- endif %}
+
+// UNIFFI:FILE {{ impl_class_name }}.kt
 package {{ config.package_name() }}
 
 // Object wrapper over a Rust `Arc<T>`. Uses a handle-based protocol
@@ -12,18 +23,14 @@ package {{ config.package_name() }}
 //
 // Structure mirrors `src/templates/ObjectTemplate.java` verbatim at
 // the protocol level — same handshake, same Cleaner integration.
-// Kotlin-only differences:
-//   * `object UniffiWithHandle` disambiguates the handle-wrapping
-//     primary constructor from user constructors without Java's
-//     marker-class-with-private-ctor dance.
-//   * `AutoCloseable` + `close()` so consumers can use
-//     `obj.use { ... }` (Kotlin's try-with-resources) idiomatically.
-//   * Named constructors (`[Name=foo]`) render as `companion object`
-//     factory functions rather than Java static methods.
-class {{ type_name }} internal constructor(
+// `[Trait, WithForeign]` objects (when has_callback_interface is true)
+// implement an additional Kotlin interface so foreign-side
+// implementations can substitute for the Rust wrapper transparently;
+// in that case methods are emitted with `override`.
+class {{ impl_class_name }} internal constructor(
     @Suppress("UNUSED_PARAMETER") phantom: UniffiWithHandle,
     internal val handle: Long,
-) : AutoCloseable {
+) : AutoCloseable{% if obj.has_callback_interface() %}, {{ interface_name }}{% endif %} {
     private val wasDestroyed = java.util.concurrent.atomic.AtomicBoolean(false)
     private val callCounter = java.util.concurrent.atomic.AtomicLong(1L)
     // NoHandle wrappers (handle == 0) don't register a cleaner: there's
@@ -43,7 +50,7 @@ class {{ type_name }} internal constructor(
     {%- when Some(cons) %}
     {%-     if cons.is_async() %}
     // Async constructors are not supported in this revision of the
-    // Kotlin backend. The primary constructor for `{{ type_name }}` is
+    // Kotlin backend. The primary constructor for `{{ impl_class_name }}` is
     // `async` in the UDL, so it's omitted here; use a named constructor
     // (if any) or wait for the async Kotlin phase to land.
     {%-     else %}
@@ -83,8 +90,8 @@ class {{ type_name }} internal constructor(
         var c: Long
         do {
             c = callCounter.get()
-            check(c != 0L) { "{{ type_name }} object has already been destroyed" }
-            check(c != Long.MAX_VALUE) { "{{ type_name }} call counter would overflow" }
+            check(c != 0L) { "{{ impl_class_name }} object has already been destroyed" }
+            check(c != Long.MAX_VALUE) { "{{ impl_class_name }} call counter would overflow" }
         } while (!callCounter.compareAndSet(c, c + 1L))
         try {
             return block(uniffiCloneHandle())
@@ -127,7 +134,11 @@ class {{ type_name }} internal constructor(
     }
 
     {% for meth in obj.methods() -%}
+    {%- if obj.has_callback_interface() %}
+    {% call kotlin::override_func_decl(meth, "    ") %}
+    {%- else %}
     {% call kotlin::func_decl(meth, "    ") %}
+    {%- endif %}
     {% endfor %}
 
     {%- if !obj.alternate_constructors().is_empty() %}
@@ -137,30 +148,73 @@ class {{ type_name }} internal constructor(
         // Async named constructor `{{ cons.name() }}` skipped — async
         // unsupported in this revision of the Kotlin backend.
         {%- else %}
-        {% call kotlin::named_constructor_decl(type_name, cons, "        ") %}
+        {% call kotlin::named_constructor_decl(impl_class_name, cons, "        ") %}
         {%- endif %}
         {% endfor %}
     }
     {%- endif %}
 }
 
+{%- if obj.has_callback_interface() %}
+{#- Foreign-vtable assembly + per-method upcall stubs that route Rust→Kotlin
+   calls into Kotlin implementations of the trait interface. Reuses the
+   shared CallbackInterfaceImpl.kt template that ships with P3j-b. -#}
+{%- let ffi_init_callback = obj.ffi_init_callback() %}
+{%- let vtable = obj.vtable().expect("[Trait, WithForeign] object missing vtable") %}
+{%- let vtable_methods = obj.vtable_methods() %}
+{% include "CallbackInterfaceImpl.kt" %}
+{%- endif %}
+
 // UNIFFI:FILE {{ ffi_converter_name }}.kt
 package {{ config.package_name() }}
 
-// FfiConverter routes `{{ type_name }}` across the FFI as an 8-byte
-// handle. No callback-interface support in this template revision —
-// P3j adds the LSB-tagged handle dispatch for trait interfaces.
-object {{ ffi_converter_name }} : FfiConverter<{{ type_name }}, Long> {
-    override fun lower(value: {{ type_name }}): Long = value.uniffiCloneHandle()
+{%- if obj.has_callback_interface() %}
+// LSB-tagged FfiConverter for `[Trait, WithForeign]` objects. Rust-side
+// instances are wrapped by `{{ impl_class_name }}` and carry even
+// handles (LSB = 0); Kotlin-side implementations of the {{ interface_name }}
+// trait get registered in the per-FfiConverter `handleMap` and carry
+// odd handles (LSB = 1). `lift` / `lower` dispatch on the LSB to route
+// to the right side without an extra type tag.
+internal object {{ ffi_converter_name }} : FfiConverter<{{ interface_name }}, Long> {
+    @JvmField internal val handleMap: UniffiHandleMap<{{ interface_name }}> = UniffiHandleMap()
 
-    override fun lift(value: Long): {{ type_name }} =
-        {{ type_name }}(UniffiWithHandle, value)
+    override fun lower(value: {{ interface_name }}): Long =
+        if (value is {{ impl_class_name }}) {
+            value.uniffiCloneHandle()
+        } else {
+            handleMap.insert(value)
+        }
 
-    override fun read(buf: java.nio.ByteBuffer): {{ type_name }} = lift(buf.getLong())
+    override fun lift(value: Long): {{ interface_name }} =
+        if ((value and 1L) == 0L) {
+            {{ impl_class_name }}(UniffiWithHandle, value)
+        } else {
+            handleMap.remove(value)
+        }
 
-    override fun allocationSize(value: {{ type_name }}): Long = 8L
+    override fun read(buf: java.nio.ByteBuffer): {{ interface_name }} = lift(buf.getLong())
 
-    override fun write(value: {{ type_name }}, buf: java.nio.ByteBuffer) {
+    override fun allocationSize(value: {{ interface_name }}): Long = 8L
+
+    override fun write(value: {{ interface_name }}, buf: java.nio.ByteBuffer) {
         buf.putLong(lower(value))
     }
 }
+{%- else %}
+// FfiConverter routes `{{ impl_class_name }}` across the FFI as an 8-byte
+// handle. No callback-interface support — pure Rust-owned object.
+object {{ ffi_converter_name }} : FfiConverter<{{ impl_class_name }}, Long> {
+    override fun lower(value: {{ impl_class_name }}): Long = value.uniffiCloneHandle()
+
+    override fun lift(value: Long): {{ impl_class_name }} =
+        {{ impl_class_name }}(UniffiWithHandle, value)
+
+    override fun read(buf: java.nio.ByteBuffer): {{ impl_class_name }} = lift(buf.getLong())
+
+    override fun allocationSize(value: {{ impl_class_name }}): Long = 8L
+
+    override fun write(value: {{ impl_class_name }}, buf: java.nio.ByteBuffer) {
+        buf.putLong(lower(value))
+    }
+}
+{%- endif %}

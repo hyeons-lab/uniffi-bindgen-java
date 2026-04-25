@@ -65,6 +65,7 @@ uniffi-fixture-simple-callback = { path = "fixtures/simple-callback" }
 uniffi-fixture-string-map = { path = "fixtures/string-map" }
 uniffi-fixture-time = { git = "https://github.com/mozilla/uniffi-rs.git", tag = "v0.31.0" }
 uniffi-fixture-trait-methods = { git = "https://github.com/mozilla/uniffi-rs.git", tag = "v0.31.0" }
+uniffi-fixture-trait-with-foreign = { path = "fixtures/trait-with-foreign" }
 uniffi_testing = { git = "https://github.com/mozilla/uniffi-rs.git", tag = "v0.31.0" }
 
 [[bench]]

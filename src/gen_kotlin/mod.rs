@@ -202,6 +202,33 @@ impl KotlinCodeOracle {
         fixup_keyword(self.convert_error_suffix(&nm.to_string().to_upper_camel_case()))
     }
 
+    /// `(interface_name, impl_class_name)` for a UniFFI object. They
+    /// only differ for `[Trait, WithForeign]` objects, where the trait
+    /// keeps the user's chosen name (so it appears in function
+    /// signatures) and the Rust-side wrapper class is suffixed with
+    /// `Impl`. Foreign Kotlin implementors of the trait satisfy the
+    /// interface directly; the FfiConverter's LSB-dispatch routes
+    /// between `<Name>Impl` (Rust handles, LSB=0) and
+    /// `handleMap.remove` (foreign handles, LSB=1).
+    ///
+    /// Pure objects (no callback interface) get `(<Name>, <Name>)`.
+    /// Diverges from Java's `<Name>Interface` suffix — Kotlin's
+    /// `open class` + test-double idioms make a separate interface
+    /// less load-bearing, so we keep snapshots tighter by skipping it.
+    pub fn object_names(
+        &self,
+        ci: &ComponentInterface,
+        obj: &uniffi_bindgen::interface::Object,
+    ) -> (String, String) {
+        let class_name = self.class_name(ci, obj.name());
+        if obj.has_callback_interface() {
+            let impl_name = format!("{class_name}Impl");
+            (class_name, impl_name)
+        } else {
+            (class_name.clone(), class_name)
+        }
+    }
+
     /// FFI type label for use in Kotlin method signatures + MethodHandle
     /// wrapper functions. Kotlin primitives are capitalized (`Long`, `Int`,
     /// `Byte`, etc.); pointer-shaped FFI types stay as
@@ -746,6 +773,18 @@ mod filters {
         ci: &ComponentInterface,
     ) -> Result<String, askama::Error> {
         Ok(KotlinCodeOracle.class_name(ci, nm.as_ref()))
+    }
+
+    /// `(interface_name, impl_class_name)` for an Object. Matches
+    /// when an object is `[Trait, WithForeign]`: the interface keeps
+    /// the user's name (for use in function signatures), the
+    /// Rust-side wrapper class gets a `<Name>Impl` suffix.
+    pub(super) fn object_names(
+        obj: &uniffi_bindgen::interface::Object,
+        _v: &dyn Values,
+        ci: &ComponentInterface,
+    ) -> Result<(String, String), askama::Error> {
+        Ok(KotlinCodeOracle.object_names(ci, obj))
     }
 
     /// Flat-enum variant name — SCREAMING_SNAKE_CASE, backtick-escaped if
