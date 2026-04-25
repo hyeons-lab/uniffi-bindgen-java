@@ -241,18 +241,38 @@ v{{ field_num }}
 // The trailing `arg_list_lowered` covers the second arg for `eq_eq` /
 // `ord_cmp` (uniffi names it `other`, which lines up with the Kotlin
 // override's parameter name post smart-cast).
+//
+// Allocator handling: when the FFI return type is a struct
+// (`RustBuffer`, e.g. for the `Display` → `String` trait method),
+// `UniffiLib.<fn>` expects an allocator as its first parameter.
+// Mirrors the `ffi_type.borrow()|ffi_type_is_struct` check used by
+// `func_decl_inner` so the same allocator-prepend rule applies here.
 #}
 {%- macro trait_ffi_call(func) -%}
 {%- match func.self_type() -%}
 {%- when Some with (Type::Object { .. }) -%}
 callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCall { _allocator, _status ->
-                UniffiLib.{{ func.ffi_func().name() }}(uniffiHandle{% if !func.arguments().is_empty() %}, {% call arg_list_lowered(func) %}{% endif %}, _status)
+                UniffiLib.{{ func.ffi_func().name() }}(
+                    {%- match func.return_type() -%}
+                    {%- when Some with (return_type) -%}
+                    {%- let ret_ffi_type = return_type|ffi_type -%}
+                    {%- if ret_ffi_type.borrow()|ffi_type_is_struct %}_allocator, {% endif -%}
+                    {%- when None -%}
+                    {%- endmatch -%}
+                    uniffiHandle{% if !func.arguments().is_empty() %}, {% call arg_list_lowered(func) %}{% endif %}, _status)
             }
         }
 {%- when Some with (t) -%}
 UniffiHelpers.uniffiRustCall { _allocator, _status ->
-            UniffiLib.{{ func.ffi_func().name() }}({{ t|lower_fn }}(this){% if !func.arguments().is_empty() %}, {% call arg_list_lowered(func) %}{% endif %}, _status)
+            UniffiLib.{{ func.ffi_func().name() }}(
+                {%- match func.return_type() -%}
+                {%- when Some with (return_type) -%}
+                {%- let ret_ffi_type = return_type|ffi_type -%}
+                {%- if ret_ffi_type.borrow()|ffi_type_is_struct %}_allocator, {% endif -%}
+                {%- when None -%}
+                {%- endmatch -%}
+                {{ t|lower_fn }}(this){% if !func.arguments().is_empty() %}, {% call arg_list_lowered(func) %}{% endif %}, _status)
         }
 {%- when None -%}
 {%- endmatch -%}
