@@ -158,6 +158,22 @@ uniffiRustCallVoid{% if callable.throws_type().is_some() %}WithError{% endif %}
 {%- endmacro -%}
 
 {#
+// Property name for an enum variant's field, falling back to `v<N>`
+// when the field is positional (Rust tuple-variant `Dog(Arc<Foo>)`
+// → field name = "", index 0 → `v1`). Mirrors the Java backend's
+// `field_name` macro. `field_num` is 1-indexed (askama loop.index
+// starts at 1) to match Rust's tuple positional convention in
+// uniffi metadata.
+#}
+{%- macro field_name(field, field_num) -%}
+{%- if field.name().is_empty() -%}
+v{{ field_num }}
+{%- else -%}
+{{ field.name()|var_name }}
+{%- endif -%}
+{%- endmacro -%}
+
+{#
 // Argument list as it appears in the Kotlin function signature:
 //   `name: Type, name2: Type2`.
 // Uses the high-level `type_name` filter, not the FFI type — these are

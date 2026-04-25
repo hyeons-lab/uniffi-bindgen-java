@@ -293,3 +293,23 @@ fn snapshot_custom_types_kotlin() -> Result<()> {
         "kt",
     )
 }
+
+/// Kotlin-side snapshot for the upstream `enum-types` fixture. Now
+/// reachable post-P3l-enums (non-flat enum support): the fixture
+/// declares `Animal`/`AnimalUInt`/etc. (flat with explicit
+/// discriminants — fall through P3g's flat path), `AnimalEnum` and
+/// `AnimalNamedEnum` (associated-data enums with `Arc<AnimalObject>`
+/// / `AnimalRecord` variants — exercise the new `sealed class` path),
+/// `AnimalObject` (Rust-only `uniffi::Object` — exercises P3i), and
+/// `AnimalRecord` (a record with one field — P3f). Validates that
+/// non-flat variants reference object/record types via the same
+/// `<Field>|read_fn` filter chain the flat path uses.
+#[test]
+fn snapshot_enum_types_kotlin() -> Result<()> {
+    snapshot_fixture_for(
+        "uniffi-fixture-enum-types",
+        "enum_types_kotlin",
+        Language::Kotlin,
+        "kt",
+    )
+}
