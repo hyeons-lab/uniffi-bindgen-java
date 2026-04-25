@@ -59,6 +59,19 @@ uniffiRustCallVoid{% if callable.throws_type().is_some() %}WithError{% endif %}
 //     through `uniffiRustCallWithError<Suffix>(<T>ErrorHandler())`.
 #}
 {%- macro func_decl(callable, indent) -%}
+{% call func_decl_inner(callable, indent, false) %}
+{%- endmacro -%}
+
+{#
+// Variant of `func_decl` that prepends `override` to every emitted
+// `fun ...` declaration. Used by `[Trait, WithForeign]` impl classes
+// where each method satisfies the corresponding interface contract.
+#}
+{%- macro override_func_decl(callable, indent) -%}
+{% call func_decl_inner(callable, indent, true) %}
+{%- endmacro -%}
+
+{%- macro func_decl_inner(callable, indent, is_override) -%}
 {%- match callable.throws_type() %}
 {%- when Some(error_type) %}
 {{ indent }}@Throws({{ error_type|type_name(ci, config) }}::class)
@@ -69,14 +82,14 @@ uniffiRustCallVoid{% if callable.throws_type().is_some() %}WithError{% endif %}
 {%- when Some(return_type) -%}
 {%- if return_type|has_primitive_ffi_type %}
 {%- if is_method %}
-{{ indent }}fun {{ callable.name()|fn_name }}({% call arg_list(callable) %}): {{ return_type|type_name(ci, config) }} =
+{{ indent }}{% if is_override %}override {% endif %}fun {{ callable.name()|fn_name }}({% call arg_list(callable) %}): {{ return_type|type_name(ci, config) }} =
 {{ indent }}    callWithHandle { uniffiHandle ->
 {{ indent }}        {% call rust_call_prefix(callable) %} { _, _status ->
 {{ indent }}            UniffiLib.{{ callable.ffi_func().name() }}({% call method_call_args(callable, false) %})
 {{ indent }}        }
 {{ indent }}    }
 {%- else %}
-{{ indent }}fun {{ callable.name()|fn_name }}({% call arg_list(callable) %}): {{ return_type|type_name(ci, config) }} =
+{{ indent }}{% if is_override %}override {% endif %}fun {{ callable.name()|fn_name }}({% call arg_list(callable) %}): {{ return_type|type_name(ci, config) }} =
 {{ indent }}    {% call rust_call_prefix(callable) %} { _, _status ->
 {{ indent }}        UniffiLib.{{ callable.ffi_func().name() }}({% call call_args(callable, false) %})
 {{ indent }}    }
@@ -84,7 +97,7 @@ uniffiRustCallVoid{% if callable.throws_type().is_some() %}WithError{% endif %}
 {%- else %}
 {%- let ret_ffi_type = return_type|ffi_type %}
 {%- if is_method %}
-{{ indent }}fun {{ callable.name()|fn_name }}({% call arg_list(callable) %}): {{ return_type|type_name(ci, config) }} =
+{{ indent }}{% if is_override %}override {% endif %}fun {{ callable.name()|fn_name }}({% call arg_list(callable) %}): {{ return_type|type_name(ci, config) }} =
 {{ indent }}    {{ return_type|lift_fn }}(
 {{ indent }}        callWithHandle { uniffiHandle ->
 {{ indent }}            {% call rust_call_prefix(callable) %} { _allocator, _status ->
@@ -93,7 +106,7 @@ uniffiRustCallVoid{% if callable.throws_type().is_some() %}WithError{% endif %}
 {{ indent }}        }
 {{ indent }}    )
 {%- else %}
-{{ indent }}fun {{ callable.name()|fn_name }}({% call arg_list(callable) %}): {{ return_type|type_name(ci, config) }} =
+{{ indent }}{% if is_override %}override {% endif %}fun {{ callable.name()|fn_name }}({% call arg_list(callable) %}): {{ return_type|type_name(ci, config) }} =
 {{ indent }}    {{ return_type|lift_fn }}(
 {{ indent }}        {% call rust_call_prefix(callable) %} { _allocator, _status ->
 {{ indent }}            UniffiLib.{{ callable.ffi_func().name() }}({% call call_args(callable, ret_ffi_type.borrow()|ffi_type_is_struct) %})
@@ -103,7 +116,7 @@ uniffiRustCallVoid{% if callable.throws_type().is_some() %}WithError{% endif %}
 {%- endif %}
 {%- when None %}
 {%- if is_method %}
-{{ indent }}fun {{ callable.name()|fn_name }}({% call arg_list(callable) %}) {
+{{ indent }}{% if is_override %}override {% endif %}fun {{ callable.name()|fn_name }}({% call arg_list(callable) %}) {
 {{ indent }}    callWithHandle { uniffiHandle ->
 {{ indent }}        {% call rust_call_prefix(callable) %} { _, _status ->
 {{ indent }}            UniffiLib.{{ callable.ffi_func().name() }}({% call method_call_args(callable, false) %})
@@ -111,7 +124,7 @@ uniffiRustCallVoid{% if callable.throws_type().is_some() %}WithError{% endif %}
 {{ indent }}    }
 {{ indent }}}
 {%- else %}
-{{ indent }}fun {{ callable.name()|fn_name }}({% call arg_list(callable) %}) {
+{{ indent }}{% if is_override %}override {% endif %}fun {{ callable.name()|fn_name }}({% call arg_list(callable) %}) {
 {{ indent }}    {% call rust_call_prefix(callable) %} { _, _status ->
 {{ indent }}        UniffiLib.{{ callable.ffi_func().name() }}({% call call_args(callable, false) %})
 {{ indent }}    }
