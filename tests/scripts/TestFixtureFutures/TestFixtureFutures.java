@@ -546,8 +546,9 @@ public class TestFixtureFutures {
       // Threshold and drain budget: RSS measurements are non-deterministic on coverage
       // builds — batch deltas observed in the wild range from -9 MB to +10 MB without
       // any code change, dominated by JVM Cleaner thread timing for `Arena.ofAuto()`
-      // reclamation. We give Cleaner ~2s of `System.gc()` + sleep to drain its queue,
-      // then assert a 16 MB threshold that still catches the original 21 MB
+      // reclamation. We give Cleaner ~2s of `System.gc()` + sleep after each batch
+      // (~4s total added to the test) to drain its queue before measuring RSS, then
+      // assert a 16,000 KB (~16 MB) threshold that still catches the original 21 MB
       // `Arena.global()` leak signal but absorbs the +10 MB noise floor seen on
       // llvm-cov-instrumented runs.
       {
@@ -580,8 +581,9 @@ public class TestFixtureFutures {
             rssAfterBatch1, rssAfterBatch2, growthKb, batchSize));
         // With Arena.global(): 500k × ~42 bytes ≈ 21 MB delta (never freed)
         // With slab: delta ≈ 0 (batch 2 reuses freed slabs from batch 1)
-        // Threshold 16 MB sits between the noise floor (~10 MB) and the leak signal
-        // (~21 MB), preserving leak detection while absorbing GC-timing variance.
+        // Threshold 16,000 KB (~16 MB) sits between the noise floor (~10 MB) and
+        // the leak signal (~21 MB), preserving leak detection while absorbing
+        // GC-timing variance.
         assert growthKb < 16_000
             : MessageFormat.format(
                 "create() leaked native memory: {0} KB growth between batches of {1} calls",
