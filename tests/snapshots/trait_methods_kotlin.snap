@@ -715,7 +715,7 @@ class TraitObj internal constructor(
     override fun toString(): String =
         FfiConverterString.lift(callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCall { _allocator, _status ->
-                UniffiLib.uniffi_uniffi_fixture_trait_methods_kt_fn_method_traitobj_uniffi_trait_display(uniffiHandle, _status)
+                UniffiLib.uniffi_uniffi_fixture_trait_methods_kt_fn_method_traitobj_uniffi_trait_display(_allocator, uniffiHandle, _status)
             }
         })
 
@@ -755,7 +755,7 @@ data class TraitRec(
 
     override fun toString(): String =
         FfiConverterString.lift(UniffiHelpers.uniffiRustCall { _allocator, _status ->
-            UniffiLib.uniffi_uniffi_fixture_trait_methods_kt_fn_method_traitrec_uniffi_trait_display(FfiConverterTypeTraitRec.lower(this), _status)
+            UniffiLib.uniffi_uniffi_fixture_trait_methods_kt_fn_method_traitrec_uniffi_trait_display(_allocator, FfiConverterTypeTraitRec.lower(this), _status)
         })
 
     override fun equals(other: Any?): Boolean {
