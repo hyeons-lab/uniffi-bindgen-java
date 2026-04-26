@@ -43,11 +43,13 @@ internal object UniffiCallbackInterface{{ name }} {
 
     {%- for (ffi_callback, meth) in vtable_methods.iter() %}
     {%- if meth.is_async() %}
+    {%- let result_struct_name = meth.foreign_future_ffi_result_struct().name()|ffi_struct_name %}
 
-    // Async callback method `{{ meth.name() }}` is not supported in
-    // this revision of the Kotlin backend (P3k adds async). Leaving
-    // an unregistered stub slot here would crash Rust on invocation;
-    // instead we panic at class-init time on the first use.
+    // Async callback method `{{ meth.name() }}` upcall: Rust is
+    // calling INTO our Kotlin `suspend fun` impl. We launch the
+    // user's coroutine via `UniffiAsyncHelpers.uniffiTraitInterfaceCallAsync`,
+    // which routes success / failure back to Rust through the
+    // completion callback Rust handed us in `uniffiFutureCallback`.
     internal object {{ meth.name()|class_name(ci) }}Callback : {{ ffi_callback.name()|ffi_callback_name }}.Fn {
         override fun callback(
             {%- for arg in ffi_callback.arguments() %}
@@ -57,7 +59,66 @@ internal object UniffiCallbackInterface{{ name }} {
             uniffiCallStatus: java.lang.foreign.MemorySegment,
             {%- endif %}
         ){%- match ffi_callback.return_type() %}{%- when Some(return_type) %}: {{ return_type|ffi_type_name }}{%- when None %}{%- endmatch %} {
-            throw NotImplementedError("async callback interface methods not yet supported (P3k)")
+            val uniffiObj = {{ ffi_converter_name }}.handleMap.get(uniffiHandle)
+            // The completion callback always has signature
+            // `(callbackData: Long, result: <ResultStruct>) -> Unit`.
+            val uniffiCompletionDescriptor: java.lang.foreign.FunctionDescriptor =
+                java.lang.foreign.FunctionDescriptor.ofVoid(
+                    java.lang.foreign.ValueLayout.JAVA_LONG,
+                    {{ result_struct_name }}.LAYOUT,
+                )
+            val uniffiHandleSuccess: ({% match meth.return_type() %}{%- when Some(return_type) %}{{ return_type|type_name(ci, config) }}{%- when None %}Unit{%- endmatch %}) -> Unit = { uniffiValue ->
+                val uniffiResult = java.lang.foreign.Arena.ofAuto().allocate({{ result_struct_name }}.LAYOUT)
+                {%- match meth.return_type() %}
+                {%- when Some(return_type) %}
+                {{ result_struct_name }}.setreturnValue(uniffiResult, {{ return_type|lower_fn }}(uniffiValue))
+                {%- when None %}
+                {%- endmatch %}
+                // callStatus left zeroed = SUCCESS.
+                try {
+                    val globalCallback = java.lang.foreign.MemorySegment.ofAddress(uniffiFutureCallback.address())
+                    val mh = java.lang.foreign.Linker.nativeLinker().downcallHandle(globalCallback, uniffiCompletionDescriptor)
+                    mh.invokeExact(uniffiCallbackData, uniffiResult)
+                } catch (t: Throwable) {
+                    throw AssertionError("invokeExact failed", t)
+                }
+            }
+            val uniffiHandleError: (java.lang.foreign.MemorySegment) -> Unit = { callStatus ->
+                val uniffiResult = java.lang.foreign.Arena.ofAuto().allocate({{ result_struct_name }}.LAYOUT)
+                {{ result_struct_name }}.setcallStatus(uniffiResult, callStatus)
+                try {
+                    val globalCallback = java.lang.foreign.MemorySegment.ofAddress(uniffiFutureCallback.address())
+                    val mh = java.lang.foreign.Linker.nativeLinker().downcallHandle(globalCallback, uniffiCompletionDescriptor)
+                    mh.invokeExact(uniffiCallbackData, uniffiResult)
+                } catch (t: Throwable) {
+                    throw AssertionError("invokeExact failed", t)
+                }
+            }
+            {%- match meth.throws_type() %}
+            {%- when None %}
+            UniffiAsyncHelpers.uniffiTraitInterfaceCallAsync(
+                makeCall = { uniffiObj.{{ meth.name()|fn_name() }}(
+                    {%- for arg in meth.arguments() %}
+                    {{ arg|lift_fn }}({{ arg.name()|var_name }}){% if !loop.last %},{% endif %}
+                    {%- endfor %}
+                ) },
+                handleSuccess = uniffiHandleSuccess,
+                handleError = uniffiHandleError,
+                uniffiOutDroppedCallback = uniffiOutDroppedCallback,
+            )
+            {%- when Some(error_type) %}
+            UniffiAsyncHelpers.uniffiTraitInterfaceCallAsyncWithError<{% match meth.return_type() %}{%- when Some(return_type) %}{{ return_type|type_name(ci, config) }}{%- when None %}Unit{%- endmatch %}, {{ error_type|type_name(ci, config) }}>(
+                makeCall = { uniffiObj.{{ meth.name()|fn_name() }}(
+                    {%- for arg in meth.arguments() %}
+                    {{ arg|lift_fn }}({{ arg.name()|var_name }}){% if !loop.last %},{% endif %}
+                    {%- endfor %}
+                ) },
+                handleSuccess = uniffiHandleSuccess,
+                handleError = uniffiHandleError,
+                lowerError = { e -> {{ error_type|lower_fn }}(e) },
+                uniffiOutDroppedCallback = uniffiOutDroppedCallback,
+            )
+            {%- endmatch %}
         }
     }
     {%- else %}

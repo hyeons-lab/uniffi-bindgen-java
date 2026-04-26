@@ -2498,6 +2498,140 @@ internal object UniffiAsyncHelpers {
             freeFunc(rustFuture)
         }
     }
+
+    // ────────────────────────────────────────────────────────────────
+    // Async callback interface support — Kotlin-side `suspend fun`
+    // implementations that Rust can call back into. Mirrors upstream
+    // uniffi-rs's `uniffiTraitInterfaceCallAsync` shape: launch the
+    // user's `suspend fun` on `GlobalScope` (Rust drives the parent
+    // task lifetime; structured concurrency is broken at the FFI
+    // boundary by design), then route success / failure to Rust via
+    // the completion callback the upcall args carried in.
+    // ────────────────────────────────────────────────────────────────
+
+    // Foreign-future handle map: Job per in-flight Kotlin coroutine.
+    // Rust's drop callback removes + cancels; success/failure paths
+    // remove via the same map (the coroutine itself completes
+    // naturally and Rust drops separately).
+    val foreignFutureHandleMap = UniffiHandleMap<kotlinx.coroutines.Job>()
+
+    // FFI dropped-callback: Rust signalling that it's no longer
+    // interested in the future's result. Cancel the Job if still
+    // running. Safe against races (handle already gone → no-op).
+    // Must NOT throw across the FFI boundary.
+    private object UniffiForeignFutureDroppedCallbackImpl :
+        UniffiForeignFutureDroppedCallback.Fn {
+        override fun callback(handle: Long) {
+            val job = foreignFutureHandleMap.removeOrNull(handle) ?: return
+            if (!job.isCompleted) {
+                job.cancel()
+            }
+        }
+    }
+
+    private val UNIFFI_FOREIGN_FUTURE_DROPPED_CALLBACK_STUB: java.lang.foreign.MemorySegment =
+        UniffiForeignFutureDroppedCallback.toUpcallStub(
+            UniffiForeignFutureDroppedCallbackImpl,
+            java.lang.foreign.Arena.global(),
+        )
+
+    // Build a `ForeignFutureDroppedCallbackStruct` payload that
+    // tells Rust how to cancel us — handle into the foreign-future
+    // map + the singleton dropped-callback stub. Writes into the
+    // out-segment Rust handed us at upcall time.
+    private fun writeDroppedCallback(
+        uniffiOutDroppedCallback: java.lang.foreign.MemorySegment,
+        handle: Long,
+    ) {
+        // Upcall parameter segments have zero size; reinterpret to
+        // the actual struct size before writing.
+        val out = uniffiOutDroppedCallback.reinterpret(
+            UniffiForeignFutureDroppedCallbackStruct.LAYOUT.byteSize()
+        )
+        UniffiForeignFutureDroppedCallbackStruct.sethandle(out, handle)
+        UniffiForeignFutureDroppedCallbackStruct.setfree(
+            out,
+            UNIFFI_FOREIGN_FUTURE_DROPPED_CALLBACK_STUB,
+        )
+    }
+
+    // Launch a Kotlin `suspend fun` that Rust is awaiting. The
+    // success and error consumers are wired to invoke Rust's
+    // completion callback — exactly one of them must fire per call,
+    // and each fires consume an Arc reference on the Rust side, so
+    // double-call must NEVER happen. The structure here ensures
+    // the catch-block returns before falling through to handleSuccess.
+    // In extreme circumstances (e.g. invoking the completion stub
+    // itself throws) we may leak the Arc — better than double-free.
+    @OptIn(kotlinx.coroutines.DelicateCoroutinesApi::class)
+    inline fun <T> uniffiTraitInterfaceCallAsync(
+        crossinline makeCall: suspend () -> T,
+        crossinline handleSuccess: (T) -> Unit,
+        crossinline handleError: (java.lang.foreign.MemorySegment) -> Unit,
+        uniffiOutDroppedCallback: java.lang.foreign.MemorySegment,
+    ) {
+        val job = kotlinx.coroutines.GlobalScope.launch coroutineBlock@ {
+            val result: T = try {
+                makeCall()
+            } catch (e: Exception) {
+                handleError(
+                    UniffiRustCallStatus.create(
+                        UniffiRustCallStatus.UNIFFI_CALL_UNEXPECTED_ERROR,
+                        FfiConverterString.lower(e.toString()),
+                    )
+                )
+                return@coroutineBlock
+            }
+            handleSuccess(result)
+        }
+        val handle = foreignFutureHandleMap.insert(job)
+        writeDroppedCallback(uniffiOutDroppedCallback, handle)
+    }
+
+    // Same as `uniffiTraitInterfaceCallAsync` but with typed-error
+    // downconversion: exceptions of type `E` get lowered via
+    // `lowerError` and shipped as a `UNIFFI_CALL_ERROR`; everything
+    // else still goes through the unexpected-error path. `reified E`
+    // gives us the runtime `is` check without passing `Class<E>`.
+    @OptIn(kotlinx.coroutines.DelicateCoroutinesApi::class)
+    inline fun <T, reified E : Throwable> uniffiTraitInterfaceCallAsyncWithError(
+        crossinline makeCall: suspend () -> T,
+        crossinline handleSuccess: (T) -> Unit,
+        crossinline handleError: (java.lang.foreign.MemorySegment) -> Unit,
+        crossinline lowerError: (E) -> java.lang.foreign.MemorySegment,
+        uniffiOutDroppedCallback: java.lang.foreign.MemorySegment,
+    ) {
+        val job = kotlinx.coroutines.GlobalScope.launch coroutineBlock@ {
+            val result: T = try {
+                makeCall()
+            } catch (e: Exception) {
+                if (e is E) {
+                    handleError(
+                        UniffiRustCallStatus.create(
+                            UniffiRustCallStatus.UNIFFI_CALL_ERROR,
+                            lowerError(e),
+                        )
+                    )
+                } else {
+                    handleError(
+                        UniffiRustCallStatus.create(
+                            UniffiRustCallStatus.UNIFFI_CALL_UNEXPECTED_ERROR,
+                            FfiConverterString.lower(e.toString()),
+                        )
+                    )
+                }
+                return@coroutineBlock
+            }
+            handleSuccess(result)
+        }
+        val handle = foreignFutureHandleMap.insert(job)
+        writeDroppedCallback(uniffiOutDroppedCallback, handle)
+    }
+
+    // For testing — exposed as `public` so consumer integration
+    // tests can assert no Job leaks after async stress. Mirrors the
+    // Java backend's `uniffiForeignFutureHandleCount()`.
+    fun uniffiForeignFutureHandleCount(): Int = foreignFutureHandleMap.size()
 }
 
 // Primitive + String + ByteArray FfiConverters. All are emitted
@@ -2676,10 +2810,11 @@ internal object UniffiCallbackInterfaceAsyncParser {
         UniffiLib.uniffi_uniffi_futures_fn_init_callback_vtable_asyncparser(vtable)
     }
 
-    // Async callback method `as_string` is not supported in
-    // this revision of the Kotlin backend (P3k adds async). Leaving
-    // an unregistered stub slot here would crash Rust on invocation;
-    // instead we panic at class-init time on the first use.
+    // Async callback method `as_string` upcall: Rust is
+    // calling INTO our Kotlin `suspend fun` impl. We launch the
+    // user's coroutine via `UniffiAsyncHelpers.uniffiTraitInterfaceCallAsync`,
+    // which routes success / failure back to Rust through the
+    // completion callback Rust handed us in `uniffiFutureCallback`.
     internal object AsStringCallback : UniffiCallbackInterfaceAsyncParserMethod0.Fn {
         override fun callback(
             uniffiHandle: Long,
@@ -2689,14 +2824,54 @@ internal object UniffiCallbackInterfaceAsyncParser {
             uniffiCallbackData: Long,
             uniffiOutDroppedCallback: java.lang.foreign.MemorySegment
         ) {
-            throw NotImplementedError("async callback interface methods not yet supported (P3k)")
+            val uniffiObj = FfiConverterTypeAsyncParser.handleMap.get(uniffiHandle)
+            // The completion callback always has signature
+            // `(callbackData: Long, result: <ResultStruct>) -> Unit`.
+            val uniffiCompletionDescriptor: java.lang.foreign.FunctionDescriptor =
+                java.lang.foreign.FunctionDescriptor.ofVoid(
+                    java.lang.foreign.ValueLayout.JAVA_LONG,
+                    UniffiForeignFutureResultRustBuffer.LAYOUT,
+                )
+            val uniffiHandleSuccess: (String) -> Unit = { uniffiValue ->
+                val uniffiResult = java.lang.foreign.Arena.ofAuto().allocate(UniffiForeignFutureResultRustBuffer.LAYOUT)
+                UniffiForeignFutureResultRustBuffer.setreturnValue(uniffiResult, FfiConverterString.lower(uniffiValue))
+                // callStatus left zeroed = SUCCESS.
+                try {
+                    val globalCallback = java.lang.foreign.MemorySegment.ofAddress(uniffiFutureCallback.address())
+                    val mh = java.lang.foreign.Linker.nativeLinker().downcallHandle(globalCallback, uniffiCompletionDescriptor)
+                    mh.invokeExact(uniffiCallbackData, uniffiResult)
+                } catch (t: Throwable) {
+                    throw AssertionError("invokeExact failed", t)
+                }
+            }
+            val uniffiHandleError: (java.lang.foreign.MemorySegment) -> Unit = { callStatus ->
+                val uniffiResult = java.lang.foreign.Arena.ofAuto().allocate(UniffiForeignFutureResultRustBuffer.LAYOUT)
+                UniffiForeignFutureResultRustBuffer.setcallStatus(uniffiResult, callStatus)
+                try {
+                    val globalCallback = java.lang.foreign.MemorySegment.ofAddress(uniffiFutureCallback.address())
+                    val mh = java.lang.foreign.Linker.nativeLinker().downcallHandle(globalCallback, uniffiCompletionDescriptor)
+                    mh.invokeExact(uniffiCallbackData, uniffiResult)
+                } catch (t: Throwable) {
+                    throw AssertionError("invokeExact failed", t)
+                }
+            }
+            UniffiAsyncHelpers.uniffiTraitInterfaceCallAsync(
+                makeCall = { uniffiObj.asString(
+                    FfiConverterInt.lift(delayMs),
+                    FfiConverterInt.lift(`value`)
+                ) },
+                handleSuccess = uniffiHandleSuccess,
+                handleError = uniffiHandleError,
+                uniffiOutDroppedCallback = uniffiOutDroppedCallback,
+            )
         }
     }
 
-    // Async callback method `try_from_string` is not supported in
-    // this revision of the Kotlin backend (P3k adds async). Leaving
-    // an unregistered stub slot here would crash Rust on invocation;
-    // instead we panic at class-init time on the first use.
+    // Async callback method `try_from_string` upcall: Rust is
+    // calling INTO our Kotlin `suspend fun` impl. We launch the
+    // user's coroutine via `UniffiAsyncHelpers.uniffiTraitInterfaceCallAsync`,
+    // which routes success / failure back to Rust through the
+    // completion callback Rust handed us in `uniffiFutureCallback`.
     internal object TryFromStringCallback : UniffiCallbackInterfaceAsyncParserMethod1.Fn {
         override fun callback(
             uniffiHandle: Long,
@@ -2706,14 +2881,55 @@ internal object UniffiCallbackInterfaceAsyncParser {
             uniffiCallbackData: Long,
             uniffiOutDroppedCallback: java.lang.foreign.MemorySegment
         ) {
-            throw NotImplementedError("async callback interface methods not yet supported (P3k)")
+            val uniffiObj = FfiConverterTypeAsyncParser.handleMap.get(uniffiHandle)
+            // The completion callback always has signature
+            // `(callbackData: Long, result: <ResultStruct>) -> Unit`.
+            val uniffiCompletionDescriptor: java.lang.foreign.FunctionDescriptor =
+                java.lang.foreign.FunctionDescriptor.ofVoid(
+                    java.lang.foreign.ValueLayout.JAVA_LONG,
+                    UniffiForeignFutureResultI32.LAYOUT,
+                )
+            val uniffiHandleSuccess: (Int) -> Unit = { uniffiValue ->
+                val uniffiResult = java.lang.foreign.Arena.ofAuto().allocate(UniffiForeignFutureResultI32.LAYOUT)
+                UniffiForeignFutureResultI32.setreturnValue(uniffiResult, FfiConverterInt.lower(uniffiValue))
+                // callStatus left zeroed = SUCCESS.
+                try {
+                    val globalCallback = java.lang.foreign.MemorySegment.ofAddress(uniffiFutureCallback.address())
+                    val mh = java.lang.foreign.Linker.nativeLinker().downcallHandle(globalCallback, uniffiCompletionDescriptor)
+                    mh.invokeExact(uniffiCallbackData, uniffiResult)
+                } catch (t: Throwable) {
+                    throw AssertionError("invokeExact failed", t)
+                }
+            }
+            val uniffiHandleError: (java.lang.foreign.MemorySegment) -> Unit = { callStatus ->
+                val uniffiResult = java.lang.foreign.Arena.ofAuto().allocate(UniffiForeignFutureResultI32.LAYOUT)
+                UniffiForeignFutureResultI32.setcallStatus(uniffiResult, callStatus)
+                try {
+                    val globalCallback = java.lang.foreign.MemorySegment.ofAddress(uniffiFutureCallback.address())
+                    val mh = java.lang.foreign.Linker.nativeLinker().downcallHandle(globalCallback, uniffiCompletionDescriptor)
+                    mh.invokeExact(uniffiCallbackData, uniffiResult)
+                } catch (t: Throwable) {
+                    throw AssertionError("invokeExact failed", t)
+                }
+            }
+            UniffiAsyncHelpers.uniffiTraitInterfaceCallAsyncWithError<Int, ParserException>(
+                makeCall = { uniffiObj.tryFromString(
+                    FfiConverterInt.lift(delayMs),
+                    FfiConverterString.lift(`value`)
+                ) },
+                handleSuccess = uniffiHandleSuccess,
+                handleError = uniffiHandleError,
+                lowerError = { e -> FfiConverterTypeParserError.lower(e) },
+                uniffiOutDroppedCallback = uniffiOutDroppedCallback,
+            )
         }
     }
 
-    // Async callback method `delay` is not supported in
-    // this revision of the Kotlin backend (P3k adds async). Leaving
-    // an unregistered stub slot here would crash Rust on invocation;
-    // instead we panic at class-init time on the first use.
+    // Async callback method `delay` upcall: Rust is
+    // calling INTO our Kotlin `suspend fun` impl. We launch the
+    // user's coroutine via `UniffiAsyncHelpers.uniffiTraitInterfaceCallAsync`,
+    // which routes success / failure back to Rust through the
+    // completion callback Rust handed us in `uniffiFutureCallback`.
     internal object DelayCallback : UniffiCallbackInterfaceAsyncParserMethod2.Fn {
         override fun callback(
             uniffiHandle: Long,
@@ -2722,14 +2938,52 @@ internal object UniffiCallbackInterfaceAsyncParser {
             uniffiCallbackData: Long,
             uniffiOutDroppedCallback: java.lang.foreign.MemorySegment
         ) {
-            throw NotImplementedError("async callback interface methods not yet supported (P3k)")
+            val uniffiObj = FfiConverterTypeAsyncParser.handleMap.get(uniffiHandle)
+            // The completion callback always has signature
+            // `(callbackData: Long, result: <ResultStruct>) -> Unit`.
+            val uniffiCompletionDescriptor: java.lang.foreign.FunctionDescriptor =
+                java.lang.foreign.FunctionDescriptor.ofVoid(
+                    java.lang.foreign.ValueLayout.JAVA_LONG,
+                    UniffiForeignFutureResultVoid.LAYOUT,
+                )
+            val uniffiHandleSuccess: (Unit) -> Unit = { uniffiValue ->
+                val uniffiResult = java.lang.foreign.Arena.ofAuto().allocate(UniffiForeignFutureResultVoid.LAYOUT)
+                // callStatus left zeroed = SUCCESS.
+                try {
+                    val globalCallback = java.lang.foreign.MemorySegment.ofAddress(uniffiFutureCallback.address())
+                    val mh = java.lang.foreign.Linker.nativeLinker().downcallHandle(globalCallback, uniffiCompletionDescriptor)
+                    mh.invokeExact(uniffiCallbackData, uniffiResult)
+                } catch (t: Throwable) {
+                    throw AssertionError("invokeExact failed", t)
+                }
+            }
+            val uniffiHandleError: (java.lang.foreign.MemorySegment) -> Unit = { callStatus ->
+                val uniffiResult = java.lang.foreign.Arena.ofAuto().allocate(UniffiForeignFutureResultVoid.LAYOUT)
+                UniffiForeignFutureResultVoid.setcallStatus(uniffiResult, callStatus)
+                try {
+                    val globalCallback = java.lang.foreign.MemorySegment.ofAddress(uniffiFutureCallback.address())
+                    val mh = java.lang.foreign.Linker.nativeLinker().downcallHandle(globalCallback, uniffiCompletionDescriptor)
+                    mh.invokeExact(uniffiCallbackData, uniffiResult)
+                } catch (t: Throwable) {
+                    throw AssertionError("invokeExact failed", t)
+                }
+            }
+            UniffiAsyncHelpers.uniffiTraitInterfaceCallAsync(
+                makeCall = { uniffiObj.delay(
+                    FfiConverterInt.lift(delayMs)
+                ) },
+                handleSuccess = uniffiHandleSuccess,
+                handleError = uniffiHandleError,
+                uniffiOutDroppedCallback = uniffiOutDroppedCallback,
+            )
         }
     }
 
-    // Async callback method `try_delay` is not supported in
-    // this revision of the Kotlin backend (P3k adds async). Leaving
-    // an unregistered stub slot here would crash Rust on invocation;
-    // instead we panic at class-init time on the first use.
+    // Async callback method `try_delay` upcall: Rust is
+    // calling INTO our Kotlin `suspend fun` impl. We launch the
+    // user's coroutine via `UniffiAsyncHelpers.uniffiTraitInterfaceCallAsync`,
+    // which routes success / failure back to Rust through the
+    // completion callback Rust handed us in `uniffiFutureCallback`.
     internal object TryDelayCallback : UniffiCallbackInterfaceAsyncParserMethod3.Fn {
         override fun callback(
             uniffiHandle: Long,
@@ -2738,7 +2992,45 @@ internal object UniffiCallbackInterfaceAsyncParser {
             uniffiCallbackData: Long,
             uniffiOutDroppedCallback: java.lang.foreign.MemorySegment
         ) {
-            throw NotImplementedError("async callback interface methods not yet supported (P3k)")
+            val uniffiObj = FfiConverterTypeAsyncParser.handleMap.get(uniffiHandle)
+            // The completion callback always has signature
+            // `(callbackData: Long, result: <ResultStruct>) -> Unit`.
+            val uniffiCompletionDescriptor: java.lang.foreign.FunctionDescriptor =
+                java.lang.foreign.FunctionDescriptor.ofVoid(
+                    java.lang.foreign.ValueLayout.JAVA_LONG,
+                    UniffiForeignFutureResultVoid.LAYOUT,
+                )
+            val uniffiHandleSuccess: (Unit) -> Unit = { uniffiValue ->
+                val uniffiResult = java.lang.foreign.Arena.ofAuto().allocate(UniffiForeignFutureResultVoid.LAYOUT)
+                // callStatus left zeroed = SUCCESS.
+                try {
+                    val globalCallback = java.lang.foreign.MemorySegment.ofAddress(uniffiFutureCallback.address())
+                    val mh = java.lang.foreign.Linker.nativeLinker().downcallHandle(globalCallback, uniffiCompletionDescriptor)
+                    mh.invokeExact(uniffiCallbackData, uniffiResult)
+                } catch (t: Throwable) {
+                    throw AssertionError("invokeExact failed", t)
+                }
+            }
+            val uniffiHandleError: (java.lang.foreign.MemorySegment) -> Unit = { callStatus ->
+                val uniffiResult = java.lang.foreign.Arena.ofAuto().allocate(UniffiForeignFutureResultVoid.LAYOUT)
+                UniffiForeignFutureResultVoid.setcallStatus(uniffiResult, callStatus)
+                try {
+                    val globalCallback = java.lang.foreign.MemorySegment.ofAddress(uniffiFutureCallback.address())
+                    val mh = java.lang.foreign.Linker.nativeLinker().downcallHandle(globalCallback, uniffiCompletionDescriptor)
+                    mh.invokeExact(uniffiCallbackData, uniffiResult)
+                } catch (t: Throwable) {
+                    throw AssertionError("invokeExact failed", t)
+                }
+            }
+            UniffiAsyncHelpers.uniffiTraitInterfaceCallAsyncWithError<Unit, ParserException>(
+                makeCall = { uniffiObj.tryDelay(
+                    FfiConverterString.lift(delayMs)
+                ) },
+                handleSuccess = uniffiHandleSuccess,
+                handleError = uniffiHandleError,
+                lowerError = { e -> FfiConverterTypeParserError.lower(e) },
+                uniffiOutDroppedCallback = uniffiOutDroppedCallback,
+            )
         }
     }
 
