@@ -86,8 +86,16 @@ class AsyncParserImpl internal constructor(
      * calls can run without taking a lock; see the comment block in
      * `src/templates/ObjectTemplate.java` for the full correctness
      * argument.
+     *
+     * NOT `inline`: the body reads `private` fields (`callCounter`,
+     * `cleanable`) and calls `internal fun uniffiCloneHandle()`. A
+     * public `inline fun` cannot reference non-public-API members
+     * without `@PublishedApi internal` annotations on each one;
+     * leaving it as a regular method costs one closure allocation
+     * per call (negligible vs the FFI roundtrip) and matches
+     * upstream uniffi-rs's Kotlin shape.
      */
-    inline fun <R> callWithHandle(block: (Long) -> R): R {
+    fun <R> callWithHandle(block: (Long) -> R): R {
         // Check and increment the call counter. Retries on CAS failure
         // under concurrent updates.
         var c: Long
@@ -271,8 +279,16 @@ class FallibleMegaphone internal constructor(
      * calls can run without taking a lock; see the comment block in
      * `src/templates/ObjectTemplate.java` for the full correctness
      * argument.
+     *
+     * NOT `inline`: the body reads `private` fields (`callCounter`,
+     * `cleanable`) and calls `internal fun uniffiCloneHandle()`. A
+     * public `inline fun` cannot reference non-public-API members
+     * without `@PublishedApi internal` annotations on each one;
+     * leaving it as a regular method costs one closure allocation
+     * per call (negligible vs the FFI roundtrip) and matches
+     * upstream uniffi-rs's Kotlin shape.
      */
-    inline fun <R> callWithHandle(block: (Long) -> R): R {
+    fun <R> callWithHandle(block: (Long) -> R): R {
         // Check and increment the call counter. Retries on CAS failure
         // under concurrent updates.
         var c: Long
@@ -1593,8 +1609,16 @@ class Megaphone internal constructor(
      * calls can run without taking a lock; see the comment block in
      * `src/templates/ObjectTemplate.java` for the full correctness
      * argument.
+     *
+     * NOT `inline`: the body reads `private` fields (`callCounter`,
+     * `cleanable`) and calls `internal fun uniffiCloneHandle()`. A
+     * public `inline fun` cannot reference non-public-API members
+     * without `@PublishedApi internal` annotations on each one;
+     * leaving it as a regular method costs one closure allocation
+     * per call (negligible vs the FFI roundtrip) and matches
+     * upstream uniffi-rs's Kotlin shape.
      */
-    inline fun <R> callWithHandle(block: (Long) -> R): R {
+    fun <R> callWithHandle(block: (Long) -> R): R {
         // Check and increment the call counter. Retries on CAS failure
         // under concurrent updates.
         var c: Long
@@ -1991,8 +2015,16 @@ class SayAfterTrait internal constructor(
      * calls can run without taking a lock; see the comment block in
      * `src/templates/ObjectTemplate.java` for the full correctness
      * argument.
+     *
+     * NOT `inline`: the body reads `private` fields (`callCounter`,
+     * `cleanable`) and calls `internal fun uniffiCloneHandle()`. A
+     * public `inline fun` cannot reference non-public-API members
+     * without `@PublishedApi internal` annotations on each one;
+     * leaving it as a regular method costs one closure allocation
+     * per call (negligible vs the FFI roundtrip) and matches
+     * upstream uniffi-rs's Kotlin shape.
      */
-    inline fun <R> callWithHandle(block: (Long) -> R): R {
+    fun <R> callWithHandle(block: (Long) -> R): R {
         // Check and increment the call counter. Retries on CAS failure
         // under concurrent updates.
         var c: Long
@@ -2116,8 +2148,16 @@ class SayAfterUdlTrait internal constructor(
      * calls can run without taking a lock; see the comment block in
      * `src/templates/ObjectTemplate.java` for the full correctness
      * argument.
+     *
+     * NOT `inline`: the body reads `private` fields (`callCounter`,
+     * `cleanable`) and calls `internal fun uniffiCloneHandle()`. A
+     * public `inline fun` cannot reference non-public-API members
+     * without `@PublishedApi internal` annotations on each one;
+     * leaving it as a regular method costs one closure allocation
+     * per call (negligible vs the FFI roundtrip) and matches
+     * upstream uniffi-rs's Kotlin shape.
      */
-    inline fun <R> callWithHandle(block: (Long) -> R): R {
+    fun <R> callWithHandle(block: (Long) -> R): R {
         // Check and increment the call counter. Retries on CAS failure
         // under concurrent updates.
         var c: Long
@@ -2254,8 +2294,16 @@ class TestObject internal constructor(
      * calls can run without taking a lock; see the comment block in
      * `src/templates/ObjectTemplate.java` for the full correctness
      * argument.
+     *
+     * NOT `inline`: the body reads `private` fields (`callCounter`,
+     * `cleanable`) and calls `internal fun uniffiCloneHandle()`. A
+     * public `inline fun` cannot reference non-public-API members
+     * without `@PublishedApi internal` annotations on each one;
+     * leaving it as a regular method costs one closure allocation
+     * per call (negligible vs the FFI roundtrip) and matches
+     * upstream uniffi-rs's Kotlin shape.
      */
-    inline fun <R> callWithHandle(block: (Long) -> R): R {
+    fun <R> callWithHandle(block: (Long) -> R): R {
         // Check and increment the call counter. Retries on CAS failure
         // under concurrent updates.
         var c: Long
@@ -2383,8 +2431,16 @@ class UdlMegaphone internal constructor(
      * calls can run without taking a lock; see the comment block in
      * `src/templates/ObjectTemplate.java` for the full correctness
      * argument.
+     *
+     * NOT `inline`: the body reads `private` fields (`callCounter`,
+     * `cleanable`) and calls `internal fun uniffiCloneHandle()`. A
+     * public `inline fun` cannot reference non-public-API members
+     * without `@PublishedApi internal` annotations on each one;
+     * leaving it as a regular method costs one closure allocation
+     * per call (negligible vs the FFI roundtrip) and matches
+     * upstream uniffi-rs's Kotlin shape.
      */
-    inline fun <R> callWithHandle(block: (Long) -> R): R {
+    fun <R> callWithHandle(block: (Long) -> R): R {
         // Check and increment the call counter. Retries on CAS failure
         // under concurrent updates.
         var c: Long
@@ -2530,6 +2586,11 @@ internal object UniffiAsyncHelpers {
     // races on cancellation: a missing handle, an already-resumed
     // continuation, or a cancelled continuation are all silently
     // ignored — the upcall must NOT throw across the FFI boundary.
+    //
+    // `tryResume` / `completeResume` live behind `@InternalCoroutinesApi`
+    // (no stable public alternative exists for the no-throw resume that
+    // FFI callbacks need). Opt-in is scoped tightly to this object.
+    @OptIn(kotlinx.coroutines.InternalCoroutinesApi::class)
     private object UniffiRustFutureContinuationCallbackImpl :
         UniffiRustFutureContinuationCallback.Fn {
         override fun callback(`data`: Long, pollResult: Byte) {
