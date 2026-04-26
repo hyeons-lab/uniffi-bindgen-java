@@ -673,6 +673,8 @@ object FfiConverterTypeAnimal : FfiConverterRustBuffer<Animal> {
     }
 }
 
+
+
 // === FILE: uniffi/enum_types/FfiConverterTypeAnimalEnum.kt ===
 package uniffi.enum_types
 
@@ -741,6 +743,8 @@ object FfiConverterTypeAnimalLargeUInt : FfiConverterRustBuffer<AnimalLargeUInt>
         buf.putInt(value.ordinal + 1)
     }
 }
+
+
 
 // === FILE: uniffi/enum_types/FfiConverterTypeAnimalNamedEnum.kt ===
 package uniffi.enum_types
@@ -893,6 +897,8 @@ object FfiConverterTypeAnimalUInt : FfiConverterRustBuffer<AnimalUInt> {
         buf.putInt(value.ordinal + 1)
     }
 }
+
+
 
 // === FILE: uniffi/enum_types/FfiConverterTypeNamedEnumWithDefaults.kt ===
 package uniffi.enum_types

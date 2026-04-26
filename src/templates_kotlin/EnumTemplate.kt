@@ -43,7 +43,7 @@ object {{ ffi_converter_name }} : FfiConverterRustBuffer<{{ type_name }}> {
     }
 }
 {% else %}
-{#- Non-flat (associated-data) enum: render as `sealed class` with
+{# Non-flat (associated-data) enum: render as `sealed class` with
    per-variant nested types. Variants with fields → `data class`;
    variants without fields → `object` (singleton, gives value
    equality without needing Kotlin 1.9+ `data object`). FfiConverter
@@ -54,20 +54,35 @@ object {{ ffi_converter_name }} : FfiConverterRustBuffer<{{ type_name }}> {
    by `data class` variants, but `sealed class` is preferred here
    so the parent type can carry future shared state (cleaner for
    error-as-object in P3l-errors, where the parent extends
-   `kotlin.Exception(message)` and the variants delegate). -#}
+   `kotlin.Exception(message)` and the variants delegate).
+
+   Trait method overrides are emitted per-variant rather than at the
+   parent class level: `data class` variants auto-generate
+   `equals` / `hashCode` / `toString` that would shadow any parent
+   override, so each variant gets its own override block. The macro
+   call is identical inside every variant — it routes through the
+   parent enum's FfiConverter, since the trait FFI methods take a
+   `&Self = &TraitEnum` argument shape (not a per-variant shape).
+   `Comparable<{type_name}>` declared on the parent sealed class
+   propagates to every variant via inheritance. #}
+{%- let has_trait_impls = uniffi_trait_methods.display_fmt.is_some() || uniffi_trait_methods.debug_fmt.is_some() || uniffi_trait_methods.eq_eq.is_some() || uniffi_trait_methods.hash_hash.is_some() || uniffi_trait_methods.ord_cmp.is_some() %}
 // UNIFFI:FILE {{ type_name }}.kt
 package {{ config.package_name() }}
 
-sealed class {{ type_name }} {
+sealed class {{ type_name }}{% if uniffi_trait_methods.ord_cmp.is_some() %} : Comparable<{{ type_name }}>{% endif %} {
     {%- for variant in e.variants() %}
     {%- if variant.has_fields() %}
     data class {{ variant.name()|class_name(ci) }}(
         {%- for field in variant.fields() %}
         val {% call kotlin::field_name(field, loop.index) %}: {{ field|type_name(ci, config) }}{% if !loop.last %},{% endif %}
         {%- endfor %}
-    ) : {{ type_name }}()
+    ) : {{ type_name }}(){% if has_trait_impls %} {
+        {% call kotlin::uniffi_trait_impls(uniffi_trait_methods) %}
+    }{% endif %}
     {%- else %}
-    object {{ variant.name()|class_name(ci) }} : {{ type_name }}()
+    object {{ variant.name()|class_name(ci) }} : {{ type_name }}(){% if has_trait_impls %} {
+        {% call kotlin::uniffi_trait_impls(uniffi_trait_methods) %}
+    }{% endif %}
     {%- endif %}
     {%- endfor %}
 }
