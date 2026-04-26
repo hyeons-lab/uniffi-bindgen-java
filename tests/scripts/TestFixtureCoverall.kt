@@ -1,4 +1,4 @@
-// Coverall round-trip — accumulating across PRs.
+// Coverall round-trip — full coverage across PRs 3a/3b/3c.
 //
 // PR 3a: records (all scalar types + optionals via createSomeDict /
 // createNoneDict), Coveralls constructor + getName + strongCount,
@@ -9,12 +9,18 @@
 // into Rust + called back), NodeTrait round-trip with both
 // Rust- and Kotlin-implementing nodes.
 //
-// PR 3c: async + the remaining lifecycle bits.
+// PR 3c: async namespace function via runBlocking, Arc-sharing
+// lifecycle (cloneMe / takeOther / takeOtherFallible /
+// takeOtherPanic / falliblePanic), and FalliblePatch — both the
+// always-fail primary constructor and the always-fail alternate
+// `secondary()` companion factory.
 
+import kotlinx.coroutines.runBlocking
 import uniffi.coverall.ComplexException
 import uniffi.coverall.Coverall
 import uniffi.coverall.CoverallException
 import uniffi.coverall.Coveralls
+import uniffi.coverall.FalliblePatch
 import uniffi.coverall.Getters
 import uniffi.coverall.NodeTrait
 import uniffi.coverall.SimpleDict
@@ -209,6 +215,90 @@ fun main() {
         traits[0].setParent(null)
     } finally {
         traits.forEach { (it as AutoCloseable).close() }
+    }
+
+    // ── async namespace function via `runBlocking`. `asyncBool` is
+    // a non-throwing async fn returning Bool; routes through
+    // `UniffiAsyncHelpers.uniffiRustCallAsync` and the i8 future
+    // poll/complete/free triple. Tests both true and false to
+    // ensure the boolean lift round-trips correctly.
+    runBlocking {
+        check(Coverall.asyncBool(true))
+        check(!Coverall.asyncBool(false))
+    }
+    check(Coverall.getNumAlive() == 0L)
+
+    // ── Arc lifecycle across returned objects. `cloneMe` returns a
+    // second `Coveralls` instance, so the number of distinct Rust
+    // objects alive increases. `takeOther(c2)` then stashes an Arc
+    // to that other instance on the Rust side, extending its
+    // lifetime after the Kotlin wrapper is closed. Verifies the
+    // object-liveness and ref-count behaviour via
+    // `Coverall.getNumAlive()` and `strongCount()`.
+    Coveralls("test_return_objects").use { coveralls ->
+        check(Coverall.getNumAlive() == 1L)
+        check(coveralls.strongCount() == 2L)
+        coveralls.cloneMe().use { c2 ->
+            check(c2.getName() == coveralls.getName())
+            check(Coverall.getNumAlive() == 2L)
+            check(c2.strongCount() == 2L)
+
+            coveralls.takeOther(c2)
+            // Same number of distinct objects alive but `c2` has an
+            // extra ref count from the stash on the Rust side.
+            check(Coverall.getNumAlive() == 2L)
+            check(coveralls.strongCount() == 2L)
+            check(c2.strongCount() == 3L)
+        }
+        // c2's Kotlin wrapper is closed but Rust still holds the
+        // Arc via the takeOther stash.
+        check(Coverall.getNumAlive() == 2L)
+    }
+    // Closing the outer wrapper releases the stashed Arc; both
+    // objects drop.
+    check(Coverall.getNumAlive() == 0L)
+
+    // ── Throwing-takeOther variants. `takeOtherFallible` always
+    // throws CoverallException.TooManyHoles; `takeOtherPanic` and
+    // `falliblePanic` always panic on the Rust side, surfacing as
+    // InternalException.
+    Coveralls("test_throwing_take_other").use { coveralls ->
+        try {
+            coveralls.takeOtherFallible()
+            error("Expected CoverallException.TooManyHoles")
+        } catch (_: CoverallException.TooManyHoles) {
+            // expected
+        }
+        try {
+            coveralls.takeOtherPanic("expected panic: with an arc!")
+            error("Expected InternalException")
+        } catch (_: uniffi.coverall.InternalException) {
+            // expected
+        }
+        try {
+            coveralls.falliblePanic("Expected panic in a fallible function!")
+            error("Expected InternalException")
+        } catch (_: uniffi.coverall.InternalException) {
+            // expected
+        }
+    }
+    check(Coverall.getNumAlive() == 0L)
+
+    // ── FalliblePatch. Both the primary constructor `FalliblePatch()`
+    // and the alternate `FalliblePatch.secondary()` always throw on
+    // the Rust side. Each is annotated `@Throws(CoverallException)`
+    // by the codegen, so the catch type is required.
+    try {
+        FalliblePatch()
+        error("Expected primary FalliblePatch() to throw")
+    } catch (_: CoverallException) {
+        // expected
+    }
+    try {
+        FalliblePatch.secondary()
+        error("Expected FalliblePatch.secondary() to throw")
+    } catch (_: CoverallException) {
+        // expected
     }
 }
 
