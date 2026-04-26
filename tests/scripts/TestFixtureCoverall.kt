@@ -123,10 +123,13 @@ fun main() {
     // (surfaces as InternalException). Each branch verifies both
     // type discrimination and field values.
     Coveralls("test_complex_errors").use { coveralls ->
-        check(coveralls.maybeThrowComplex(0))
+        // `maybeThrowComplex` takes a `Byte`. Int literals fit
+        // in Byte's positive range here, but explicit `.toByte()`
+        // matches the rest of the file's convention.
+        check(coveralls.maybeThrowComplex(0.toByte()))
 
         try {
-            coveralls.maybeThrowComplex(1)
+            coveralls.maybeThrowComplex(1.toByte())
             error("Expected ComplexException.OsException")
         } catch (e: ComplexException.OsException) {
             check(e.code == 10.toShort())
@@ -134,21 +137,21 @@ fun main() {
         }
 
         try {
-            coveralls.maybeThrowComplex(2)
+            coveralls.maybeThrowComplex(2.toByte())
             error("Expected ComplexException.PermissionDenied")
         } catch (e: ComplexException.PermissionDenied) {
             check(e.reason == "Forbidden")
         }
 
         try {
-            coveralls.maybeThrowComplex(3)
+            coveralls.maybeThrowComplex(3.toByte())
             error("Expected ComplexException.UnknownException")
         } catch (e: ComplexException.UnknownException) {
             // No payload to assert; reaching the catch is the assertion.
         }
 
         try {
-            coveralls.maybeThrowComplex(4)
+            coveralls.maybeThrowComplex(4.toByte())
             error("Expected InternalException for the panic path")
         } catch (e: uniffi.coverall.InternalException) {
             // Rust panic surfaces as InternalException.
@@ -209,9 +212,13 @@ fun main() {
     }
 }
 
-// Shared exerciser for the `Getters` trait, used against both the
-// Rust-backed impl and the Kotlin one. Mirrors Java's
-// `testGettersFromJava` shape.
+// Shared exerciser for a representative subset of the `Getters`
+// trait, used against both the Rust-backed impl and the Kotlin
+// one. Covers the throwing paths (typed CoverallException +
+// typed ComplexException), the uppercase/optional behaviour
+// switch, and value passthrough. Skips `getList` and
+// `getNothing` — those are validated implicitly by
+// `Coverall.testGetters(g)` calling them on the Rust side.
 private fun exerciseGetters(g: Getters) {
     check(g.getBool(true, true) == false)
     check(g.getBool(true, false))
@@ -256,7 +263,7 @@ private class KotlinGetters : Getters {
 
     override fun getOption(v: String, arg2: Boolean): String? =
         when (v) {
-            "os-error" -> throw ComplexException.OsException(100, 200)
+            "os-error" -> throw ComplexException.OsException(100.toShort(), 200.toShort())
             "unknown-error" -> throw ComplexException.UnknownException()
             else ->
                 if (arg2) {
