@@ -15,8 +15,8 @@ sealed class {{ type_name }}(message: String) : kotlin.Exception(message){% if u
     {%- for variant in e.variants() %}
     class {{ variant|error_variant_name }}(message: String) : {{ type_name }}(message)
     {%- endfor %}
-{%- if has_trait_impls %}
-    {% call kotlin::uniffi_trait_impls(uniffi_trait_methods) %}
+{%- if has_trait_impls -%}
+{% call kotlin::uniffi_trait_impls(uniffi_trait_methods, "    ") %}
 {%- endif %}
 }
 
@@ -89,8 +89,8 @@ sealed class {{ type_name }}(message: String) : kotlin.Exception(message){% if u
         {%- endif -%}
     )
     {%- endfor %}
-{%- if has_trait_impls %}
-    {% call kotlin::uniffi_trait_impls(uniffi_trait_methods) %}
+{%- if has_trait_impls -%}
+{% call kotlin::uniffi_trait_impls(uniffi_trait_methods, "    ") %}
 {%- endif %}
 }
 

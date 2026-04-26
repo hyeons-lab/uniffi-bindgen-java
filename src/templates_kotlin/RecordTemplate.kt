@@ -17,11 +17,11 @@ data class {{ type_name }}(
        impl (which can deliberately ignore some fields). Explicit
        declarations win over `data class`'s auto-generated equals /
        hashCode / toString. -#}
-    {% call kotlin::uniffi_trait_impls(uniffi_trait_methods) %}
+{% call kotlin::uniffi_trait_impls(uniffi_trait_methods, "    ") %}
 }{% endif %}
 {%- else -%}
 object {{ type_name }}{% if uniffi_trait_methods.ord_cmp.is_some() %} : Comparable<{{ type_name }}>{% endif %}{% if has_trait_impls %} {
-    {% call kotlin::uniffi_trait_impls(uniffi_trait_methods) %}
+{% call kotlin::uniffi_trait_impls(uniffi_trait_methods, "    ") %}
 }{% endif %}
 {%- endif %}
 
