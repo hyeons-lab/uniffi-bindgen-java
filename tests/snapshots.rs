@@ -389,3 +389,25 @@ fn snapshot_time() -> Result<()> {
 fn snapshot_time_kotlin() -> Result<()> {
     snapshot_fixture_for("uniffi-fixture-time", "time_kotlin", Language::Kotlin, "kt")
 }
+
+/// Kotlin-side snapshot for the upstream `coverall` fixture — the
+/// comprehensive smoke fixture that exercises every UniFFI surface
+/// in one place: records with all scalar types + optionals, objects
+/// (including `[Trait, WithForeign]`), flat & non-flat enums, flat
+/// / rich / nested errors, sync & async traits, an async namespace
+/// function, return-only types, `[ByRef]` arguments, and
+/// `[Self=ByArc]` methods. Several of these combinations are not
+/// exercised by any other Kotlin snapshot in this test suite, so
+/// regressions in less-traveled template branches show up here
+/// first. Companion to the runtime `test_coverall_kotlin` smoke
+/// test (PRs 3a/3b/3c) — this snapshot catches codegen drift
+/// without paying the price of a full `kotlinc` round-trip.
+#[test]
+fn snapshot_coverall_kotlin() -> Result<()> {
+    snapshot_fixture_for(
+        "uniffi-fixture-coverall",
+        "coverall_kotlin",
+        Language::Kotlin,
+        "kt",
+    )
+}
