@@ -42,6 +42,16 @@
 // using Java FFM (Foreign Function & Memory API).
 {% include "NamespaceLibraryTemplate.kt" %}
 
+{#- Async support — only emitted when the interface declares any
+    `async fn` (free function or method). Generated `suspend fun`
+    signatures route through `UniffiAsyncHelpers.uniffiRustCallAsync`,
+    which uses `kotlinx.coroutines.suspendCancellableCoroutine` for
+    the polling continuation. Consumers must have
+    `org.jetbrains.kotlinx:kotlinx-coroutines-core` on classpath. -#}
+{%- if ci.has_async_fns() %}
+{% include "Async.kt" %}
+{%- endif %}
+
 // Primitive + String + ByteArray FfiConverters. All are emitted
 // unconditionally for now; a later revision will gate them on which types
 // the interface actually uses (mirroring the Java `Types.java` dispatch

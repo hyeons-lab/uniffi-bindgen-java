@@ -78,6 +78,17 @@ uniffiRustCallVoid{% if callable.throws_type().is_some() %}WithError{% endif %}
 {%- when None %}
 {%- endmatch %}
 {%- let is_method = callable.self_type().is_some() -%}
+{#- Async path: generate `suspend fun` and route through
+    `uniffiRustCallAsync`. Object methods wrap the FFI call in
+    `callWithHandle { uniffiHandle -> ... }` so the in-flight-call
+    counter holds the wrapper alive across the async polling loop;
+    namespace functions invoke the FFI directly. The lift function
+    is `Unit` for void returns (signature unifies on T = Unit) so
+    a single async helper handles both. -#}
+{%- if callable.is_async() %}
+{{ indent }}{% if is_override %}override {% endif %}suspend fun {{ callable.name()|fn_name }}({% call arg_list(callable) %}){% match callable.return_type() %}{% when Some(return_type) %}: {{ return_type|type_name(ci, config) }}{% when None %}{% endmatch %} =
+{{ indent }}    {% call call_async(callable, indent) %}
+{%- else %}
 {%- match callable.return_type() -%}
 {%- when Some(return_type) -%}
 {%- if return_type|has_primitive_ffi_type %}
@@ -131,6 +142,52 @@ uniffiRustCallVoid{% if callable.throws_type().is_some() %}WithError{% endif %}
 {{ indent }}}
 {%- endif %}
 {%- endmatch %}
+{%- endif %}
+{%- endmacro -%}
+
+{#
+// Inner macro for the async branch of `func_decl_inner`. Emits the
+// `uniffiRustCallAsync<T, F, E>` invocation: the rust-future handle
+// from `UniffiLib.<scaffolding>(args)`, then `pollFunc` /
+// `completeFunc` / `freeFunc` filters that resolve to FFI-shape-
+// specific stubs, then the `liftFunc` (lifts FFI return → user type;
+// `{ Unit }` for void), then the error handler (typed or null).
+// `indent` mirrors `func_decl_inner`'s parameter so multi-line
+// emission stays aligned with the enclosing `suspend fun` body.
+#}
+{%- macro call_async(callable, indent) -%}
+uniffiRustCallAsync(
+{%- match callable.self_type() %}
+{%- when Some with (Type::Object { .. }) %}
+{{ indent }}        callWithHandle { uniffiHandle ->
+{{ indent }}            UniffiLib.{{ callable.ffi_func().name() }}(uniffiHandle{% if !callable.arguments().is_empty() %}, {% call arg_list_lowered(callable) %}{% endif %})
+{{ indent }}        },
+{%- when Some(t) %}
+{{ indent }}        UniffiLib.{{ callable.ffi_func().name() }}({{ t|lower_fn }}(this){% if !callable.arguments().is_empty() %}, {% call arg_list_lowered(callable) %}{% endif %}),
+{%- when None %}
+{{ indent }}        UniffiLib.{{ callable.ffi_func().name() }}({% call arg_list_lowered(callable) %}),
+{%- endmatch %}
+{{ indent }}        // pollFunc
+{{ indent }}        {{ callable|async_poll(ci) }},
+{{ indent }}        // completeFunc
+{{ indent }}        {{ callable|async_complete(ci) }},
+{{ indent }}        // freeFunc
+{{ indent }}        {{ callable|async_free(ci) }},
+{{ indent }}        // liftFunc
+{%- match callable.return_type() %}
+{%- when Some(return_type) %}
+{{ indent }}        { {{ return_type|lift_fn }}(it) },
+{%- when None %}
+{{ indent }}        { Unit },
+{%- endmatch %}
+{{ indent }}        // errorHandler
+{%- match callable.throws_type() %}
+{%- when Some(error_type) %}
+{{ indent }}        {{ error_type|type_name(ci, config) }}ErrorHandler(),
+{%- when None %}
+{{ indent }}        UniffiNullRustCallStatusErrorHandler(),
+{%- endmatch %}
+{{ indent }}    )
 {%- endmacro -%}
 
 {#
