@@ -1,24 +1,28 @@
 
 {%- let e = ci.get_enum_definition(name).unwrap() %}
 {%- let uniffi_trait_methods = e.uniffi_trait_methods() %}
-{%- let has_trait_impls = uniffi_trait_methods.display_fmt.is_some() || uniffi_trait_methods.debug_fmt.is_some() || uniffi_trait_methods.eq_eq.is_some() || uniffi_trait_methods.hash_hash.is_some() || uniffi_trait_methods.ord_cmp.is_some() %}
 {%- if e.is_flat() %}
+{# Flat enum: Kotlin's `enum class` compiles to `java.lang.Enum`,
+   which has final `equals` / `hashCode` / `compareTo`. Only
+   Display / Debug → `toString()` is emittable here; we
+   deliberately skip the `Eq` / `Hash` / `Ord` arms even when
+   exported (the generated overrides would not compile). The `;`
+   after the last variant is required by Kotlin syntax when the
+   enum body has any further declarations. #}
+{%- let flat_fmt = uniffi_trait_methods.display_fmt.as_ref().or(uniffi_trait_methods.debug_fmt.as_ref()) %}
 // UNIFFI:FILE {{ type_name }}.kt
 package {{ config.package_name() }}
 
-{# Flat enum: only Display/Debug → toString are emittable here.
-   Kotlin enum class compiles to `java.lang.Enum`, which has
-   final equals/hashCode/compareTo — exporting Eq/Hash/Ord on a
-   flat enum produces invalid Kotlin (same constraint as the
-   Java backend; uniffi-rs doesn't reject it at the macro
-   level). The `;` after the last variant is required by Kotlin
-   syntax when the enum body has any further declarations. #}
 enum class {{ type_name }} {
     {%- for variant in e.variants() %}
     {{ variant|variant_name }}{% if !loop.last %},{% endif %}
-    {%- endfor %}{% if e.variants().is_empty() || has_trait_impls %};{% endif %}
-{% if has_trait_impls %}    {% call kotlin::uniffi_trait_impls(uniffi_trait_methods) %}
-{% endif %}}
+    {%- endfor %}{% if e.variants().is_empty() || flat_fmt.is_some() %};{% endif %}
+{%- if let Some(fmt) = flat_fmt %}
+
+    override fun toString(): String =
+        {{ fmt.return_type().unwrap()|lift_fn }}({% call kotlin::trait_ffi_call(fmt) %})
+{%- endif %}
+}
 
 // UNIFFI:FILE {{ ffi_converter_name }}.kt
 package {{ config.package_name() }}

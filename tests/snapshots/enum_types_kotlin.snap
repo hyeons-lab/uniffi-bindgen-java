@@ -5,7 +5,6 @@ expression: combined
 // === FILE: uniffi/enum_types/Animal.kt ===
 package uniffi.enum_types
 
-
 enum class Animal {
     DOG,
     CAT
@@ -29,7 +28,6 @@ sealed class AnimalEnum {
 // === FILE: uniffi/enum_types/AnimalLargeUInt.kt ===
 package uniffi.enum_types
 
-
 enum class AnimalLargeUInt {
     DOG,
     CAT
@@ -52,7 +50,6 @@ sealed class AnimalNamedEnum {
 
 // === FILE: uniffi/enum_types/AnimalNoReprInt.kt ===
 package uniffi.enum_types
-
 
 enum class AnimalNoReprInt {
     DOG,
@@ -198,7 +195,6 @@ data class AnimalRecord(
 // === FILE: uniffi/enum_types/AnimalSignedInt.kt ===
 package uniffi.enum_types
 
-
 enum class AnimalSignedInt {
     DOG,
     CAT,
@@ -210,7 +206,6 @@ enum class AnimalSignedInt {
 
 // === FILE: uniffi/enum_types/AnimalUInt.kt ===
 package uniffi.enum_types
-
 
 enum class AnimalUInt {
     DOG,
@@ -727,6 +722,7 @@ object FfiConverterTypeAnimalEnum : FfiConverterRustBuffer<AnimalEnum> {
 }
 
 
+
 // === FILE: uniffi/enum_types/FfiConverterTypeAnimalLargeUInt.kt ===
 package uniffi.enum_types
 
@@ -795,6 +791,7 @@ object FfiConverterTypeAnimalNamedEnum : FfiConverterRustBuffer<AnimalNamedEnum>
 }
 
 
+
 // === FILE: uniffi/enum_types/FfiConverterTypeAnimalNoReprInt.kt ===
 package uniffi.enum_types
 
@@ -813,6 +810,7 @@ object FfiConverterTypeAnimalNoReprInt : FfiConverterRustBuffer<AnimalNoReprInt>
         buf.putInt(value.ordinal + 1)
     }
 }
+
 
 
 // === FILE: uniffi/enum_types/FfiConverterTypeAnimalObject.kt ===
@@ -855,6 +853,7 @@ object FfiConverterTypeAnimalRecord : FfiConverterRustBuffer<AnimalRecord> {
     }
 }
 
+
 // === FILE: uniffi/enum_types/FfiConverterTypeAnimalSignedInt.kt ===
 package uniffi.enum_types
 
@@ -873,6 +872,7 @@ object FfiConverterTypeAnimalSignedInt : FfiConverterRustBuffer<AnimalSignedInt>
         buf.putInt(value.ordinal + 1)
     }
 }
+
 
 
 // === FILE: uniffi/enum_types/FfiConverterTypeAnimalUInt.kt ===

@@ -436,6 +436,7 @@ object FfiConverterTypeTraitErr : FfiConverterRustBuffer<TraitErr> {
 }
 
 
+
 // === FILE: uniffi/trait_methods_kt/FfiConverterTypeTraitFlatEnum.kt ===
 package uniffi.trait_methods_kt
 
@@ -716,12 +717,10 @@ class TraitErrErrorHandler : UniffiRustCallStatusErrorHandler<TraitErr> {
 // === FILE: uniffi/trait_methods_kt/TraitFlatEnum.kt ===
 package uniffi.trait_methods_kt
 
-
 enum class TraitFlatEnum {
     ALPHA,
     BETA,
     GAMMA;
-    
 
     override fun toString(): String =
         FfiConverterString.lift(UniffiHelpers.uniffiRustCall { _allocator, _status ->
