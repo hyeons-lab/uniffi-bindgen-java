@@ -6,7 +6,7 @@ The Java backend uses Java-native types where possible — `CompletableFuture` f
 
 The official upstream Kotlin bindings shipped by `uniffi-rs` are also usable from any JVM language including Java; this project's Kotlin backend differs in two main ways: it generates against Java's [Foreign Function & Memory API](https://docs.oracle.com/en/java/javase/21/core/foreign-function-and-memory-api.html) (Project Panama) rather than JNA — see [benches/](benches/) for the performance gap — and it stays in lockstep with the Java backend's wire format so the two outputs are layout-compatible.
 
-We highly reccommend you use [UniFFI's proc-macro definition](https://mozilla.github.io/uniffi-rs/latest/proc_macro/index.html) instead of UDL where possible. 
+We highly recommend you use [UniFFI's proc-macro definition](https://mozilla.github.io/uniffi-rs/latest/proc_macro/index.html) instead of UDL where possible.
 
 ## Requirements
 
@@ -115,7 +115,7 @@ object Arithmeticpm {
 ...
 ```
 
-The Kotlin output uses `object` for the namespace (so call sites read `Arithmeticpm.add(2, 4)` from Kotlin or `Arithmeticpm.INSTANCE.add(2, 4)` from Java), `data class` for records, `sealed class` for typed errors, and `suspend fun` (via `kotlinx.coroutines`) for async. See [tests/scripts/TestArithmetic.kt](tests/scripts/TestArithmetic.kt) for a runnable smoke test.
+The Kotlin output uses `object` for the namespace (so call sites read `Arithmeticpm.add(2, 4)` from Kotlin or `Arithmeticpm.INSTANCE.add(2, 4)` from Java), `data class` for records, `sealed class` for typed errors, and `suspend fun` (via `kotlinx.coroutines`) for async.
 
 ### Generate Scaffolding
 
@@ -159,7 +159,7 @@ The generated bindings can be configured via a `uniffi.toml` file. The Java back
 
 | Configuration name | Default | Description |
 | --- | --- | --- |
-| `package_name` | `uniffi.{namespace}` | The Java package name - ie, the value use in the `package` statement at the top of generated files. |
+| `package_name` | `uniffi.{namespace}` | The Java package name — the value used in the `package` statement at the top of generated files. |
 | `cdylib_name` | `uniffi_{namespace}` | The name of the compiled Rust library containing the FFI implementation (not needed when using `generate --library`) |
 | `generate_immutable_records` | `false` | Whether to generate records with immutable fields (`record` instead of `class`). |
 | `custom_types` | | A map which controls how custom types are exposed to Java. See the [custom types section of the UniFFI manual](https://mozilla.github.io/uniffi-rs/latest/udl/custom_types.html#custom-types-in-the-bindings-code) |
@@ -283,8 +283,8 @@ scope).
 ## Notes
 
 - failures in CompletableFutures will cause them to `completeExceptionally`. The error that caused the failure can be checked with `e.getCause()`. When implementing an async Rust trait in Java, you'll need to `completeExceptionally` instead of throwing. See `TestFixtureFutures.java` for an example trait implementation with errors. Kotlin equivalents: a failed `suspend fun` throws normally; in callback-interface impls, throwing from the user's `suspend` block surfaces as the corresponding Rust error variant via the typed-error path.
-- all primitives are signed in Java by default. Rust correctly interprets the a signed primitive value from Java as unsigned when told to. Callers of Uniffi functions need to be aware when making comparisons (`compareUnsigned`) or printing when a value is actually unsigned to code around footguns on this side. Kotlin has the same constraint — `Long`/`Int`/`Short`/`Byte` are signed; the wire treats them as unsigned where the Rust side is `u64`/`u32`/`u16`/`u8`. Use `Long.toULong()` etc. or `Long.compareUnsigned(...)` for unsigned semantics.
-- this is an internal note for development but because Enum variants are not cases/hanging off their parent in Java, their named standalone, they can conflict with any/all `java.lang` types. We could do extensive checking and forced renaming around this, but instead we use fully qualified names for all `java.lang` types in all templates. Ensure that when you're making changes you're not dropping those qualified names or adding generated code without them. The same shape applies to the Kotlin backend — variants are flat-named and the templates fully-qualify `kotlin.*` and `java.lang.*` references defensively.
+- all primitives are signed in Java by default. Rust correctly interprets a signed primitive value from Java as unsigned when told to. Callers of Uniffi functions need to be aware when making comparisons (`compareUnsigned`) or printing when a value is actually unsigned to code around footguns on this side. Kotlin has the same constraint — `Long`/`Int`/`Short`/`Byte` are signed; the wire treats them as unsigned where the Rust side is `u64`/`u32`/`u16`/`u8`. Use `Long.toULong()` etc. or `Long.compareUnsigned(...)` for unsigned semantics.
+- this is an internal note for development but because Enum variants are not cases/hanging off their parent in Java, they're named standalone, so they can conflict with any/all `java.lang` types. We could do extensive checking and forced renaming around this, but instead we use fully qualified names for all `java.lang` types in all templates. Ensure that when you're making changes you're not dropping those qualified names or adding generated code without them. The same shape applies to the Kotlin backend — variants are flat-named and the templates fully-qualify `kotlin.*` and `java.lang.*` references defensively.
 
 
 ## Unsupported features
@@ -296,7 +296,7 @@ scope).
 
 We pull down the pinned examples directly from Uniffi (currently v0.31.0) and run Java tests using the generated bindings. Run `cargo t` to run all of them.
 
-Kotlin runtime tests (which compile generated `.kt` output with `kotlinc` and run it on a JVM) are gated behind `#[ignore]` so the default `cargo test` invocation doesn't require `kotlinc`. Opt in with `cargo test -- --ignored` once `kotlinc` is on `$PATH` (or set `KOTLINC=/abs/path/to/kotlinc` to override discovery). The harness probes `kotlinc` location and the bundled `kotlin-stdlib.jar`; if neither resolves, the test prints a skip notice and returns success rather than failing. Snapshot tests for the Kotlin output run unconditionally as part of the default suite — those don't need `kotlinc`.
+The Kotlin backend has snapshot-level coverage in the default suite (string-compare against committed expected output for representative fixtures); these don't require `kotlinc` to run. A runtime smoke harness that invokes `kotlinc` and exercises the compiled output on a JVM is on the roadmap.
 
 Note that if you need additional toml entries for your test, you can put a `uniffi-extras.toml` as a sibling of the test and it will be read in addition to the base `uniffi.toml` for the example. See [CustomTypes](./tests/scripts/TestCustomTypes/) for an example. Settings in `uniffi-extras.toml` apply across all namespaces.
 
