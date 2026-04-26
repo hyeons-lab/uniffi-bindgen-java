@@ -247,10 +247,10 @@ class FallibleMegaphone internal constructor(
      * connected Rust peer. Any method call on a fake object will fail.
      */
     constructor(@Suppress("UNUSED_PARAMETER") noHandle: NoHandle) : this(UniffiWithHandle, 0L)
-    // Async constructors are not supported in this revision of the
-    // Kotlin backend. The primary constructor for `FallibleMegaphone` is
-    // `async` in the UDL, so it's omitted here; use a named constructor
-    // (if any) or wait for the async Kotlin phase to land.
+    // Primary constructor `new` is `async`. Kotlin
+    // constructors cannot be `suspend`, so it's emitted as a
+    // `companion object` factory (`FallibleMegaphone.new(...)`)
+    // below.
 
     override fun close() {
         // Single-shot. Subsequent close() calls are silent no-ops.
@@ -322,6 +322,25 @@ class FallibleMegaphone internal constructor(
     }
 
     
+    companion object {
+        
+        @Throws(MyException::class)
+        @JvmStatic
+        suspend fun new(): FallibleMegaphone =
+            UniffiAsyncHelpers.uniffiRustCallAsync(
+                UniffiLib.uniffi_uniffi_futures_fn_constructor_falliblemegaphone_new(),
+                // pollFunc
+                UniffiLib::ffi_uniffi_futures_rust_future_poll_u64,
+                // completeFunc
+                { _allocator, future, status -> UniffiLib.ffi_uniffi_futures_rust_future_complete_u64(future, status) },
+                // freeFunc
+                UniffiLib::ffi_uniffi_futures_rust_future_free_u64,
+                // liftFunc
+                { FfiConverterTypeFallibleMegaphone.lift(it) },
+                // errorHandler
+                MyExceptionErrorHandler(),
+            )
+    }
 }
 
 
@@ -1550,10 +1569,10 @@ class Megaphone internal constructor(
      * connected Rust peer. Any method call on a fake object will fail.
      */
     constructor(@Suppress("UNUSED_PARAMETER") noHandle: NoHandle) : this(UniffiWithHandle, 0L)
-    // Async constructors are not supported in this revision of the
-    // Kotlin backend. The primary constructor for `Megaphone` is
-    // `async` in the UDL, so it's omitted here; use a named constructor
-    // (if any) or wait for the async Kotlin phase to land.
+    // Primary constructor `new` is `async`. Kotlin
+    // constructors cannot be `suspend`, so it's emitted as a
+    // `companion object` factory (`Megaphone.new(...)`)
+    // below.
 
     override fun close() {
         // Single-shot. Subsequent close() calls are silent no-ops.
@@ -1710,8 +1729,37 @@ class Megaphone internal constructor(
     
     companion object {
         
-        // Async named constructor `secondary` skipped — async
-        // unsupported in this revision of the Kotlin backend.
+        @JvmStatic
+        suspend fun new(): Megaphone =
+            UniffiAsyncHelpers.uniffiRustCallAsync(
+                UniffiLib.uniffi_uniffi_futures_fn_constructor_megaphone_new(),
+                // pollFunc
+                UniffiLib::ffi_uniffi_futures_rust_future_poll_u64,
+                // completeFunc
+                { _allocator, future, status -> UniffiLib.ffi_uniffi_futures_rust_future_complete_u64(future, status) },
+                // freeFunc
+                UniffiLib::ffi_uniffi_futures_rust_future_free_u64,
+                // liftFunc
+                { FfiConverterTypeMegaphone.lift(it) },
+                // errorHandler
+                UniffiNullRustCallStatusErrorHandler(),
+            )
+        
+        @JvmStatic
+        suspend fun secondary(): Megaphone =
+            UniffiAsyncHelpers.uniffiRustCallAsync(
+                UniffiLib.uniffi_uniffi_futures_fn_constructor_megaphone_secondary(),
+                // pollFunc
+                UniffiLib::ffi_uniffi_futures_rust_future_poll_u64,
+                // completeFunc
+                { _allocator, future, status -> UniffiLib.ffi_uniffi_futures_rust_future_complete_u64(future, status) },
+                // freeFunc
+                UniffiLib::ffi_uniffi_futures_rust_future_free_u64,
+                // liftFunc
+                { FfiConverterTypeMegaphone.lift(it) },
+                // errorHandler
+                UniffiNullRustCallStatusErrorHandler(),
+            )
         
     }
 }
@@ -2182,10 +2230,10 @@ class TestObject internal constructor(
      * connected Rust peer. Any method call on a fake object will fail.
      */
     constructor(@Suppress("UNUSED_PARAMETER") noHandle: NoHandle) : this(UniffiWithHandle, 0L)
-    // Async constructors are not supported in this revision of the
-    // Kotlin backend. The primary constructor for `TestObject` is
-    // `async` in the UDL, so it's omitted here; use a named constructor
-    // (if any) or wait for the async Kotlin phase to land.
+    // Primary constructor `new` is `async`. Kotlin
+    // constructors cannot be `suspend`, so it's emitted as a
+    // `companion object` factory (`TestObject.new(...)`)
+    // below.
 
     override fun close() {
         // Single-shot. Subsequent close() calls are silent no-ops.
@@ -2257,6 +2305,24 @@ class TestObject internal constructor(
     }
 
     
+    companion object {
+        
+        @JvmStatic
+        suspend fun new(): TestObject =
+            UniffiAsyncHelpers.uniffiRustCallAsync(
+                UniffiLib.uniffi_uniffi_futures_fn_constructor_testobject_new(),
+                // pollFunc
+                UniffiLib::ffi_uniffi_futures_rust_future_poll_u64,
+                // completeFunc
+                { _allocator, future, status -> UniffiLib.ffi_uniffi_futures_rust_future_complete_u64(future, status) },
+                // freeFunc
+                UniffiLib::ffi_uniffi_futures_rust_future_free_u64,
+                // liftFunc
+                { FfiConverterTypeTestObject.lift(it) },
+                // errorHandler
+                UniffiNullRustCallStatusErrorHandler(),
+            )
+    }
 }
 
 
@@ -2293,10 +2359,10 @@ class UdlMegaphone internal constructor(
      * connected Rust peer. Any method call on a fake object will fail.
      */
     constructor(@Suppress("UNUSED_PARAMETER") noHandle: NoHandle) : this(UniffiWithHandle, 0L)
-    // Async constructors are not supported in this revision of the
-    // Kotlin backend. The primary constructor for `UdlMegaphone` is
-    // `async` in the UDL, so it's omitted here; use a named constructor
-    // (if any) or wait for the async Kotlin phase to land.
+    // Primary constructor `new` is `async`. Kotlin
+    // constructors cannot be `suspend`, so it's emitted as a
+    // `companion object` factory (`UdlMegaphone.new(...)`)
+    // below.
 
     override fun close() {
         // Single-shot. Subsequent close() calls are silent no-ops.
@@ -2388,8 +2454,37 @@ class UdlMegaphone internal constructor(
     
     companion object {
         
-        // Async named constructor `secondary` skipped — async
-        // unsupported in this revision of the Kotlin backend.
+        @JvmStatic
+        suspend fun new(): UdlMegaphone =
+            UniffiAsyncHelpers.uniffiRustCallAsync(
+                UniffiLib.uniffi_uniffi_futures_fn_constructor_udlmegaphone_new(),
+                // pollFunc
+                UniffiLib::ffi_uniffi_futures_rust_future_poll_u64,
+                // completeFunc
+                { _allocator, future, status -> UniffiLib.ffi_uniffi_futures_rust_future_complete_u64(future, status) },
+                // freeFunc
+                UniffiLib::ffi_uniffi_futures_rust_future_free_u64,
+                // liftFunc
+                { FfiConverterTypeUdlMegaphone.lift(it) },
+                // errorHandler
+                UniffiNullRustCallStatusErrorHandler(),
+            )
+        
+        @JvmStatic
+        suspend fun secondary(): UdlMegaphone =
+            UniffiAsyncHelpers.uniffiRustCallAsync(
+                UniffiLib.uniffi_uniffi_futures_fn_constructor_udlmegaphone_secondary(),
+                // pollFunc
+                UniffiLib::ffi_uniffi_futures_rust_future_poll_u64,
+                // completeFunc
+                { _allocator, future, status -> UniffiLib.ffi_uniffi_futures_rust_future_complete_u64(future, status) },
+                // freeFunc
+                UniffiLib::ffi_uniffi_futures_rust_future_free_u64,
+                // liftFunc
+                { FfiConverterTypeUdlMegaphone.lift(it) },
+                // errorHandler
+                UniffiNullRustCallStatusErrorHandler(),
+            )
         
     }
 }
