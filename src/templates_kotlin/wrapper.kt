@@ -130,6 +130,10 @@
 {%- let type_name = type_|type_name(ci, config) -%}
 {%- let ffi_converter_name = type_|ffi_converter_name -%}
 {% include "CustomTypeTemplate.kt" %}
+{%- when Type::Timestamp -%}
+{% include "TimestampHelper.kt" %}
+{%- when Type::Duration -%}
+{% include "DurationHelper.kt" %}
 {%- else -%}
 {%- endmatch -%}
 {%- endfor -%}

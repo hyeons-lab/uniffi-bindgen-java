@@ -3801,14 +3801,18 @@ public enum FfiConverterTimestamp implements FfiConverterRustBuffer<java.time.In
     @Override
     public java.time.Instant read(java.nio.ByteBuffer buf) {
         long seconds = buf.getLong();
-        // Type mismatch (should be u32) but we check for overflow/underflow below
+        // Type mismatch (should be u32) but we check the i32 → u32 range below
         long nanoseconds = (long) buf.getInt();
-        if (nanoseconds < 0) {
-            throw new java.time.DateTimeException("Instant nanoseconds exceed minimum or maximum supported by uniffi");
+        if (nanoseconds < 0 || nanoseconds > 999_999_999L) {
+            throw new java.time.DateTimeException("Instant nanoseconds out of range, must be 0..999_999_999");
         }
         if (seconds >= 0) {
             return java.time.Instant.EPOCH.plus(java.time.Duration.ofSeconds(seconds, nanoseconds));
         } else {
+            // `-Long.MIN_VALUE` overflows back to `Long.MIN_VALUE`; reject explicitly.
+            if (seconds == Long.MIN_VALUE) {
+                throw new java.time.DateTimeException("Instant seconds value Long.MIN_VALUE cannot be negated without overflow");
+            }
             return java.time.Instant.EPOCH.minus(java.time.Duration.ofSeconds(-seconds, nanoseconds));
         }
     }
