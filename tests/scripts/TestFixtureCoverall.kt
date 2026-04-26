@@ -1,13 +1,22 @@
-// PR 3a strategic subset: records (all scalar types + optionals via
-// createSomeDict / createNoneDict), Coveralls constructor + getName +
-// strongCount, one simple typed-error throw (maybeThrow ->
-// CoverallException.TooManyHoles), and Arc lifecycle via
-// Coverall.getNumAlive(). Traits, complex errors, and async land in
-// PRs 3b / 3c.
+// Coverall round-trip — accumulating across PRs.
+//
+// PR 3a: records (all scalar types + optionals via createSomeDict /
+// createNoneDict), Coveralls constructor + getName + strongCount,
+// CoverallException.TooManyHoles, Arc lifecycle.
+//
+// PR 3b: ComplexException variants with payload data, Getters trait
+// implemented in Rust (passed back to Kotlin) AND in Kotlin (passed
+// into Rust + called back), NodeTrait round-trip with both
+// Rust- and Kotlin-implementing nodes.
+//
+// PR 3c: async + the remaining lifecycle bits.
 
+import uniffi.coverall.ComplexException
 import uniffi.coverall.Coverall
 import uniffi.coverall.CoverallException
 import uniffi.coverall.Coveralls
+import uniffi.coverall.Getters
+import uniffi.coverall.NodeTrait
 import uniffi.coverall.SimpleDict
 
 fun main() {
@@ -108,6 +117,173 @@ fun main() {
         }
     }
     check(Coverall.getNumAlive() == 0L)
+
+    // ── ComplexException: variant-with-data error. Each input byte
+    // selects a different variant; byte 4 is the panic path
+    // (surfaces as InternalException). Each branch verifies both
+    // type discrimination and field values.
+    Coveralls("test_complex_errors").use { coveralls ->
+        check(coveralls.maybeThrowComplex(0))
+
+        try {
+            coveralls.maybeThrowComplex(1)
+            error("Expected ComplexException.OsException")
+        } catch (e: ComplexException.OsException) {
+            check(e.code == 10.toShort())
+            check(e.extendedCode == 20.toShort())
+        }
+
+        try {
+            coveralls.maybeThrowComplex(2)
+            error("Expected ComplexException.PermissionDenied")
+        } catch (e: ComplexException.PermissionDenied) {
+            check(e.reason == "Forbidden")
+        }
+
+        try {
+            coveralls.maybeThrowComplex(3)
+            error("Expected ComplexException.UnknownException")
+        } catch (e: ComplexException.UnknownException) {
+            // No payload to assert; reaching the catch is the assertion.
+        }
+
+        try {
+            coveralls.maybeThrowComplex(4)
+            error("Expected InternalException for the panic path")
+        } catch (e: uniffi.coverall.InternalException) {
+            // Rust panic surfaces as InternalException.
+        }
+    }
+    check(Coverall.getNumAlive() == 0L)
+
+    // ── Getters trait, Rust-implemented side. `makeRustGetters()`
+    // returns a Rust-backed `Getters` impl that round-trips through
+    // `testGetters(g: Getters)` (sanity check + opaque exercise of
+    // the FFI vtable on the way out).
+    val rustGetters = Coverall.makeRustGetters()
+    Coverall.testGetters(rustGetters)
+    exerciseGetters(rustGetters)
+    // Rust-backed `Getters` is a Coveralls-like AutoCloseable wrapper.
+    (rustGetters as AutoCloseable).close()
+
+    // ── Getters trait, Kotlin-implemented side. The same suite of
+    // calls, but the Kotlin object is now passing INTO Rust and
+    // being called BACK via the foreign-vtable upcall path. Catches
+    // any divergence between the two implementations.
+    val kotlinGetters = KotlinGetters()
+    Coverall.testGetters(kotlinGetters)
+    exerciseGetters(kotlinGetters)
+
+    // ── NodeTrait. `getTraits()` returns a list of Rust-backed
+    // NodeTrait wrappers. Set parents on them, then thread a
+    // Kotlin-backed NodeTrait into the same parent chain to verify
+    // both directions of the FFI work.
+    val traits = Coverall.getTraits()
+    try {
+        check(traits[0].name() == "node-1")
+        check(traits[1].name() == "node-2")
+        // Rust-side parent assignment.
+        traits[0].setParent(traits[1])
+        check(Coverall.ancestorNames(traits[0]) == listOf("node-2"))
+        check(Coverall.ancestorNames(traits[1]).isEmpty())
+        check(traits[0].getParent()?.name() == "node-2")
+
+        // Kotlin-implemented parent in the chain.
+        val kotlinNode = KotlinNode("node-kt")
+        traits[1].setParent(kotlinNode)
+        check(Coverall.ancestorNames(traits[0]) == listOf("node-2", "node-kt"))
+        check(Coverall.ancestorNames(traits[1]) == listOf("node-kt"))
+        check(Coverall.ancestorNames(kotlinNode).isEmpty())
+
+        // Detach + re-attach from the Kotlin side. This catches
+        // dangling-reference bugs in the upcall path.
+        traits[1].setParent(null)
+        kotlinNode.setParent(traits[0])
+        check(Coverall.ancestorNames(kotlinNode) == listOf("node-1", "node-2"))
+
+        // Drop all parents to release Rust-side strong refs.
+        kotlinNode.setParent(null)
+        traits[0].setParent(null)
+    } finally {
+        traits.forEach { (it as AutoCloseable).close() }
+    }
+}
+
+// Shared exerciser for the `Getters` trait, used against both the
+// Rust-backed impl and the Kotlin one. Mirrors Java's
+// `testGettersFromJava` shape.
+private fun exerciseGetters(g: Getters) {
+    check(g.getBool(true, true) == false)
+    check(g.getBool(true, false))
+    check(g.getString("hello", false) == "hello")
+    check(g.getString("hello", true) == "HELLO")
+    check(g.getOption("hello", true) == "HELLO")
+    check(g.getOption("", true) == null)
+    try {
+        g.getString("too-many-holes", true)
+        error("Expected CoverallException.TooManyHoles")
+    } catch (e: CoverallException.TooManyHoles) {
+        // expected
+    }
+    try {
+        g.getOption("os-error", true)
+        error("Expected ComplexException.OsException")
+    } catch (e: ComplexException.OsException) {
+        check(e.code == 100.toShort())
+        check(e.extendedCode == 200.toShort())
+    }
+    try {
+        g.getOption("unknown-error", true)
+        error("Expected ComplexException.UnknownException")
+    } catch (_: ComplexException.UnknownException) {
+        // expected
+    }
+}
+
+// Kotlin-side `Getters` impl. When passed into Rust (e.g. via
+// `testGetters`) it's looked up by handle and dispatched through
+// the foreign vtable; same instance can also be exercised
+// directly.
+private class KotlinGetters : Getters {
+    override fun getBool(v: Boolean, arg2: Boolean): Boolean = v != arg2
+
+    override fun getString(v: String, arg2: Boolean): String =
+        when (v) {
+            "too-many-holes" -> throw CoverallException.TooManyHoles("too many holes")
+            "unexpected-error" -> throw RuntimeException("unexpected error")
+            else -> if (arg2) v.uppercase() else v
+        }
+
+    override fun getOption(v: String, arg2: Boolean): String? =
+        when (v) {
+            "os-error" -> throw ComplexException.OsException(100, 200)
+            "unknown-error" -> throw ComplexException.UnknownException()
+            else ->
+                if (arg2) {
+                    if (v.isNotEmpty()) v.uppercase() else null
+                } else {
+                    v
+                }
+        }
+
+    override fun getList(v: IntArray, arg2: Boolean): IntArray = if (arg2) v else IntArray(0)
+
+    override fun getNothing(v: String) {}
+
+    override fun roundTripObject(coveralls: Coveralls): Coveralls = coveralls
+}
+
+// Kotlin-side `NodeTrait` impl. State is kept in a Kotlin field;
+// `getParent()` returns whatever `setParent()` last stashed.
+private class KotlinNode(private val nodeName: String) : NodeTrait {
+    private var currentParent: NodeTrait? = null
+
+    override fun name(): String = nodeName
+    override fun setParent(parent: NodeTrait?) {
+        currentParent = parent
+    }
+    override fun getParent(): NodeTrait? = currentParent
+    override fun strongCount(): Long = 0L
 }
 
 private fun almostEquals(a: Float, b: Float): Boolean = kotlin.math.abs(a - b) < 0.000001f
