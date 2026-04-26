@@ -40,6 +40,7 @@ mod callback_interface;
 mod compounds;
 mod custom;
 mod enum_;
+mod miscellany;
 mod object;
 mod primitives;
 mod record;
@@ -557,19 +558,8 @@ impl AsCodeType for Type {
                 Box::new(callback_interface::CallbackInterfaceCodeType::new(name))
             }
             Type::Custom { name, .. } => Box::new(custom::CustomCodeType::new(name)),
-
-            // Non-primitive types land in later phases. Panicking with a
-            // clear message at codegen time matches the P3d
-            // `FfiType::Struct` strategy: a fixture that exercises one of
-            // these surfaces the gap loudly rather than producing
-            // kotlinc-uncompilable output. Update each arm as the
-            // corresponding template support lands.
-            other => panic!(
-                "Kotlin CodeType not implemented for `{:?}` yet \
-                 (async support lands in a later phase). \
-                 See gen_kotlin/mod.rs.",
-                other
-            ),
+            Type::Timestamp => Box::new(miscellany::TimestampCodeType),
+            Type::Duration => Box::new(miscellany::DurationCodeType),
         }
     }
 }
