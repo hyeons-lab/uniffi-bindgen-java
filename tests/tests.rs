@@ -20,76 +20,13 @@ fn run_test(fixture_name: &str, test_file: &str) -> Result<()> {
     let out_dir = test_helper.create_out_dir(env!("CARGO_TARGET_TMPDIR"), &test_path)?;
     let cdylib_path = test_helper.cdylib_path()?;
 
-    // This whole block in designed to create a new TOML file if there is one in the fixture or a uniffi-extras.toml as a sibling of the test. The extras
-    // will be concatenated to the end of the base with extra if available.
-    let maybe_new_uniffi_toml_filename = {
-        let maybe_base_uniffi_toml_string =
-            find_uniffi_toml(fixture_name)?.and_then(read_file_contents);
-        let maybe_extra_uniffi_toml_string =
-            read_file_contents(test_path.with_file_name("uniffi-extras.toml"));
-
-        // final_string will be "" if there aren't any toml files to read.
-        let final_string: String = itertools::Itertools::intersperse(
-            vec![
-                maybe_base_uniffi_toml_string,
-                maybe_extra_uniffi_toml_string,
-            ]
-            .into_iter()
-            .flatten(),
-            "\n".to_string(),
-        )
-        .collect();
-
-        // If there wasn't anything read from the files, just return none so the default config file can be used.
-        if final_string.is_empty() {
-            None
-        } else {
-            //Create a unique(ish) filename for the fixture. We'll just accept that nanosecond uniqueness is good enough per fixture_name.
-            let current_time = SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .expect("Time went backwards")
-                .as_nanos();
-            let new_filename =
-                out_dir.with_file_name(format!("{}-{}.toml", fixture_name, current_time));
-            write_file_contents(&new_filename, &final_string)?;
-            Some(new_filename)
-        }
-    };
-
-    // Create BindgenPaths with cargo metadata layer and optional config override
-    let mut paths = BindgenPaths::default();
-    if let Some(config_path) = &maybe_new_uniffi_toml_filename {
-        paths.add_config_override_layer(config_path.clone());
-    }
-    paths.add_cargo_metadata_layer(false)?;
-    let loader = BindgenLoader::new(paths);
+    let loader = bindgen_loader_with_config_override(fixture_name, &test_path, &out_dir)?;
 
     // generate the fixture bindings
     let options = GenerateOptions::new(cdylib_path.clone(), out_dir.clone());
     generate(&loader, &options)?;
 
-    // Copy the cdylib to a flat directory for java.library.path.
-    // System.loadLibrary expects "lib<name>.dylib" (macOS) or "lib<name>.so" (Linux).
-    // The cdylib from cargo has a hash suffix, so we create a symlink with the
-    // expected name that System.loadLibrary will find.
-    let native_lib_dir = out_dir.join("native");
-    fs::create_dir_all(&native_lib_dir)?;
-    let cdylib_filename = cdylib_path.file_name().unwrap();
-    let cdylib_dest = native_lib_dir.join(cdylib_filename);
-    fs::copy(&cdylib_path, &cdylib_dest)?;
-
-    let extension = cdylib_path.extension().unwrap(); // "dylib" or "so"
-    let lib_base_name = cdylib_filename
-        .strip_prefix("lib")
-        .unwrap_or(cdylib_filename)
-        .split('-')
-        .next()
-        .unwrap_or(cdylib_filename);
-    let expected_lib_name = format!("lib{}.{}", lib_base_name, extension);
-    let symlink_path = native_lib_dir.join(&expected_lib_name);
-    if !symlink_path.exists() {
-        std::os::unix::fs::symlink(cdylib_dest.file_name().unwrap(), &symlink_path)?;
-    }
+    let native_lib_dir = prepare_native_lib_dir(&out_dir, &cdylib_path)?;
 
     // compile generated bindings and form jar
     let jar_file = build_jar(fixture_name, &out_dir)?;
@@ -238,8 +175,6 @@ fn run_kotlin_test(fixture_name: &str, test_file: &str) -> Result<()> {
         );
         return Ok(());
     };
-    let stdlib_jar = kotlin_stdlib_jar(&kotlinc)
-        .with_context(|| format!("locating kotlin-stdlib.jar near {kotlinc}"))?;
 
     let test_path = Utf8Path::new(".").join("tests").join(test_file);
     let test_helper = UniFFITestHelper::new(fixture_name)?;
@@ -252,9 +187,7 @@ fn run_kotlin_test(fixture_name: &str, test_file: &str) -> Result<()> {
     let out_dir = test_helper.create_out_dir(env!("CARGO_TARGET_TMPDIR"), &out_dir_key)?;
     let cdylib_path = test_helper.cdylib_path()?;
 
-    let mut paths = BindgenPaths::default();
-    paths.add_cargo_metadata_layer(false)?;
-    let loader = BindgenLoader::new(paths);
+    let loader = bindgen_loader_with_config_override(fixture_name, &test_path, &out_dir)?;
 
     let mut options = GenerateOptions::new(cdylib_path.clone(), out_dir.clone());
     options.language = Language::Kotlin;
@@ -262,7 +195,12 @@ fn run_kotlin_test(fixture_name: &str, test_file: &str) -> Result<()> {
 
     let native_lib_dir = prepare_native_lib_dir(&out_dir, &cdylib_path)?;
 
-    // Compile the generated `.kt` files into a single bindings JAR.
+    // Compile the generated `.kt` files into a single bindings JAR with
+    // `-include-runtime` so kotlin-stdlib classes get baked in. That
+    // makes the harness independent of where kotlinc keeps its bundled
+    // stdlib (Homebrew uses libexec/lib/, Linux distros use lib/, SDKMAN
+    // varies, etc.) at the cost of a ~5 MB heavier JAR — fine for a
+    // test harness that doesn't ship.
     let bindings_jar = out_dir.join(format!("{}-kt.jar", fixture_name));
     let kt_files: Vec<String> = glob::glob(out_dir.join("**/*.kt").as_str())?
         .flatten()
@@ -272,6 +210,7 @@ fn run_kotlin_test(fixture_name: &str, test_file: &str) -> Result<()> {
         bail!("no generated .kt files under {}", out_dir);
     }
     let kotlinc_status = Command::new(kotlinc.as_std_path())
+        .arg("-include-runtime")
         .arg("-d")
         .arg(bindings_jar.as_str())
         .args(&kt_files)
@@ -286,7 +225,9 @@ fn run_kotlin_test(fixture_name: &str, test_file: &str) -> Result<()> {
         );
     }
 
-    // Compile the test script against the bindings JAR.
+    // Compile the test script against the bindings JAR. kotlinc auto-
+    // includes its own stdlib at compile time, so no explicit classpath
+    // entry for kotlin-stdlib is needed here.
     let test_classes_dir = out_dir.join("test-classes");
     fs::create_dir_all(&test_classes_dir)?;
     let test_kotlinc_status = Command::new(kotlinc.as_std_path())
@@ -305,8 +246,11 @@ fn run_kotlin_test(fixture_name: &str, test_file: &str) -> Result<()> {
 
     // Run with FFM native-access flags + java.library.path. Top-level
     // `fun main()` in `Foo.kt` lands as class `FooKt` after kotlinc.
+    // The bindings JAR contains kotlin-stdlib classes (via
+    // `-include-runtime`), so it's the only classpath entry beyond
+    // the test classes dir.
     let main_class = format!("{}Kt", test_path.file_stem().unwrap());
-    let run_classpath = calc_classpath(vec![&bindings_jar, &test_classes_dir, &stdlib_jar]);
+    let run_classpath = calc_classpath(vec![&bindings_jar, &test_classes_dir]);
     let run_status = Command::new("java")
         .arg("-ea")
         .arg("--enable-native-access=ALL-UNNAMED")
@@ -347,43 +291,50 @@ fn kotlinc_path() -> Option<Utf8PathBuf> {
     }
 }
 
-/// Resolve the bundled `kotlin-stdlib.jar` next to a given
-/// `kotlinc` install. Two known layouts:
-/// - Homebrew: `<prefix>/bin/kotlinc` → `<prefix>/libexec/lib/kotlin-stdlib.jar`
-///   (the `bin/kotlinc` is a launcher script; the real install
-///   sits under `libexec/`).
-/// - Most Linux distros / SDKMAN: `<prefix>/bin/kotlinc` → `<prefix>/lib/kotlin-stdlib.jar`.
-fn kotlin_stdlib_jar(kotlinc: &Utf8Path) -> Result<Utf8PathBuf> {
-    let resolved = std::fs::canonicalize(kotlinc.as_std_path())
-        .with_context(|| format!("canonicalizing kotlinc at {kotlinc}"))?;
-    let resolved = Utf8PathBuf::try_from(resolved)
-        .map_err(|e| anyhow::anyhow!("non-UTF8 kotlinc path: {e}"))?;
-    let bin_dir = resolved
-        .parent()
-        .with_context(|| format!("kotlinc has no parent dir: {resolved}"))?;
-    let prefix = bin_dir
-        .parent()
-        .with_context(|| format!("kotlinc bin/ has no parent: {bin_dir}"))?;
+/// Build a `BindgenLoader` that consults the fixture's `uniffi.toml`
+/// (if any) merged with a sibling `uniffi-extras.toml` (if any), and
+/// also adds the cargo-metadata layer for fixture discovery. Same
+/// override semantics that `run_test` originally inlined; factored
+/// out so `run_kotlin_test` can use it too — without this, Kotlin
+/// runtime tests would silently generate different bindings for any
+/// fixture that ships TOML config (e.g. `TestCustomTypes`).
+fn bindgen_loader_with_config_override(
+    fixture_name: &str,
+    test_path: &Utf8Path,
+    out_dir: &Utf8Path,
+) -> Result<BindgenLoader> {
+    let maybe_base = find_uniffi_toml(fixture_name)?.and_then(read_file_contents);
+    let maybe_extras = read_file_contents(test_path.with_file_name("uniffi-extras.toml"));
 
-    for candidate in [
-        prefix.join("libexec").join("lib").join("kotlin-stdlib.jar"),
-        prefix.join("lib").join("kotlin-stdlib.jar"),
-    ] {
-        if candidate.is_file() {
-            return Ok(candidate);
-        }
+    // Concatenate base + extras (in order), preserving the original
+    // semantics: a missing file contributes nothing, both missing
+    // means no override.
+    let merged: String = itertools::Itertools::intersperse(
+        vec![maybe_base, maybe_extras].into_iter().flatten(),
+        "\n".to_string(),
+    )
+    .collect();
+
+    let mut paths = BindgenPaths::default();
+    if !merged.is_empty() {
+        // Unique-ish per-fixture override file; nanosecond is enough
+        // to avoid collisions across parallel fixtures.
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("Time went backwards")
+            .as_nanos();
+        let override_path = out_dir.with_file_name(format!("{fixture_name}-{now}.toml"));
+        write_file_contents(&override_path, &merged)?;
+        paths.add_config_override_layer(override_path);
     }
-    bail!(
-        "could not find kotlin-stdlib.jar under {} (tried libexec/lib/ and lib/)",
-        prefix
-    );
+    paths.add_cargo_metadata_layer(false)?;
+    Ok(BindgenLoader::new(paths))
 }
 
 /// Copy the cdylib into `out_dir/native/` and create the
 /// `lib<name>.<ext>` symlink that `System.loadLibrary` expects.
-/// Extracted from the original symlink dance in `run_test()` so
-/// the Java and Kotlin harnesses share a single canonical
-/// implementation.
+/// Shared by `run_test` (Java) and `run_kotlin_test` (Kotlin) so
+/// there's one canonical implementation of the symlink dance.
 fn prepare_native_lib_dir(out_dir: &Utf8Path, cdylib_path: &Utf8Path) -> Result<Utf8PathBuf> {
     let native_lib_dir = out_dir.join("native");
     fs::create_dir_all(&native_lib_dir)?;
