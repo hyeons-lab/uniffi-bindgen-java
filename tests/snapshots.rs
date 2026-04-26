@@ -373,3 +373,19 @@ fn snapshot_futures_kotlin() -> Result<()> {
         "kt",
     )
 }
+
+/// Snapshots for the upstream `uniffi-fixture-time` fixture, which
+/// exercises both `Timestamp` (`SystemTime`) and `Duration` —
+/// including pre-epoch instants (negative seconds), the only
+/// in-test-suite coverage of the miscellany code path. Both
+/// languages snapshot the same fixture so a divergence in the
+/// Java/Kotlin Helper templates surfaces as a paired diff.
+#[test]
+fn snapshot_time() -> Result<()> {
+    snapshot_fixture("uniffi-fixture-time", "time")
+}
+
+#[test]
+fn snapshot_time_kotlin() -> Result<()> {
+    snapshot_fixture_for("uniffi-fixture-time", "time_kotlin", Language::Kotlin, "kt")
+}
