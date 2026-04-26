@@ -228,11 +228,13 @@ fun main() {
     }
     check(Coverall.getNumAlive() == 0L)
 
-    // ── Arc-sharing lifecycle. `cloneMe` produces a new wrapper
-    // around the same Rust Arc (count goes up); `takeOther` stashes
-    // the Arc on the Rust side (another count up). Verifies the
-    // ref-count protocol against `Coverall.getNumAlive()` and
-    // `coveralls.strongCount()`.
+    // ── Arc lifecycle across returned objects. `cloneMe` returns a
+    // second `Coveralls` instance, so the number of distinct Rust
+    // objects alive increases. `takeOther(c2)` then stashes an Arc
+    // to that other instance on the Rust side, extending its
+    // lifetime after the Kotlin wrapper is closed. Verifies the
+    // object-liveness and ref-count behaviour via
+    // `Coverall.getNumAlive()` and `strongCount()`.
     Coveralls("test_return_objects").use { coveralls ->
         check(Coverall.getNumAlive() == 1L)
         check(coveralls.strongCount() == 2L)
