@@ -139,7 +139,7 @@ class AsyncParserImpl internal constructor(
     
     
     override suspend fun asString(delayMs: Int, `value`: Int): String =
-        uniffiRustCallAsync(
+        UniffiAsyncHelpers.uniffiRustCallAsync(
             callWithHandle { uniffiHandle ->
                 UniffiLib.uniffi_uniffi_futures_fn_method_asyncparser_as_string(uniffiHandle, delayMs, `value`)
             },
@@ -158,7 +158,7 @@ class AsyncParserImpl internal constructor(
     
     @Throws(ParserException::class)
     override suspend fun tryFromString(delayMs: Int, `value`: String): Int =
-        uniffiRustCallAsync(
+        UniffiAsyncHelpers.uniffiRustCallAsync(
             callWithHandle { uniffiHandle ->
                 UniffiLib.uniffi_uniffi_futures_fn_method_asyncparser_try_from_string(uniffiHandle, delayMs, FfiConverterString.lower(`value`))
             },
@@ -176,7 +176,7 @@ class AsyncParserImpl internal constructor(
     
     
     override suspend fun delay(delayMs: Int) =
-        uniffiRustCallAsync(
+        UniffiAsyncHelpers.uniffiRustCallAsync(
             callWithHandle { uniffiHandle ->
                 UniffiLib.uniffi_uniffi_futures_fn_method_asyncparser_delay(uniffiHandle, delayMs)
             },
@@ -195,7 +195,7 @@ class AsyncParserImpl internal constructor(
     
     @Throws(ParserException::class)
     override suspend fun tryDelay(delayMs: String) =
-        uniffiRustCallAsync(
+        UniffiAsyncHelpers.uniffiRustCallAsync(
             callWithHandle { uniffiHandle ->
                 UniffiLib.uniffi_uniffi_futures_fn_method_asyncparser_try_delay(uniffiHandle, FfiConverterString.lower(delayMs))
             },
@@ -1156,7 +1156,7 @@ object Futures {
 
 
     suspend fun alwaysReady(): Boolean =
-        uniffiRustCallAsync(
+        UniffiAsyncHelpers.uniffiRustCallAsync(
             UniffiLib.uniffi_uniffi_futures_fn_func_always_ready(),
             // pollFunc
             UniffiLib::ffi_uniffi_futures_rust_future_poll_i8,
@@ -1172,7 +1172,7 @@ object Futures {
 
 
     suspend fun asStringUsingTrait(obj: AsyncParser, delayMs: Int, `value`: Int): String =
-        uniffiRustCallAsync(
+        UniffiAsyncHelpers.uniffiRustCallAsync(
             UniffiLib.uniffi_uniffi_futures_fn_func_as_string_using_trait(FfiConverterTypeAsyncParser.lower(obj), delayMs, `value`),
             // pollFunc
             UniffiLib::ffi_uniffi_futures_rust_future_poll_rust_buffer,
@@ -1188,7 +1188,7 @@ object Futures {
 
 
     suspend fun asyncMaybeNewMegaphone(y: Boolean): Megaphone? =
-        uniffiRustCallAsync(
+        UniffiAsyncHelpers.uniffiRustCallAsync(
             UniffiLib.uniffi_uniffi_futures_fn_func_async_maybe_new_megaphone(FfiConverterBoolean.lower(y)),
             // pollFunc
             UniffiLib::ffi_uniffi_futures_rust_future_poll_rust_buffer,
@@ -1204,7 +1204,7 @@ object Futures {
 
 
     suspend fun asyncNewMegaphone(): Megaphone =
-        uniffiRustCallAsync(
+        UniffiAsyncHelpers.uniffiRustCallAsync(
             UniffiLib.uniffi_uniffi_futures_fn_func_async_new_megaphone(),
             // pollFunc
             UniffiLib::ffi_uniffi_futures_rust_future_poll_u64,
@@ -1220,7 +1220,7 @@ object Futures {
 
 
     suspend fun brokenSleep(ms: Short, failAfter: Short) =
-        uniffiRustCallAsync(
+        UniffiAsyncHelpers.uniffiRustCallAsync(
             UniffiLib.uniffi_uniffi_futures_fn_func_broken_sleep(ms, failAfter),
             // pollFunc
             UniffiLib::ffi_uniffi_futures_rust_future_poll_void,
@@ -1236,7 +1236,7 @@ object Futures {
 
 
     suspend fun cancelDelayUsingTrait(obj: AsyncParser, delayMs: Int) =
-        uniffiRustCallAsync(
+        UniffiAsyncHelpers.uniffiRustCallAsync(
             UniffiLib.uniffi_uniffi_futures_fn_func_cancel_delay_using_trait(FfiConverterTypeAsyncParser.lower(obj), delayMs),
             // pollFunc
             UniffiLib::ffi_uniffi_futures_rust_future_poll_void,
@@ -1252,7 +1252,7 @@ object Futures {
 
 
     suspend fun delayUsingTrait(obj: AsyncParser, delayMs: Int) =
-        uniffiRustCallAsync(
+        UniffiAsyncHelpers.uniffiRustCallAsync(
             UniffiLib.uniffi_uniffi_futures_fn_func_delay_using_trait(FfiConverterTypeAsyncParser.lower(obj), delayMs),
             // pollFunc
             UniffiLib::ffi_uniffi_futures_rust_future_poll_void,
@@ -1269,7 +1269,7 @@ object Futures {
 
     @Throws(MyException::class)
     suspend fun fallibleMe(doFail: Boolean): Byte =
-        uniffiRustCallAsync(
+        UniffiAsyncHelpers.uniffiRustCallAsync(
             UniffiLib.uniffi_uniffi_futures_fn_func_fallible_me(FfiConverterBoolean.lower(doFail)),
             // pollFunc
             UniffiLib::ffi_uniffi_futures_rust_future_poll_u8,
@@ -1286,7 +1286,7 @@ object Futures {
 
     @Throws(MyException::class)
     suspend fun fallibleStruct(doFail: Boolean): Megaphone =
-        uniffiRustCallAsync(
+        UniffiAsyncHelpers.uniffiRustCallAsync(
             UniffiLib.uniffi_uniffi_futures_fn_func_fallible_struct(FfiConverterBoolean.lower(doFail)),
             // pollFunc
             UniffiLib::ffi_uniffi_futures_rust_future_poll_u64,
@@ -1334,7 +1334,7 @@ object Futures {
 
 
     suspend fun newMyRecord(a: String, b: Int): MyRecord =
-        uniffiRustCallAsync(
+        UniffiAsyncHelpers.uniffiRustCallAsync(
             UniffiLib.uniffi_uniffi_futures_fn_func_new_my_record(FfiConverterString.lower(a), b),
             // pollFunc
             UniffiLib::ffi_uniffi_futures_rust_future_poll_rust_buffer,
@@ -1350,7 +1350,7 @@ object Futures {
 
 
     suspend fun say(): String =
-        uniffiRustCallAsync(
+        UniffiAsyncHelpers.uniffiRustCallAsync(
             UniffiLib.uniffi_uniffi_futures_fn_func_say(),
             // pollFunc
             UniffiLib::ffi_uniffi_futures_rust_future_poll_rust_buffer,
@@ -1366,7 +1366,7 @@ object Futures {
 
 
     suspend fun sayAfter(ms: Short, who: String): String =
-        uniffiRustCallAsync(
+        UniffiAsyncHelpers.uniffiRustCallAsync(
             UniffiLib.uniffi_uniffi_futures_fn_func_say_after(ms, FfiConverterString.lower(who)),
             // pollFunc
             UniffiLib::ffi_uniffi_futures_rust_future_poll_rust_buffer,
@@ -1382,7 +1382,7 @@ object Futures {
 
 
     suspend fun sayAfterWithMegaphone(megaphone: Megaphone, ms: Short, who: String): String =
-        uniffiRustCallAsync(
+        UniffiAsyncHelpers.uniffiRustCallAsync(
             UniffiLib.uniffi_uniffi_futures_fn_func_say_after_with_megaphone(FfiConverterTypeMegaphone.lower(megaphone), ms, FfiConverterString.lower(who)),
             // pollFunc
             UniffiLib::ffi_uniffi_futures_rust_future_poll_rust_buffer,
@@ -1398,7 +1398,7 @@ object Futures {
 
 
     suspend fun sayAfterWithTokio(ms: Short, who: String): String =
-        uniffiRustCallAsync(
+        UniffiAsyncHelpers.uniffiRustCallAsync(
             UniffiLib.uniffi_uniffi_futures_fn_func_say_after_with_tokio(ms, FfiConverterString.lower(who)),
             // pollFunc
             UniffiLib::ffi_uniffi_futures_rust_future_poll_rust_buffer,
@@ -1414,7 +1414,7 @@ object Futures {
 
 
     suspend fun sleep(ms: Short): Boolean =
-        uniffiRustCallAsync(
+        UniffiAsyncHelpers.uniffiRustCallAsync(
             UniffiLib.uniffi_uniffi_futures_fn_func_sleep(ms),
             // pollFunc
             UniffiLib::ffi_uniffi_futures_rust_future_poll_i8,
@@ -1430,7 +1430,7 @@ object Futures {
 
 
     suspend fun sleepNoReturn(ms: Short) =
-        uniffiRustCallAsync(
+        UniffiAsyncHelpers.uniffiRustCallAsync(
             UniffiLib.uniffi_uniffi_futures_fn_func_sleep_no_return(ms),
             // pollFunc
             UniffiLib::ffi_uniffi_futures_rust_future_poll_void,
@@ -1447,7 +1447,7 @@ object Futures {
 
     @Throws(ParserException::class)
     suspend fun tryDelayUsingTrait(obj: AsyncParser, delayMs: String) =
-        uniffiRustCallAsync(
+        UniffiAsyncHelpers.uniffiRustCallAsync(
             UniffiLib.uniffi_uniffi_futures_fn_func_try_delay_using_trait(FfiConverterTypeAsyncParser.lower(obj), FfiConverterString.lower(delayMs)),
             // pollFunc
             UniffiLib::ffi_uniffi_futures_rust_future_poll_void,
@@ -1464,7 +1464,7 @@ object Futures {
 
     @Throws(ParserException::class)
     suspend fun tryFromStringUsingTrait(obj: AsyncParser, delayMs: Int, `value`: String): Int =
-        uniffiRustCallAsync(
+        UniffiAsyncHelpers.uniffiRustCallAsync(
             UniffiLib.uniffi_uniffi_futures_fn_func_try_from_string_using_trait(FfiConverterTypeAsyncParser.lower(obj), delayMs, FfiConverterString.lower(`value`)),
             // pollFunc
             UniffiLib::ffi_uniffi_futures_rust_future_poll_i32,
@@ -1481,7 +1481,7 @@ object Futures {
 
     @Throws(AsyncException::class)
     suspend fun useSharedResource(options: SharedResourceOptions) =
-        uniffiRustCallAsync(
+        UniffiAsyncHelpers.uniffiRustCallAsync(
             UniffiLib.uniffi_uniffi_futures_fn_func_use_shared_resource(FfiConverterTypeSharedResourceOptions.lower(options)),
             // pollFunc
             UniffiLib::ffi_uniffi_futures_rust_future_poll_void,
@@ -1497,7 +1497,7 @@ object Futures {
 
 
     suspend fun void() =
-        uniffiRustCallAsync(
+        UniffiAsyncHelpers.uniffiRustCallAsync(
             UniffiLib.uniffi_uniffi_futures_fn_func_void(),
             // pollFunc
             UniffiLib::ffi_uniffi_futures_rust_future_poll_void,
@@ -1628,7 +1628,7 @@ class Megaphone internal constructor(
     
     @Throws(MyException::class)
     suspend fun fallibleMe(doFail: Boolean): Byte =
-        uniffiRustCallAsync(
+        UniffiAsyncHelpers.uniffiRustCallAsync(
             callWithHandle { uniffiHandle ->
                 UniffiLib.uniffi_uniffi_futures_fn_method_megaphone_fallible_me(uniffiHandle, FfiConverterBoolean.lower(doFail))
             },
@@ -1646,7 +1646,7 @@ class Megaphone internal constructor(
     
     
     suspend fun sayAfter(ms: Short, who: String): String =
-        uniffiRustCallAsync(
+        UniffiAsyncHelpers.uniffiRustCallAsync(
             callWithHandle { uniffiHandle ->
                 UniffiLib.uniffi_uniffi_futures_fn_method_megaphone_say_after(uniffiHandle, ms, FfiConverterString.lower(who))
             },
@@ -1664,7 +1664,7 @@ class Megaphone internal constructor(
     
     
     suspend fun sayAfterWithTokio(ms: Short, who: String): String =
-        uniffiRustCallAsync(
+        UniffiAsyncHelpers.uniffiRustCallAsync(
             callWithHandle { uniffiHandle ->
                 UniffiLib.uniffi_uniffi_futures_fn_method_megaphone_say_after_with_tokio(uniffiHandle, ms, FfiConverterString.lower(who))
             },
@@ -1692,7 +1692,7 @@ class Megaphone internal constructor(
     
     
     suspend fun silence(): String =
-        uniffiRustCallAsync(
+        UniffiAsyncHelpers.uniffiRustCallAsync(
             callWithHandle { uniffiHandle ->
                 UniffiLib.uniffi_uniffi_futures_fn_method_megaphone_silence(uniffiHandle)
             },
@@ -1996,7 +1996,7 @@ class SayAfterTrait internal constructor(
     
     
     suspend fun sayAfter(ms: Short, who: String): String =
-        uniffiRustCallAsync(
+        UniffiAsyncHelpers.uniffiRustCallAsync(
             callWithHandle { uniffiHandle ->
                 UniffiLib.uniffi_uniffi_futures_fn_method_sayaftertrait_say_after(uniffiHandle, ms, FfiConverterString.lower(who))
             },
@@ -2121,7 +2121,7 @@ class SayAfterUdlTrait internal constructor(
     
     
     suspend fun sayAfter(ms: Short, who: String): String =
-        uniffiRustCallAsync(
+        UniffiAsyncHelpers.uniffiRustCallAsync(
             callWithHandle { uniffiHandle ->
                 UniffiLib.uniffi_uniffi_futures_fn_method_sayafterudltrait_say_after(uniffiHandle, ms, FfiConverterString.lower(who))
             },
@@ -2370,7 +2370,7 @@ class UdlMegaphone internal constructor(
     
     
     suspend fun sayAfter(ms: Short, who: String): String =
-        uniffiRustCallAsync(
+        UniffiAsyncHelpers.uniffiRustCallAsync(
             callWithHandle { uniffiHandle ->
                 UniffiLib.uniffi_uniffi_futures_fn_method_udlmegaphone_say_after(uniffiHandle, ms, FfiConverterString.lower(who))
             },
@@ -2404,80 +2404,99 @@ package uniffi.fixture.futures
 // callback gets materialized — upstream uses JNA, we use FFM upcall
 // stubs (consistent with the rest of this Kotlin backend).
 //
-// Generated `suspend fun` enters `uniffiRustCallAsync` which loops
-// `pollFunc` → `suspendCancellableCoroutine` until the Rust future
-// reports READY, then calls `completeFunc` and lifts the result.
+// Generated `suspend fun` enters `UniffiAsyncHelpers.uniffiRustCallAsync`
+// which loops `pollFunc` → `suspendCancellableCoroutine` until the Rust
+// future reports READY, then calls `completeFunc` and lifts the result.
 // `freeFunc` is invoked in `finally` so the Rust future is dropped on
 // normal completion, exception, or coroutine cancellation.
 //
 // Runtime dependency: `org.jetbrains.kotlinx:kotlinx-coroutines-core`.
 // Consumers must have it on classpath. Standard for any modern
 // Kotlin async codebase.
+internal object UniffiAsyncHelpers {
+    const val UNIFFI_RUST_FUTURE_POLL_READY: Byte = 0
+    const val UNIFFI_RUST_FUTURE_POLL_WAKE: Byte = 1
 
-internal const val UNIFFI_RUST_FUTURE_POLL_READY: Byte = 0
-internal const val UNIFFI_RUST_FUTURE_POLL_WAKE: Byte = 1
+    // Continuation handle map. Rust calls our continuation callback with
+    // the handle it was given when polling started, and we look up the
+    // corresponding `CancellableContinuation` to resume. Every
+    // `insert(continuation)` pairs with either:
+    //   - A successful `removeOrNull` from the FFI callback (Rust polled
+    //     and signalled READY/WAKE), or
+    //   - A `removeOrNull` from `invokeOnCancellation` (the coroutine
+    //     was cancelled before Rust got around to calling back).
+    // Whichever runs first wins; the loser sees `null` and bails out.
+    val continuationHandleMap =
+        UniffiHandleMap<kotlinx.coroutines.CancellableContinuation<Byte>>()
 
-// Continuation handle map. Rust calls our continuation callback with
-// the handle it was given when polling started, and we look up the
-// corresponding `CancellableContinuation` to resume.
-internal val uniffiContinuationHandleMap =
-    UniffiHandleMap<kotlinx.coroutines.CancellableContinuation<Byte>>()
-
-// FFI continuation callback: resume the suspended coroutine with the
-// poll result byte. The callback is materialized as a singleton FFM
-// upcall stub once at class-init and reused for every async call.
-internal object UniffiRustFutureContinuationCallbackImpl :
-    UniffiRustFutureContinuationCallback.Fn {
-    override fun callback(`data`: Long, pollResult: Byte) {
-        // `resume` ignores the `onCancellation` arg in this version of
-        // kotlinx.coroutines; pass `null` for forward compatibility
-        // with the experimental `resume(value, onCancellation)` shape.
-        uniffiContinuationHandleMap.remove(`data`).resume(pollResult, null)
+    // FFI continuation callback: resume the suspended coroutine with the
+    // poll result byte. Materialized once at class-init as a singleton
+    // FFM upcall stub and reused for every async call. Safe against
+    // races on cancellation: a missing handle, an already-resumed
+    // continuation, or a cancelled continuation are all silently
+    // ignored — the upcall must NOT throw across the FFI boundary.
+    private object UniffiRustFutureContinuationCallbackImpl :
+        UniffiRustFutureContinuationCallback.Fn {
+        override fun callback(`data`: Long, pollResult: Byte) {
+            val continuation = continuationHandleMap.removeOrNull(`data`) ?: return
+            // `tryResume` returns a non-null token only when the
+            // continuation was actually resumed; null means the
+            // coroutine was cancelled or already resumed. In the
+            // success case we must call `completeResume` to finalize.
+            val token = continuation.tryResume(pollResult)
+            if (token != null) {
+                continuation.completeResume(token)
+            }
+        }
     }
-}
 
-// Arena.global() because the upcall stub must outlive every async
-// call (which can span arbitrary suspension points). Auto arenas
-// would reclaim the stub once the only Java reference dies, leaving
-// Rust holding a dangling function pointer.
-private val UNIFFI_CONTINUATION_CALLBACK_STUB: java.lang.foreign.MemorySegment =
-    UniffiRustFutureContinuationCallback.toUpcallStub(
-        UniffiRustFutureContinuationCallbackImpl,
-        java.lang.foreign.Arena.global(),
-    )
-
-// Single generic helper that handles both value-returning and void
-// async calls. For void, callers pass `F = Unit`, `completeFunc`
-// returns `Unit` (FFM `_complete_void` returns nothing → Kotlin
-// lambda implicitly produces Unit), and `liftFunc = { Unit }`.
-@Throws(Exception::class)
-internal suspend fun <T, F, E : Exception> uniffiRustCallAsync(
-    rustFuture: Long,
-    pollFunc: (Long, java.lang.foreign.MemorySegment, Long) -> Unit,
-    completeFunc: (java.lang.foreign.SegmentAllocator, Long, java.lang.foreign.MemorySegment) -> F,
-    freeFunc: (Long) -> Unit,
-    liftFunc: (F) -> T,
-    errorHandler: UniffiRustCallStatusErrorHandler<E>,
-): T {
-    try {
-        var pollResult: Byte
-        do {
-            pollResult = kotlinx.coroutines.suspendCancellableCoroutine { continuation ->
-                pollFunc(
-                    rustFuture,
-                    UNIFFI_CONTINUATION_CALLBACK_STUB,
-                    uniffiContinuationHandleMap.insert(continuation),
-                )
-            }
-        } while (pollResult != UNIFFI_RUST_FUTURE_POLL_READY)
-
-        return liftFunc(
-            UniffiHelpers.uniffiRustCallWithError(errorHandler) { allocator, status ->
-                completeFunc(allocator, rustFuture, status)
-            }
+    // Arena.global() because the upcall stub must outlive every async
+    // call (which can span arbitrary suspension points). Auto arenas
+    // would reclaim the stub once the only Java reference dies, leaving
+    // Rust holding a dangling function pointer.
+    private val UNIFFI_CONTINUATION_CALLBACK_STUB: java.lang.foreign.MemorySegment =
+        UniffiRustFutureContinuationCallback.toUpcallStub(
+            UniffiRustFutureContinuationCallbackImpl,
+            java.lang.foreign.Arena.global(),
         )
-    } finally {
-        freeFunc(rustFuture)
+
+    // Single generic helper that handles both value-returning and void
+    // async calls. For void, callers pass `F = Unit`, `completeFunc`
+    // returns `Unit` (FFM `_complete_void` returns nothing → Kotlin
+    // lambda implicitly produces Unit), and `liftFunc = { Unit }`.
+    @Throws(Exception::class)
+    suspend fun <T, F, E : Exception> uniffiRustCallAsync(
+        rustFuture: Long,
+        pollFunc: (Long, java.lang.foreign.MemorySegment, Long) -> Unit,
+        completeFunc: (java.lang.foreign.SegmentAllocator, Long, java.lang.foreign.MemorySegment) -> F,
+        freeFunc: (Long) -> Unit,
+        liftFunc: (F) -> T,
+        errorHandler: UniffiRustCallStatusErrorHandler<E>,
+    ): T {
+        try {
+            var pollResult: Byte
+            do {
+                pollResult = kotlinx.coroutines.suspendCancellableCoroutine { continuation ->
+                    val handle = continuationHandleMap.insert(continuation)
+                    // If the coroutine is cancelled before Rust calls
+                    // the continuation callback, drop our handle entry
+                    // so a late callback finds nothing and silently
+                    // exits (`removeOrNull` returns null).
+                    continuation.invokeOnCancellation {
+                        continuationHandleMap.removeOrNull(handle)
+                    }
+                    pollFunc(rustFuture, UNIFFI_CONTINUATION_CALLBACK_STUB, handle)
+                }
+            } while (pollResult != UNIFFI_RUST_FUTURE_POLL_READY)
+
+            return liftFunc(
+                UniffiHelpers.uniffiRustCallWithError(errorHandler) { allocator, status ->
+                    completeFunc(allocator, rustFuture, status)
+                }
+            )
+        } finally {
+            freeFunc(rustFuture)
+        }
     }
 }
 
@@ -3996,10 +4015,15 @@ internal class UniffiHandleMap<T : Any> {
     fun remove(handle: Long): T =
         map.remove(handle) ?: throw InternalException("UniffiHandleMap: Invalid handle")
 
+    // Single-use, non-throwing variant — returns null if the handle
+    // is missing instead of raising. Used by the async runtime where
+    // a coroutine cancellation race may have already removed the
+    // entry before the Rust-side continuation callback fires.
+    fun removeOrNull(handle: Long): T? = map.remove(handle)
+
     // Clone a handle: insert the same object again under a new handle.
     fun clone(handle: Long): Long = insert(get(handle))
 }
-
 
 // === FILE: uniffi/fixture/futures/UniffiHelpers.kt ===
 package uniffi.fixture.futures

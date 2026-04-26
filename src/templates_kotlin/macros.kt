@@ -156,7 +156,7 @@ uniffiRustCallVoid{% if callable.throws_type().is_some() %}WithError{% endif %}
 // emission stays aligned with the enclosing `suspend fun` body.
 #}
 {%- macro call_async(callable, indent) -%}
-uniffiRustCallAsync(
+UniffiAsyncHelpers.uniffiRustCallAsync(
 {%- match callable.self_type() %}
 {%- when Some with (Type::Object { .. }) %}
 {{ indent }}        callWithHandle { uniffiHandle ->
