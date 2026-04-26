@@ -722,6 +722,7 @@ object FfiConverterTypeAnimalEnum : FfiConverterRustBuffer<AnimalEnum> {
 }
 
 
+
 // === FILE: uniffi/enum_types/FfiConverterTypeAnimalLargeUInt.kt ===
 package uniffi.enum_types
 
@@ -790,6 +791,7 @@ object FfiConverterTypeAnimalNamedEnum : FfiConverterRustBuffer<AnimalNamedEnum>
 }
 
 
+
 // === FILE: uniffi/enum_types/FfiConverterTypeAnimalNoReprInt.kt ===
 package uniffi.enum_types
 
@@ -808,6 +810,7 @@ object FfiConverterTypeAnimalNoReprInt : FfiConverterRustBuffer<AnimalNoReprInt>
         buf.putInt(value.ordinal + 1)
     }
 }
+
 
 
 // === FILE: uniffi/enum_types/FfiConverterTypeAnimalObject.kt ===
@@ -850,6 +853,7 @@ object FfiConverterTypeAnimalRecord : FfiConverterRustBuffer<AnimalRecord> {
     }
 }
 
+
 // === FILE: uniffi/enum_types/FfiConverterTypeAnimalSignedInt.kt ===
 package uniffi.enum_types
 
@@ -868,6 +872,7 @@ object FfiConverterTypeAnimalSignedInt : FfiConverterRustBuffer<AnimalSignedInt>
         buf.putInt(value.ordinal + 1)
     }
 }
+
 
 
 // === FILE: uniffi/enum_types/FfiConverterTypeAnimalUInt.kt ===

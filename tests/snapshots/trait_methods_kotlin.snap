@@ -391,6 +391,71 @@ object FfiConverterString : FfiConverter<String, java.lang.foreign.MemorySegment
 }
 
 
+// === FILE: uniffi/trait_methods_kt/FfiConverterTypeTraitErr.kt ===
+package uniffi.trait_methods_kt
+
+object FfiConverterTypeTraitErr : FfiConverterRustBuffer<TraitErr> {
+    override fun read(buf: java.nio.ByteBuffer): TraitErr =
+        when (buf.getInt()) {
+            1 -> TraitErr.Network(
+                FfiConverterString.read(buf)
+            )
+            2 -> TraitErr.Server(
+                FfiConverterInt.read(buf),
+                FfiConverterString.read(buf)
+            )
+            else -> throw RuntimeException("invalid error enum value, something is very wrong!!")
+        }
+
+    override fun allocationSize(value: TraitErr): Long =
+        when (value) {
+            is TraitErr.Network -> (
+                4L
+                + FfiConverterString.allocationSize(value.reason)
+            )
+            is TraitErr.Server -> (
+                4L
+                + FfiConverterInt.allocationSize(value.code)
+                + FfiConverterString.allocationSize(value.reason)
+            )
+        }
+
+    override fun write(value: TraitErr, buf: java.nio.ByteBuffer) {
+        when (value) {
+            is TraitErr.Network -> {
+                buf.putInt(1)
+                FfiConverterString.write(value.reason, buf)
+            }
+            is TraitErr.Server -> {
+                buf.putInt(2)
+                FfiConverterInt.write(value.code, buf)
+                FfiConverterString.write(value.reason, buf)
+            }
+        }
+    }
+}
+
+
+
+// === FILE: uniffi/trait_methods_kt/FfiConverterTypeTraitFlatEnum.kt ===
+package uniffi.trait_methods_kt
+
+object FfiConverterTypeTraitFlatEnum : FfiConverterRustBuffer<TraitFlatEnum> {
+    override fun read(buf: java.nio.ByteBuffer): TraitFlatEnum {
+        try {
+            return TraitFlatEnum.values()[buf.getInt() - 1]
+        } catch (e: IndexOutOfBoundsException) {
+            throw RuntimeException("invalid enum value, something is very wrong!!", e)
+        }
+    }
+
+    override fun allocationSize(value: TraitFlatEnum): Long = 4L
+
+    override fun write(value: TraitFlatEnum, buf: java.nio.ByteBuffer) {
+        buf.putInt(value.ordinal + 1)
+    }
+}
+
 // === FILE: uniffi/trait_methods_kt/FfiConverterTypeTraitObj.kt ===
 package uniffi.trait_methods_kt
 // FfiConverter routes `TraitObj` across the FFI as an 8-byte
@@ -433,6 +498,7 @@ object FfiConverterTypeTraitRec : FfiConverterRustBuffer<TraitRec> {
         FfiConverterInt.write(value.i, buf)
     }
 }
+
 // === FILE: uniffi/trait_methods_kt/ForeignBytes.kt ===
 package uniffi.trait_methods_kt
 
@@ -598,6 +664,68 @@ object RustBuffer {
         }
         return getData(seg).reinterpret(capacity).asByteBuffer().order(java.nio.ByteOrder.BIG_ENDIAN)
     }
+}
+
+
+// === FILE: uniffi/trait_methods_kt/TraitErr.kt ===
+package uniffi.trait_methods_kt
+
+sealed class TraitErr(message: String) : kotlin.Exception(message), Comparable<TraitErr> {
+    class Network(
+        val reason: String
+    ) : TraitErr("reason=${reason}")
+    class Server(
+        val code: Int,
+        val reason: String
+    ) : TraitErr("code=${code}, reason=${reason}")
+    
+
+    override fun toString(): String =
+        FfiConverterString.lift(UniffiHelpers.uniffiRustCall { _allocator, _status ->
+            UniffiLib.uniffi_uniffi_fixture_trait_methods_kt_fn_method_traiterr_uniffi_trait_display(_allocator, FfiConverterTypeTraitErr.lower(this), _status)
+        })
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is TraitErr) return false
+        return FfiConverterBoolean.lift(UniffiHelpers.uniffiRustCall { _allocator, _status ->
+            UniffiLib.uniffi_uniffi_fixture_trait_methods_kt_fn_method_traiterr_uniffi_trait_eq_eq(FfiConverterTypeTraitErr.lower(this), FfiConverterTypeTraitErr.lower(other), _status)
+        })
+    }
+
+    override fun hashCode(): Int =
+        FfiConverterLong.lift(UniffiHelpers.uniffiRustCall { _allocator, _status ->
+            UniffiLib.uniffi_uniffi_fixture_trait_methods_kt_fn_method_traiterr_uniffi_trait_hash(FfiConverterTypeTraitErr.lower(this), _status)
+        }).toInt()
+
+    override fun compareTo(other: TraitErr): Int =
+        FfiConverterByte.lift(UniffiHelpers.uniffiRustCall { _allocator, _status ->
+            UniffiLib.uniffi_uniffi_fixture_trait_methods_kt_fn_method_traiterr_uniffi_trait_ord_cmp(FfiConverterTypeTraitErr.lower(this), FfiConverterTypeTraitErr.lower(other), _status)
+        }).toInt()
+}
+
+
+// === FILE: uniffi/trait_methods_kt/TraitErrErrorHandler.kt ===
+package uniffi.trait_methods_kt
+
+class TraitErrErrorHandler : UniffiRustCallStatusErrorHandler<TraitErr> {
+    override fun lift(errorBuf: java.lang.foreign.MemorySegment): TraitErr =
+        FfiConverterTypeTraitErr.lift(errorBuf)
+}
+
+
+// === FILE: uniffi/trait_methods_kt/TraitFlatEnum.kt ===
+package uniffi.trait_methods_kt
+
+enum class TraitFlatEnum {
+    ALPHA,
+    BETA,
+    GAMMA;
+
+    override fun toString(): String =
+        FfiConverterString.lift(UniffiHelpers.uniffiRustCall { _allocator, _status ->
+            UniffiLib.uniffi_uniffi_fixture_trait_methods_kt_fn_method_traitflatenum_uniffi_trait_display(_allocator, FfiConverterTypeTraitFlatEnum.lower(this), _status)
+        })
 }
 
 
@@ -2382,6 +2510,157 @@ internal object UniffiLib {
                 other,
                 uniffiOutErr,
             ) as Byte
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // uniffi_uniffi_fixture_trait_methods_kt_fn_method_traiterr_uniffi_trait_display
+    private val MH_uniffi_uniffi_fixture_trait_methods_kt_fn_method_traiterr_uniffi_trait_display: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_fixture_trait_methods_kt_fn_method_traiterr_uniffi_trait_display",
+        java.lang.foreign.FunctionDescriptor.of(
+            RustBuffer.LAYOUT,
+            RustBuffer.LAYOUT,
+            java.lang.foreign.ValueLayout.ADDRESS,
+        ),
+    )
+
+    fun uniffi_uniffi_fixture_trait_methods_kt_fn_method_traiterr_uniffi_trait_display(
+        allocator: java.lang.foreign.SegmentAllocator,
+        ptr: java.lang.foreign.MemorySegment,
+        uniffiOutErr: java.lang.foreign.MemorySegment,
+    ): java.lang.foreign.MemorySegment =
+        try {
+            MH_uniffi_uniffi_fixture_trait_methods_kt_fn_method_traiterr_uniffi_trait_display.invokeExact(
+                allocator,
+                ptr,
+                uniffiOutErr,
+            ) as java.lang.foreign.MemorySegment
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // uniffi_uniffi_fixture_trait_methods_kt_fn_method_traiterr_uniffi_trait_eq_eq
+    private val MH_uniffi_uniffi_fixture_trait_methods_kt_fn_method_traiterr_uniffi_trait_eq_eq: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_fixture_trait_methods_kt_fn_method_traiterr_uniffi_trait_eq_eq",
+        java.lang.foreign.FunctionDescriptor.of(
+            java.lang.foreign.ValueLayout.JAVA_BYTE,
+            RustBuffer.LAYOUT,
+            RustBuffer.LAYOUT,
+            java.lang.foreign.ValueLayout.ADDRESS,
+        ),
+    )
+
+    fun uniffi_uniffi_fixture_trait_methods_kt_fn_method_traiterr_uniffi_trait_eq_eq(
+        ptr: java.lang.foreign.MemorySegment,
+        other: java.lang.foreign.MemorySegment,
+        uniffiOutErr: java.lang.foreign.MemorySegment,
+    ): Byte =
+        try {
+            MH_uniffi_uniffi_fixture_trait_methods_kt_fn_method_traiterr_uniffi_trait_eq_eq.invokeExact(
+                ptr,
+                other,
+                uniffiOutErr,
+            ) as Byte
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // uniffi_uniffi_fixture_trait_methods_kt_fn_method_traiterr_uniffi_trait_eq_ne
+    private val MH_uniffi_uniffi_fixture_trait_methods_kt_fn_method_traiterr_uniffi_trait_eq_ne: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_fixture_trait_methods_kt_fn_method_traiterr_uniffi_trait_eq_ne",
+        java.lang.foreign.FunctionDescriptor.of(
+            java.lang.foreign.ValueLayout.JAVA_BYTE,
+            RustBuffer.LAYOUT,
+            RustBuffer.LAYOUT,
+            java.lang.foreign.ValueLayout.ADDRESS,
+        ),
+    )
+
+    fun uniffi_uniffi_fixture_trait_methods_kt_fn_method_traiterr_uniffi_trait_eq_ne(
+        ptr: java.lang.foreign.MemorySegment,
+        other: java.lang.foreign.MemorySegment,
+        uniffiOutErr: java.lang.foreign.MemorySegment,
+    ): Byte =
+        try {
+            MH_uniffi_uniffi_fixture_trait_methods_kt_fn_method_traiterr_uniffi_trait_eq_ne.invokeExact(
+                ptr,
+                other,
+                uniffiOutErr,
+            ) as Byte
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // uniffi_uniffi_fixture_trait_methods_kt_fn_method_traiterr_uniffi_trait_hash
+    private val MH_uniffi_uniffi_fixture_trait_methods_kt_fn_method_traiterr_uniffi_trait_hash: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_fixture_trait_methods_kt_fn_method_traiterr_uniffi_trait_hash",
+        java.lang.foreign.FunctionDescriptor.of(
+            java.lang.foreign.ValueLayout.JAVA_LONG,
+            RustBuffer.LAYOUT,
+            java.lang.foreign.ValueLayout.ADDRESS,
+        ),
+    )
+
+    fun uniffi_uniffi_fixture_trait_methods_kt_fn_method_traiterr_uniffi_trait_hash(
+        ptr: java.lang.foreign.MemorySegment,
+        uniffiOutErr: java.lang.foreign.MemorySegment,
+    ): Long =
+        try {
+            MH_uniffi_uniffi_fixture_trait_methods_kt_fn_method_traiterr_uniffi_trait_hash.invokeExact(
+                ptr,
+                uniffiOutErr,
+            ) as Long
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // uniffi_uniffi_fixture_trait_methods_kt_fn_method_traiterr_uniffi_trait_ord_cmp
+    private val MH_uniffi_uniffi_fixture_trait_methods_kt_fn_method_traiterr_uniffi_trait_ord_cmp: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_fixture_trait_methods_kt_fn_method_traiterr_uniffi_trait_ord_cmp",
+        java.lang.foreign.FunctionDescriptor.of(
+            java.lang.foreign.ValueLayout.JAVA_BYTE,
+            RustBuffer.LAYOUT,
+            RustBuffer.LAYOUT,
+            java.lang.foreign.ValueLayout.ADDRESS,
+        ),
+    )
+
+    fun uniffi_uniffi_fixture_trait_methods_kt_fn_method_traiterr_uniffi_trait_ord_cmp(
+        ptr: java.lang.foreign.MemorySegment,
+        other: java.lang.foreign.MemorySegment,
+        uniffiOutErr: java.lang.foreign.MemorySegment,
+    ): Byte =
+        try {
+            MH_uniffi_uniffi_fixture_trait_methods_kt_fn_method_traiterr_uniffi_trait_ord_cmp.invokeExact(
+                ptr,
+                other,
+                uniffiOutErr,
+            ) as Byte
+        } catch (ex: Throwable) {
+            throw AssertionError("invokeExact failed", ex)
+        }
+
+    // uniffi_uniffi_fixture_trait_methods_kt_fn_method_traitflatenum_uniffi_trait_display
+    private val MH_uniffi_uniffi_fixture_trait_methods_kt_fn_method_traitflatenum_uniffi_trait_display: java.lang.invoke.MethodHandle = findDowncallHandle(
+        "uniffi_uniffi_fixture_trait_methods_kt_fn_method_traitflatenum_uniffi_trait_display",
+        java.lang.foreign.FunctionDescriptor.of(
+            RustBuffer.LAYOUT,
+            RustBuffer.LAYOUT,
+            java.lang.foreign.ValueLayout.ADDRESS,
+        ),
+    )
+
+    fun uniffi_uniffi_fixture_trait_methods_kt_fn_method_traitflatenum_uniffi_trait_display(
+        allocator: java.lang.foreign.SegmentAllocator,
+        ptr: java.lang.foreign.MemorySegment,
+        uniffiOutErr: java.lang.foreign.MemorySegment,
+    ): java.lang.foreign.MemorySegment =
+        try {
+            MH_uniffi_uniffi_fixture_trait_methods_kt_fn_method_traitflatenum_uniffi_trait_display.invokeExact(
+                allocator,
+                ptr,
+                uniffiOutErr,
+            ) as java.lang.foreign.MemorySegment
         } catch (ex: Throwable) {
             throw AssertionError("invokeExact failed", ex)
         }

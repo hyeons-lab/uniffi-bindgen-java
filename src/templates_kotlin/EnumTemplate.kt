@@ -1,14 +1,27 @@
 
 {%- let e = ci.get_enum_definition(name).unwrap() %}
+{%- let uniffi_trait_methods = e.uniffi_trait_methods() %}
 {%- if e.is_flat() %}
+{# Flat enum: Kotlin's `enum class` compiles to `java.lang.Enum`,
+   which has final `equals` / `hashCode` / `compareTo`. Only
+   Display / Debug → `toString()` is emittable here; we
+   deliberately skip the `Eq` / `Hash` / `Ord` arms even when
+   exported (the generated overrides would not compile). The `;`
+   after the last variant is required by Kotlin syntax when the
+   enum body has any further declarations. #}
+{%- let flat_fmt = uniffi_trait_methods.display_fmt.as_ref().or(uniffi_trait_methods.debug_fmt.as_ref()) %}
 // UNIFFI:FILE {{ type_name }}.kt
 package {{ config.package_name() }}
 
 enum class {{ type_name }} {
     {%- for variant in e.variants() %}
     {{ variant|variant_name }}{% if !loop.last %},{% endif %}
-    {%- endfor -%}
-    {% if e.variants().is_empty() %};{% endif %}
+    {%- endfor %}{% if e.variants().is_empty() || flat_fmt.is_some() %};{% endif %}
+{%- if let Some(fmt) = flat_fmt %}
+
+    override fun toString(): String =
+        {{ fmt.return_type().unwrap()|lift_fn }}({% call kotlin::trait_ffi_call(fmt) %})
+{%- endif %}
 }
 
 // UNIFFI:FILE {{ ffi_converter_name }}.kt

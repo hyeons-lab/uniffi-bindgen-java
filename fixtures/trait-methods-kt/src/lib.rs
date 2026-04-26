@@ -101,4 +101,77 @@ impl Hash for TraitObj {
     }
 }
 
+// --- P3l-traits-b: trait method exports on flat enums + errors ---
+
+// Flat enum with Display only — Kotlin's `enum class` inherits final
+// `equals` / `hashCode` / `compareTo` from `java.lang.Enum`, so only
+// `Display` / `Debug` (which override `toString`) make sense here.
+// Mirrors the upstream `FlatTraitEnum` constraint.
+#[derive(uniffi::Enum, Debug, Clone, Copy)]
+#[uniffi::export(Display)]
+pub enum TraitFlatEnum {
+    Alpha,
+    Beta,
+    Gamma,
+}
+
+impl std::fmt::Display for TraitFlatEnum {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let label = match self {
+            TraitFlatEnum::Alpha => "alpha",
+            TraitFlatEnum::Beta => "beta",
+            TraitFlatEnum::Gamma => "gamma",
+        };
+        write!(f, "TraitFlatEnum::{label}")
+    }
+}
+
+// Note: the flat-error path (`#[uniffi(flat_error)]`) doesn't support
+// trait exports — the FFI carries only the discriminant, so Display /
+// Eq / Ord / Hash have nothing to lift. The flat-error template's
+// `Comparable<T>` + macro emission is dead code in practice but kept
+// for parity with the non-flat path.
+//
+// Non-flat error (variants carry fields). Exercises the parent-level
+// trait-impl path on field-bearing variants.
+#[derive(Debug, uniffi::Error, thiserror::Error, Clone)]
+#[uniffi::export(Display, Eq, Ord, Hash)]
+pub enum TraitErr {
+    #[error("network: {reason}")]
+    Network { reason: String },
+    #[error("server {code}: {reason}")]
+    Server { code: i32, reason: String },
+}
+
+impl PartialEq for TraitErr {
+    fn eq(&self, other: &Self) -> bool {
+        std::mem::discriminant(self) == std::mem::discriminant(other)
+    }
+}
+
+impl Eq for TraitErr {}
+
+impl PartialOrd for TraitErr {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for TraitErr {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        match (self, other) {
+            (Self::Network { .. }, Self::Network { .. })
+            | (Self::Server { .. }, Self::Server { .. }) => std::cmp::Ordering::Equal,
+            (Self::Network { .. }, Self::Server { .. }) => std::cmp::Ordering::Less,
+            (Self::Server { .. }, Self::Network { .. }) => std::cmp::Ordering::Greater,
+        }
+    }
+}
+
+impl std::hash::Hash for TraitErr {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        std::mem::discriminant(self).hash(state)
+    }
+}
+
 uniffi::setup_scaffolding!("trait_methods_kt");
