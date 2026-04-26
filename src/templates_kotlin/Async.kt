@@ -39,6 +39,11 @@ internal object UniffiAsyncHelpers {
     // races on cancellation: a missing handle, an already-resumed
     // continuation, or a cancelled continuation are all silently
     // ignored — the upcall must NOT throw across the FFI boundary.
+    //
+    // `tryResume` / `completeResume` live behind `@InternalCoroutinesApi`
+    // (no stable public alternative exists for the no-throw resume that
+    // FFI callbacks need). Opt-in is scoped tightly to this object.
+    @OptIn(kotlinx.coroutines.InternalCoroutinesApi::class)
     private object UniffiRustFutureContinuationCallbackImpl :
         UniffiRustFutureContinuationCallback.Fn {
         override fun callback(`data`: Long, pollResult: Byte) {

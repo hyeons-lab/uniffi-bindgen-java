@@ -927,8 +927,16 @@ class TraitObj internal constructor(
      * calls can run without taking a lock; see the comment block in
      * `src/templates/ObjectTemplate.java` for the full correctness
      * argument.
+     *
+     * NOT `inline`: the body reads `private` fields (`callCounter`,
+     * `cleanable`) and calls `internal fun uniffiCloneHandle()`. A
+     * public `inline fun` cannot reference non-public-API members
+     * without `@PublishedApi internal` annotations on each one;
+     * leaving it as a regular method costs one closure allocation
+     * per call (negligible vs the FFI roundtrip) and matches
+     * upstream uniffi-rs's Kotlin shape.
      */
-    inline fun <R> callWithHandle(block: (Long) -> R): R {
+    fun <R> callWithHandle(block: (Long) -> R): R {
         // Check and increment the call counter. Retries on CAS failure
         // under concurrent updates.
         var c: Long

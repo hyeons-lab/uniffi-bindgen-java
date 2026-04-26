@@ -195,12 +195,22 @@ fn run_kotlin_test(fixture_name: &str, test_file: &str) -> Result<()> {
 
     let native_lib_dir = prepare_native_lib_dir(&out_dir, &cdylib_path)?;
 
+    // Acquire kotlinx-coroutines-core-jvm. The Kotlin Async runtime
+    // template references it whenever the fixture has any async
+    // function (gated on `ci.has_async_fns()`); arithmetic doesn't
+    // hit it but coverall does (via `asyncBool`), and any future
+    // fixture with async will too. Maven download is cached + SHA-
+    // verified (see `ensure_kotlinx_coroutines_jar`).
+    let coroutines_jar = ensure_kotlinx_coroutines_jar()?;
+
     // Compile the generated `.kt` files into a single bindings JAR with
     // `-include-runtime` so kotlin-stdlib classes get baked in. That
     // makes the harness independent of where kotlinc keeps its bundled
     // stdlib (Homebrew uses libexec/lib/, Linux distros use lib/, SDKMAN
     // varies, etc.) at the cost of a ~5 MB heavier JAR — fine for a
-    // test harness that doesn't ship.
+    // test harness that doesn't ship. Coroutines is on the kotlinc
+    // classpath so the Async runtime template's `kotlinx.coroutines.*`
+    // references resolve.
     let bindings_jar = out_dir.join(format!("{}-kt.jar", fixture_name));
     let kt_files: Vec<String> = glob::glob(out_dir.join("**/*.kt").as_str())?
         .flatten()
@@ -211,6 +221,8 @@ fn run_kotlin_test(fixture_name: &str, test_file: &str) -> Result<()> {
     }
     let kotlinc_status = Command::new(kotlinc.as_std_path())
         .arg("-include-runtime")
+        .arg("-classpath")
+        .arg(calc_classpath(vec![&coroutines_jar]))
         .arg("-d")
         .arg(bindings_jar.as_str())
         .args(&kt_files)
@@ -226,13 +238,14 @@ fn run_kotlin_test(fixture_name: &str, test_file: &str) -> Result<()> {
     }
 
     // Compile the test script against the bindings JAR. kotlinc auto-
-    // includes its own stdlib at compile time, so no explicit classpath
-    // entry for kotlin-stdlib is needed here.
+    // includes its own stdlib at compile time; coroutines goes on the
+    // classpath so test programs that use `runBlocking { ... }` /
+    // `suspend fun` resolve.
     let test_classes_dir = out_dir.join("test-classes");
     fs::create_dir_all(&test_classes_dir)?;
     let test_kotlinc_status = Command::new(kotlinc.as_std_path())
         .arg("-classpath")
-        .arg(calc_classpath(vec![&bindings_jar]))
+        .arg(calc_classpath(vec![&bindings_jar, &coroutines_jar]))
         .arg("-d")
         .arg(test_classes_dir.as_str())
         .arg(test_path.as_str())
@@ -247,10 +260,10 @@ fn run_kotlin_test(fixture_name: &str, test_file: &str) -> Result<()> {
     // Run with FFM native-access flags + java.library.path. Top-level
     // `fun main()` in `Foo.kt` lands as class `FooKt` after kotlinc.
     // The bindings JAR contains kotlin-stdlib classes (via
-    // `-include-runtime`), so it's the only classpath entry beyond
-    // the test classes dir.
+    // `-include-runtime`); coroutines is needed at runtime for any
+    // suspend / Async-runtime path.
     let main_class = format!("{}Kt", test_path.file_stem().unwrap());
-    let run_classpath = calc_classpath(vec![&bindings_jar, &test_classes_dir]);
+    let run_classpath = calc_classpath(vec![&bindings_jar, &test_classes_dir, &coroutines_jar]);
     let run_status = Command::new("java")
         .arg("-ea")
         .arg("--enable-native-access=ALL-UNNAMED")
@@ -267,6 +280,97 @@ fn run_kotlin_test(fixture_name: &str, test_file: &str) -> Result<()> {
     }
 
     Ok(())
+}
+
+/// Pinned Maven coordinate + SHA-256 for `kotlinx-coroutines-core-jvm`.
+/// Bumping the version requires updating both constants together;
+/// `KOTLINX_COROUTINES_SHA256` is verified against the downloaded jar
+/// so a stale-version checkout won't silently use a mismatched runtime.
+const KOTLINX_COROUTINES_VERSION: &str = "1.10.2";
+const KOTLINX_COROUTINES_SHA256: &str =
+    "5ca175b38df331fd64155b35cd8cae1251fa9ee369709b36d42e0a288ccce3fd";
+
+/// Download `kotlinx-coroutines-core-jvm-<VERSION>.jar` from Maven
+/// Central, SHA-256 verify, and cache under `target/kotlin-deps/`.
+/// Returns the cached path. On a cache hit, only re-verifies the
+/// hash; on miss (or hash mismatch) re-downloads.
+///
+/// Why download instead of vendor? A 1.4 MB binary blob in-tree
+/// drags every clone; downloading once per machine costs the same
+/// total bytes and keeps the version pin visible in source.
+///
+/// Shells out to `curl` for the download and `shasum`/`sha256sum`
+/// for verification — no Rust crypto crate dep introduced.
+fn ensure_kotlinx_coroutines_jar() -> Result<Utf8PathBuf> {
+    // CARGO_TARGET_TMPDIR is `<workspace>/target/tmp/`; sibling
+    // kotlin-deps/ survives across `cargo test` runs but blows away
+    // on `cargo clean`, which is the right cache lifetime here.
+    let tmp = Utf8Path::new(env!("CARGO_TARGET_TMPDIR"));
+    let cache_root = tmp
+        .parent()
+        .with_context(|| format!("CARGO_TARGET_TMPDIR has no parent: {tmp}"))?
+        .join("kotlin-deps");
+    fs::create_dir_all(&cache_root)?;
+
+    let jar_name = format!("kotlinx-coroutines-core-jvm-{KOTLINX_COROUTINES_VERSION}.jar");
+    let cached = cache_root.join(&jar_name);
+
+    if cached.is_file() && verify_sha256(&cached, KOTLINX_COROUTINES_SHA256)? {
+        return Ok(cached);
+    }
+
+    let url = format!(
+        "https://repo1.maven.org/maven2/org/jetbrains/kotlinx/\
+         kotlinx-coroutines-core-jvm/{KOTLINX_COROUTINES_VERSION}/{jar_name}"
+    );
+    let status = Command::new("curl")
+        .arg("-fsSL")
+        .arg("--output")
+        .arg(cached.as_str())
+        .arg(&url)
+        .spawn()
+        .with_context(|| format!("spawning curl to fetch {url}"))?
+        .wait()
+        .context("waiting for curl on coroutines jar")?;
+    if !status.success() {
+        bail!("curl failed to download {url}");
+    }
+
+    if !verify_sha256(&cached, KOTLINX_COROUTINES_SHA256)? {
+        // Leave the bad file in place for diagnosis but refuse to use it.
+        bail!(
+            "downloaded {jar_name} did not match expected SHA-256 \
+             ({KOTLINX_COROUTINES_SHA256}); cache file: {cached}"
+        );
+    }
+    Ok(cached)
+}
+
+/// Verify that `path`'s SHA-256 matches `expected_hex` (lowercase
+/// hex). Tries `shasum -a 256` first (macOS default), falls back
+/// to `sha256sum` (most Linux distros). Returns `Ok(false)` on
+/// hash mismatch so callers can decide whether to re-download.
+fn verify_sha256(path: &Utf8Path, expected_hex: &str) -> Result<bool> {
+    let output = Command::new("shasum")
+        .arg("-a")
+        .arg("256")
+        .arg(path.as_str())
+        .output()
+        .or_else(|_| {
+            Command::new("sha256sum")
+                .arg(path.as_str())
+                .output()
+                .context("neither shasum nor sha256sum available on PATH")
+        })?;
+    if !output.status.success() {
+        bail!("hash command failed for {path}");
+    }
+    let stdout = String::from_utf8(output.stdout).context("hash command stdout not UTF-8")?;
+    let actual = stdout
+        .split_whitespace()
+        .next()
+        .with_context(|| format!("empty hash output for {path}"))?;
+    Ok(actual.eq_ignore_ascii_case(expected_hex))
 }
 
 /// Locate the `kotlinc` binary. Honors `KOTLINC` env var first
@@ -519,4 +623,15 @@ fn test_library_override_absolute_path() -> Result<()> {
 #[ignore = "requires kotlinc; opt in with `cargo test -- --ignored`"]
 fn test_arithmetic_kotlin() -> Result<()> {
     run_kotlin_test("uniffi-example-arithmetic", "scripts/TestArithmetic.kt")
+}
+
+/// Kotlin runtime test for the upstream `coverall` fixture. PR 3a
+/// of the coverall round-trip arc: covers the strategic subset
+/// (records with all scalar types + optionals, Coveralls
+/// constructor / getName / strongCount, a single typed-error
+/// throw). Traits, complex errors, and async land in PRs 3b / 3c.
+#[test]
+#[ignore = "requires kotlinc; opt in with `cargo test -- --ignored`"]
+fn test_coverall_kotlin() -> Result<()> {
+    run_kotlin_test("uniffi-fixture-coverall", "scripts/TestFixtureCoverall.kt")
 }
