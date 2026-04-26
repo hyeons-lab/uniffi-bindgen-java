@@ -733,7 +733,7 @@ pub fn generate_bindings(config: &Config, ci: &ComponentInterface) -> Result<Str
 // filters needed by the Kotlin runtime + namespace-function rendering.
 mod filters {
     use askama::Values;
-    use uniffi_bindgen::interface::{FfiType, Variant};
+    use uniffi_bindgen::interface::{Callable, FfiType, Variant};
     use uniffi_meta::AsType;
 
     use super::{AsCodeType, Config, KotlinCodeOracle};
@@ -1021,6 +1021,50 @@ mod filters {
         _v: &dyn Values,
     ) -> Result<String, askama::Error> {
         Ok(KotlinCodeOracle.ffi_struct_name(nm.as_ref()))
+    }
+
+    /// `pollFunc` argument for `uniffiRustCallAsync` — a method
+    /// reference into `UniffiLib`'s `ffi_<crate>_rust_future_poll_<T>`
+    /// stub (where `<T>` is the return-type-specialized FFI suffix
+    /// uniffi-rs picks). Mirrors Java's `async_poll` filter.
+    pub(super) fn async_poll(
+        callable: impl Callable,
+        _v: &dyn Values,
+        ci: &ComponentInterface,
+    ) -> Result<String, askama::Error> {
+        Ok(format!("UniffiLib::{}", callable.ffi_rust_future_poll(ci)))
+    }
+
+    /// `completeFunc` argument for `uniffiRustCallAsync` — a lambda
+    /// that calls `UniffiLib`'s `ffi_<crate>_rust_future_complete_<T>`
+    /// stub. Conditionally prepends `_allocator` when the FFI return
+    /// is a struct (`RustBuffer` for non-primitive types).
+    pub(super) fn async_complete(
+        callable: impl Callable,
+        _v: &dyn Values,
+        ci: &ComponentInterface,
+    ) -> Result<String, askama::Error> {
+        let ffi_func = callable.ffi_rust_future_complete(ci);
+        let needs_allocator = callable.return_type().is_some_and(|t| {
+            let ffi_type: FfiType = t.into();
+            KotlinCodeOracle.ffi_type_is_struct(&ffi_type)
+        });
+        let body = if needs_allocator {
+            format!("UniffiLib.{ffi_func}(_allocator, future, status)")
+        } else {
+            format!("UniffiLib.{ffi_func}(future, status)")
+        };
+        Ok(format!("{{ _allocator, future, status -> {body} }}"))
+    }
+
+    /// `freeFunc` argument for `uniffiRustCallAsync` — method reference
+    /// into `UniffiLib`'s `ffi_<crate>_rust_future_free_<T>` stub.
+    pub(super) fn async_free(
+        callable: impl Callable,
+        _v: &dyn Values,
+        ci: &ComponentInterface,
+    ) -> Result<String, askama::Error> {
+        Ok(format!("UniffiLib::{}", callable.ffi_rust_future_free(ci)))
     }
 
     /// Enclosing helper-class name for a struct-shaped FfiType.

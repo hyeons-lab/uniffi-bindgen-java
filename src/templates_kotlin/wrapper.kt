@@ -27,20 +27,36 @@
 {% include "UniffiCleaner.kt" %}
 {%- endif %}
 
-{%- if ci.has_callback_definitions() %}
-{#- Callback-interface runtime: UniffiHandleMap (odd-handle
-    ConcurrentHashMap) + FfiConverterCallbackInterface (abstract
-    base class that routes lift/lower through the handle map). Only
-    emitted when the interface has at least one callback interface
-    or `[Trait, WithForeign]` object; parallel to the Java backend's
-    `include_once_check("CallbackInterfaceRuntime.java")` dance. -#}
+{%- if ci.has_callback_definitions() || ci.has_async_fns() %}
+{#- UniffiHandleMap (odd-handle ConcurrentHashMap) is needed by both
+    the callback-interface runtime AND the async runtime — Async.kt
+    keys its continuation handle map on `UniffiHandleMap`. Emit
+    once when either feature is in use. -#}
 {% include "HandleMap.kt" %}
+{%- endif %}
+{%- if ci.has_callback_definitions() %}
+{#- Callback-interface runtime: FfiConverterCallbackInterface
+    (abstract base class that routes lift/lower through the handle
+    map). Only emitted when the interface has at least one callback
+    interface or `[Trait, WithForeign]` object; parallel to the
+    Java backend's `include_once_check("CallbackInterfaceRuntime.java")`
+    dance. -#}
 {% include "CallbackInterfaceRuntime.kt" %}
 {%- endif %}
 
 // Contains loading, initialization code, and the FFI Function declarations
 // using Java FFM (Foreign Function & Memory API).
 {% include "NamespaceLibraryTemplate.kt" %}
+
+{#- Async support — only emitted when the interface declares any
+    `async fn` (free function or method). Generated `suspend fun`
+    signatures route through `UniffiAsyncHelpers.uniffiRustCallAsync`,
+    which uses `kotlinx.coroutines.suspendCancellableCoroutine` for
+    the polling continuation. Consumers must have
+    `org.jetbrains.kotlinx:kotlinx-coroutines-core` on classpath. -#}
+{%- if ci.has_async_fns() %}
+{% include "Async.kt" %}
+{%- endif %}
 
 // Primitive + String + ByteArray FfiConverters. All are emitted
 // unconditionally for now; a later revision will gate them on which types

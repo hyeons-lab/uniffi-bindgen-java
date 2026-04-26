@@ -34,6 +34,12 @@ internal class UniffiHandleMap<T : Any> {
     fun remove(handle: Long): T =
         map.remove(handle) ?: throw InternalException("UniffiHandleMap: Invalid handle")
 
+    // Single-use, non-throwing variant — returns null if the handle
+    // is missing instead of raising. Used by the async runtime where
+    // a coroutine cancellation race may have already removed the
+    // entry before the Rust-side continuation callback fires.
+    fun removeOrNull(handle: Long): T? = map.remove(handle)
+
     // Clone a handle: insert the same object again under a new handle.
     fun clone(handle: Long): Long = insert(get(handle))
 }

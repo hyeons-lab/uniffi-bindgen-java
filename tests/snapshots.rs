@@ -353,3 +353,23 @@ fn snapshot_trait_methods_kotlin() -> Result<()> {
         "kt",
     )
 }
+
+/// Kotlin-side snapshot for the upstream `futures` fixture. P3k-async
+/// adds full async support — `suspend fun` codegen for namespace
+/// functions and Object instance methods, routed through
+/// `UniffiAsyncHelpers.uniffiRustCallAsync` via
+/// `kotlinx.coroutines.suspendCancellableCoroutine` for the polling
+/// continuation. The fixture exercises every async return shape:
+/// `bool` / `i64` / `String` / `Option<T>` / `Vec<T>` /
+/// `Record` / `Object`, plus async methods on Objects. Async
+/// callback interface (`AsyncParser`) trait stubs still throw
+/// `NotImplementedError` — that's deferred to P3k-async-b.
+#[test]
+fn snapshot_futures_kotlin() -> Result<()> {
+    snapshot_fixture_for(
+        "uniffi-fixture-futures",
+        "futures_kotlin",
+        Language::Kotlin,
+        "kt",
+    )
+}
