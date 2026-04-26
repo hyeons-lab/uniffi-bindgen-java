@@ -192,42 +192,53 @@ v{{ field_num }}
 
 {#
 // Macro for `#[uniffi::export(Display, Eq, Ord, Hash)]` proc-macro
-// trait method overrides on Records and Objects. Mirrors Java's
-// `uniffi_trait_impls` shape but uses Kotlin idioms — single-expression
-// bodies, smart-cast `is` checks, and `.toInt()` for the Int-returning
-// `hashCode` / `compareTo` overrides (Rust returns u64 / i8).
+// trait method overrides on Records, Objects, Enums, and Errors.
+// Mirrors Java's `uniffi_trait_impls` shape but uses Kotlin idioms —
+// single-expression bodies, smart-cast `is` checks, and `.toInt()`
+// for the Int-returning `hashCode` / `compareTo` overrides (Rust
+// returns u64 / i8).
 //
 // Each FFI call routes through `trait_ffi_call` which dispatches on the
 // trait method's `self_type()`:
 //   - Object self → wrap in `callWithHandle { uniffiHandle -> ... }`
-//   - Record self → call `lower(this)` directly (no handle protocol)
+//   - Record / Enum self → call `lower(this)` directly (no handle protocol)
 //
 // Display takes precedence over Debug for `toString()` — same priority
 // as the Java backend.
+//
+// `indent` is the leading-whitespace string to prefix every emitted
+// line with. Top-level call sites (Records, Objects, flat-Errors,
+// non-flat-Errors at parent class level) pass `"    "` (4 spaces) so
+// the overrides sit one level inside the class body. Per-variant call
+// sites (inside non-flat enum `data class V() : T() { ... }` /
+// `object V : T() { ... }`) pass `"        "` (8 spaces) so the
+// overrides sit one level inside the variant's body — which is itself
+// inside the parent sealed class body. Mirrors `func_decl`'s `indent`
+// parameter pattern.
 #}
-{%- macro uniffi_trait_impls(uniffi_trait_methods) %}
+{%- macro uniffi_trait_impls(uniffi_trait_methods, indent) %}
 {%- if let Some(fmt) = uniffi_trait_methods.display_fmt.as_ref().or(uniffi_trait_methods.debug_fmt.as_ref()) %}
 
-    override fun toString(): String =
-        {{ fmt.return_type().unwrap()|lift_fn }}({% call trait_ffi_call(fmt) %})
+{{ indent }}override fun toString(): String =
+{{ indent }}    {{ fmt.return_type().unwrap()|lift_fn }}({% call trait_ffi_call(fmt, indent) %})
 {%- endif %}
 {%- if let Some(eq) = uniffi_trait_methods.eq_eq.as_ref() %}
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is {{ eq.object_name()|class_name(ci) }}) return false
-        return {{ eq.return_type().unwrap()|lift_fn }}({% call trait_ffi_call(eq) %})
-    }
+{{ indent }}override fun equals(other: Any?): Boolean {
+{{ indent }}    if (this === other) return true
+{{ indent }}    if (other !is {{ eq.object_name()|class_name(ci) }}) return false
+{{ indent }}    return {{ eq.return_type().unwrap()|lift_fn }}({% call trait_ffi_call(eq, indent) %})
+{{ indent }}}
 {%- endif %}
 {%- if let Some(hash) = uniffi_trait_methods.hash_hash.as_ref() %}
 
-    override fun hashCode(): Int =
-        {{ hash.return_type().unwrap()|lift_fn }}({% call trait_ffi_call(hash) %}).toInt()
+{{ indent }}override fun hashCode(): Int =
+{{ indent }}    {{ hash.return_type().unwrap()|lift_fn }}({% call trait_ffi_call(hash, indent) %}).toInt()
 {%- endif %}
 {%- if let Some(cmp) = uniffi_trait_methods.ord_cmp.as_ref() %}
 
-    override fun compareTo(other: {{ cmp.object_name()|class_name(ci) }}): Int =
-        {{ cmp.return_type().unwrap()|lift_fn }}({% call trait_ffi_call(cmp) %}).toInt()
+{{ indent }}override fun compareTo(other: {{ cmp.object_name()|class_name(ci) }}): Int =
+{{ indent }}    {{ cmp.return_type().unwrap()|lift_fn }}({% call trait_ffi_call(cmp, indent) %}).toInt()
 {%- endif %}
 {%- endmacro %}
 
@@ -247,33 +258,37 @@ v{{ field_num }}
 // `UniffiLib.<fn>` expects an allocator as its first parameter.
 // Mirrors the `ffi_type.borrow()|ffi_type_is_struct` check used by
 // `func_decl_inner` so the same allocator-prepend rule applies here.
+//
+// `indent` mirrors `uniffi_trait_impls`' parameter — used to prefix
+// the multi-line call body so it lines up with the override
+// declaration emitted by the parent macro.
 #}
-{%- macro trait_ffi_call(func) -%}
+{%- macro trait_ffi_call(func, indent) -%}
 {%- match func.self_type() -%}
 {%- when Some with (Type::Object { .. }) -%}
 callWithHandle { uniffiHandle ->
-            UniffiHelpers.uniffiRustCall { _allocator, _status ->
-                UniffiLib.{{ func.ffi_func().name() }}(
-                    {%- match func.return_type() -%}
-                    {%- when Some with (return_type) -%}
-                    {%- let ret_ffi_type = return_type|ffi_type -%}
-                    {%- if ret_ffi_type.borrow()|ffi_type_is_struct %}_allocator, {% endif -%}
-                    {%- when None -%}
-                    {%- endmatch -%}
-                    uniffiHandle{% if !func.arguments().is_empty() %}, {% call arg_list_lowered(func) %}{% endif %}, _status)
-            }
-        }
-{%- when Some with (t) -%}
-UniffiHelpers.uniffiRustCall { _allocator, _status ->
-            UniffiLib.{{ func.ffi_func().name() }}(
+{{ indent }}        UniffiHelpers.uniffiRustCall { _allocator, _status ->
+{{ indent }}            UniffiLib.{{ func.ffi_func().name() }}(
                 {%- match func.return_type() -%}
                 {%- when Some with (return_type) -%}
                 {%- let ret_ffi_type = return_type|ffi_type -%}
                 {%- if ret_ffi_type.borrow()|ffi_type_is_struct %}_allocator, {% endif -%}
                 {%- when None -%}
                 {%- endmatch -%}
-                {{ t|lower_fn }}(this){% if !func.arguments().is_empty() %}, {% call arg_list_lowered(func) %}{% endif %}, _status)
-        }
+                uniffiHandle{% if !func.arguments().is_empty() %}, {% call arg_list_lowered(func) %}{% endif %}, _status)
+{{ indent }}        }
+{{ indent }}    }
+{%- when Some with (t) -%}
+UniffiHelpers.uniffiRustCall { _allocator, _status ->
+{{ indent }}        UniffiLib.{{ func.ffi_func().name() }}(
+            {%- match func.return_type() -%}
+            {%- when Some with (return_type) -%}
+            {%- let ret_ffi_type = return_type|ffi_type -%}
+            {%- if ret_ffi_type.borrow()|ffi_type_is_struct %}_allocator, {% endif -%}
+            {%- when None -%}
+            {%- endmatch -%}
+            {{ t|lower_fn }}(this){% if !func.arguments().is_empty() %}, {% call arg_list_lowered(func) %}{% endif %}, _status)
+{{ indent }}    }
 {%- when None -%}
 {%- endmatch -%}
 {%- endmacro -%}

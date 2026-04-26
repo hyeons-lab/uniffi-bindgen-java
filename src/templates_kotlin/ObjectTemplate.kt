@@ -158,7 +158,7 @@ class {{ impl_class_name }} internal constructor(
        trait overrides. Each override routes through a Rust-side FFI
        call wrapped in `callWithHandle` so the in-flight-call counter
        holds the wrapper alive across the trait method's roundtrip. -#}
-    {% call kotlin::uniffi_trait_impls(uniffi_trait_methods) %}
+{% call kotlin::uniffi_trait_impls(uniffi_trait_methods, "    ") %}
 }
 
 {%- if obj.has_callback_interface() %}
