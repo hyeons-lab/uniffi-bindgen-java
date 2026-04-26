@@ -1,3 +1,25 @@
+//! Java + Kotlin bindings generator for [UniFFI](https://github.com/mozilla/uniffi-rs).
+//!
+//! Two backends share one CLI and one FFI runtime:
+//!
+//! - The Java backend (default; `--language java` or no flag) emits
+//!   `.java` source using `CompletableFuture` for async, optional
+//!   JSpecify nullness annotations, and no external runtime dependency.
+//! - The Kotlin backend (`--language kotlin`) emits idiomatic Kotlin —
+//!   `suspend fun` for async (requires `kotlinx.coroutines` at runtime
+//!   when the interface contains async APIs), nullable types as `T?`,
+//!   `data class` records, `sealed class` errors, `companion object`
+//!   factories.
+//!
+//! Both backends generate against Java's Foreign Function & Memory API
+//! (Project Panama) rather than JNA. The wire format is shared, so a
+//! single compiled cdylib serves consumers of either backend.
+//!
+//! The library entry point is [`generate`], driven by [`GenerateOptions`]
+//! (set [`Language::Kotlin`] on the options struct to switch backends).
+//! [`run_main`] is the CLI front end; the `uniffi-bindgen-java` binary
+//! calls it directly.
+
 use anyhow::{Context, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 use clap::{Parser, Subcommand};
