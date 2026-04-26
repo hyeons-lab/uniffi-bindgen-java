@@ -102,4 +102,154 @@ internal object UniffiAsyncHelpers {
             freeFunc(rustFuture)
         }
     }
+{%- if ci.has_async_callback_interface_definition() %}
+
+    // ────────────────────────────────────────────────────────────────
+    // Async callback interface support — Kotlin-side `suspend fun`
+    // implementations that Rust can call back into. Mirrors upstream
+    // uniffi-rs's `uniffiTraitInterfaceCallAsync` shape: launch the
+    // user's `suspend fun` on `GlobalScope` (Rust drives the parent
+    // task lifetime; structured concurrency is broken at the FFI
+    // boundary by design), then route success / failure to Rust via
+    // the completion callback the upcall args carried in.
+    // ────────────────────────────────────────────────────────────────
+
+    // Foreign-future handle map: Job per in-flight Kotlin coroutine.
+    // Entries are removed by Rust's dropped callback (which also
+    // cancels the Job if it is still running). On success or failure
+    // the coroutine completes naturally; the entry stays until Rust
+    // signals it has dropped the foreign future, which is the
+    // standard handoff pattern (Rust holds the Arc until then).
+    val foreignFutureHandleMap = UniffiHandleMap<kotlinx.coroutines.Job>()
+
+    // FFI dropped-callback: Rust signalling that it's no longer
+    // interested in the future's result. Cancel the Job if still
+    // running. Safe against races (handle already gone → no-op).
+    // Must NOT throw across the FFI boundary.
+    private object UniffiForeignFutureDroppedCallbackImpl :
+        UniffiForeignFutureDroppedCallback.Fn {
+        override fun callback(handle: Long) {
+            val job = foreignFutureHandleMap.removeOrNull(handle) ?: return
+            if (!job.isCompleted) {
+                job.cancel()
+            }
+        }
+    }
+
+    private val UNIFFI_FOREIGN_FUTURE_DROPPED_CALLBACK_STUB: java.lang.foreign.MemorySegment =
+        UniffiForeignFutureDroppedCallback.toUpcallStub(
+            UniffiForeignFutureDroppedCallbackImpl,
+            java.lang.foreign.Arena.global(),
+        )
+
+    // Build a `ForeignFutureDroppedCallbackStruct` payload that
+    // tells Rust how to cancel us — handle into the foreign-future
+    // map + the singleton dropped-callback stub. Writes into the
+    // out-segment Rust handed us at upcall time.
+    private fun writeDroppedCallback(
+        uniffiOutDroppedCallback: java.lang.foreign.MemorySegment,
+        handle: Long,
+    ) {
+        // Upcall parameter segments have zero size; reinterpret to
+        // the actual struct size before writing.
+        val out = uniffiOutDroppedCallback.reinterpret(
+            UniffiForeignFutureDroppedCallbackStruct.LAYOUT.byteSize()
+        )
+        UniffiForeignFutureDroppedCallbackStruct.sethandle(out, handle)
+        UniffiForeignFutureDroppedCallbackStruct.setfree(
+            out,
+            UNIFFI_FOREIGN_FUTURE_DROPPED_CALLBACK_STUB,
+        )
+    }
+
+    // Launch a Kotlin `suspend fun` that Rust is awaiting. The
+    // success and error consumers are wired to invoke Rust's
+    // completion callback — exactly one of them must fire per call,
+    // and each fires consume an Arc reference on the Rust side, so
+    // double-call must NEVER happen. The structure here ensures
+    // the catch-block returns before falling through to handleSuccess.
+    // In extreme circumstances (e.g. invoking the completion stub
+    // itself throws) we may leak the Arc — better than double-free.
+    //
+    // CoroutineStart.LAZY is load-bearing: a fast-completing
+    // `makeCall` would otherwise race the dropped-callback wiring,
+    // and the success callback could fire before Rust received the
+    // handle to cancel against. We start the Job only after the
+    // handle is in the map and Rust has the dropped-callback struct.
+    @OptIn(kotlinx.coroutines.DelicateCoroutinesApi::class)
+    inline fun <T> uniffiTraitInterfaceCallAsync(
+        crossinline makeCall: suspend () -> T,
+        crossinline handleSuccess: (T) -> Unit,
+        crossinline handleError: (java.lang.foreign.MemorySegment) -> Unit,
+        uniffiOutDroppedCallback: java.lang.foreign.MemorySegment,
+    ) {
+        val job = kotlinx.coroutines.GlobalScope.launch(
+            start = kotlinx.coroutines.CoroutineStart.LAZY,
+        ) coroutineBlock@ {
+            val result: T = try {
+                makeCall()
+            } catch (e: Exception) {
+                handleError(
+                    UniffiRustCallStatus.create(
+                        UniffiRustCallStatus.UNIFFI_CALL_UNEXPECTED_ERROR,
+                        FfiConverterString.lower(e.stackTraceToString()),
+                    )
+                )
+                return@coroutineBlock
+            }
+            handleSuccess(result)
+        }
+        val handle = foreignFutureHandleMap.insert(job)
+        writeDroppedCallback(uniffiOutDroppedCallback, handle)
+        job.start()
+    }
+
+    // Same as `uniffiTraitInterfaceCallAsync` but with typed-error
+    // downconversion: exceptions of type `E` get lowered via
+    // `lowerError` and shipped as a `UNIFFI_CALL_ERROR`; everything
+    // else still goes through the unexpected-error path. `reified E`
+    // gives us the runtime `is` check without passing `Class<E>`.
+    @OptIn(kotlinx.coroutines.DelicateCoroutinesApi::class)
+    inline fun <T, reified E : Throwable> uniffiTraitInterfaceCallAsyncWithError(
+        crossinline makeCall: suspend () -> T,
+        crossinline handleSuccess: (T) -> Unit,
+        crossinline handleError: (java.lang.foreign.MemorySegment) -> Unit,
+        crossinline lowerError: (E) -> java.lang.foreign.MemorySegment,
+        uniffiOutDroppedCallback: java.lang.foreign.MemorySegment,
+    ) {
+        val job = kotlinx.coroutines.GlobalScope.launch(
+            start = kotlinx.coroutines.CoroutineStart.LAZY,
+        ) coroutineBlock@ {
+            val result: T = try {
+                makeCall()
+            } catch (e: Exception) {
+                if (e is E) {
+                    handleError(
+                        UniffiRustCallStatus.create(
+                            UniffiRustCallStatus.UNIFFI_CALL_ERROR,
+                            lowerError(e),
+                        )
+                    )
+                } else {
+                    handleError(
+                        UniffiRustCallStatus.create(
+                            UniffiRustCallStatus.UNIFFI_CALL_UNEXPECTED_ERROR,
+                            FfiConverterString.lower(e.stackTraceToString()),
+                        )
+                    )
+                }
+                return@coroutineBlock
+            }
+            handleSuccess(result)
+        }
+        val handle = foreignFutureHandleMap.insert(job)
+        writeDroppedCallback(uniffiOutDroppedCallback, handle)
+        job.start()
+    }
+
+    // For testing — exposed as `public` so consumer integration
+    // tests can assert no Job leaks after async stress. Mirrors the
+    // Java backend's `uniffiForeignFutureHandleCount()`.
+    fun uniffiForeignFutureHandleCount(): Int = foreignFutureHandleMap.size()
+{%- endif %}
 }
