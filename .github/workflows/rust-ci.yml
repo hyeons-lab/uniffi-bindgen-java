@@ -15,3 +15,25 @@ jobs:
       minimum_coverage: "0"
       cargo_command_env_vars: "PATH=$JAVA_HOME_25_X64/bin:$PATH JDK_JAVA_OPTIONS=--enable-native-access=ALL-UNNAMED"
     secrets: inherit
+
+  kotlin-ci:
+    name: Kotlin runtime tests
+    runs-on: ubuntu-latest
+    env:
+      JDK_JAVA_OPTIONS: --enable-native-access=ALL-UNNAMED
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+      - name: Set up Kotlin
+        uses: fwilhe2/setup-kotlin@v1
+        with:
+          version: 2.3.20
+      - name: Install Rust toolchain (per rust-toolchain.toml)
+        run: rustup show active-toolchain || rustup show
+      - uses: Swatinem/rust-cache@v2
+      - name: Run Kotlin runtime tests
+        run: cargo test --test tests kotlin -- --ignored
