@@ -4,18 +4,18 @@ package {{ config.package_name() }}
 
 object FfiConverterDuration : FfiConverterRustBuffer<java.time.Duration> {
     override fun read(buf: java.nio.ByteBuffer): java.time.Duration {
-        // Type mismatch (should be u64) but we check for overflow/underflow below
+        // Type mismatch (should be u64) but we check the i64 → u64 range below
         val seconds = buf.getLong()
-        // Type mismatch (should be u32) but we check for overflow/underflow below
+        // Type mismatch (should be u32) but we check the i32 → u32 range below
         val nanoseconds = buf.getInt().toLong()
         if (seconds < 0) {
             throw java.time.DateTimeException(
                 "Duration exceeds minimum or maximum value supported by uniffi"
             )
         }
-        if (nanoseconds < 0) {
+        if (nanoseconds < 0 || nanoseconds > 999_999_999L) {
             throw java.time.DateTimeException(
-                "Duration nanoseconds exceed minimum or maximum supported by uniffi"
+                "Duration nanoseconds out of range, must be 0..999_999_999"
             )
         }
         return java.time.Duration.ofSeconds(seconds, nanoseconds)

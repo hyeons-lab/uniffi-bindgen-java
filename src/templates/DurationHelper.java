@@ -7,15 +7,15 @@ public enum FfiConverterDuration implements FfiConverterRustBuffer<java.time.Dur
 
     @Override
     public java.time.Duration read(java.nio.ByteBuffer buf) {
-        // Type mismatch (should be u64) but we check for overflow/underflow below
+        // Type mismatch (should be u64) but we check the i64 → u64 range below
         long seconds = buf.getLong();
-        // Type mismatch (should be u32) but we check for overflow/underflow below
+        // Type mismatch (should be u32) but we check the i32 → u32 range below
         long nanoseconds = (long) buf.getInt();
         if (seconds < 0) {
             throw new java.time.DateTimeException("Duration exceeds minimum or maximum value supported by uniffi");
         }
-        if (nanoseconds < 0) {
-            throw new java.time.DateTimeException("Duration nanoseconds exceed minimum or maximum supported by uniffi");
+        if (nanoseconds < 0 || nanoseconds > 999_999_999L) {
+            throw new java.time.DateTimeException("Duration nanoseconds out of range, must be 0..999_999_999");
         }
         return java.time.Duration.ofSeconds(seconds, nanoseconds);
     }
