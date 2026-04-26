@@ -10,7 +10,7 @@ use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::{env, fs};
 use uniffi_bindgen::{BindgenLoader, BindgenPaths};
-use uniffi_bindgen_java::{GenerateOptions, generate};
+use uniffi_bindgen_java::{GenerateOptions, Language, generate};
 use uniffi_testing::UniFFITestHelper;
 
 /// Run the test fixtures from UniFFI
@@ -220,6 +220,192 @@ fn run_test_with_library_override(
     Ok(())
 }
 
+/// Run a generated Kotlin test fixture: produce Kotlin bindings,
+/// compile them with `kotlinc`, then compile and run the test
+/// script in a JVM with FFM native access enabled. Mirrors
+/// `run_test()` for the Kotlin backend.
+///
+/// Skips silently (returns `Ok(())` after an `eprintln!` notice)
+/// when `kotlinc` isn't on `$PATH` and `KOTLINC` isn't set.
+/// Tests calling this should be `#[ignore]`d so the default
+/// `cargo test` invocation doesn't run them; opt in with
+/// `cargo test -- --ignored`.
+fn run_kotlin_test(fixture_name: &str, test_file: &str) -> Result<()> {
+    let Some(kotlinc) = kotlinc_path() else {
+        eprintln!(
+            "skip: `kotlinc` not found (set KOTLINC or install kotlinc) — \
+             skipping Kotlin test for {fixture_name}"
+        );
+        return Ok(());
+    };
+    let stdlib_jar = kotlin_stdlib_jar(&kotlinc)
+        .with_context(|| format!("locating kotlin-stdlib.jar near {kotlinc}"))?;
+
+    let test_path = Utf8Path::new(".").join("tests").join(test_file);
+    let test_helper = UniFFITestHelper::new(fixture_name)?;
+    // Use a synthetic out_dir key so we don't collide with the Java
+    // `run_test` cache for the same fixture.
+    let out_dir_key = Utf8Path::new(".")
+        .join("tests")
+        .join("kotlin")
+        .join(test_file);
+    let out_dir = test_helper.create_out_dir(env!("CARGO_TARGET_TMPDIR"), &out_dir_key)?;
+    let cdylib_path = test_helper.cdylib_path()?;
+
+    let mut paths = BindgenPaths::default();
+    paths.add_cargo_metadata_layer(false)?;
+    let loader = BindgenLoader::new(paths);
+
+    let mut options = GenerateOptions::new(cdylib_path.clone(), out_dir.clone());
+    options.language = Language::Kotlin;
+    generate(&loader, &options)?;
+
+    let native_lib_dir = prepare_native_lib_dir(&out_dir, &cdylib_path)?;
+
+    // Compile the generated `.kt` files into a single bindings JAR.
+    let bindings_jar = out_dir.join(format!("{}-kt.jar", fixture_name));
+    let kt_files: Vec<String> = glob::glob(out_dir.join("**/*.kt").as_str())?
+        .flatten()
+        .map(|p| p.to_string_lossy().into_owned())
+        .collect();
+    if kt_files.is_empty() {
+        bail!("no generated .kt files under {}", out_dir);
+    }
+    let kotlinc_status = Command::new(kotlinc.as_std_path())
+        .arg("-d")
+        .arg(bindings_jar.as_str())
+        .args(&kt_files)
+        .spawn()
+        .with_context(|| format!("spawning kotlinc at {kotlinc}"))?
+        .wait()
+        .context("waiting for kotlinc on bindings")?;
+    if !kotlinc_status.success() {
+        bail!(
+            "kotlinc failed compiling generated bindings under {}",
+            out_dir
+        );
+    }
+
+    // Compile the test script against the bindings JAR.
+    let test_classes_dir = out_dir.join("test-classes");
+    fs::create_dir_all(&test_classes_dir)?;
+    let test_kotlinc_status = Command::new(kotlinc.as_std_path())
+        .arg("-classpath")
+        .arg(calc_classpath(vec![&bindings_jar]))
+        .arg("-d")
+        .arg(test_classes_dir.as_str())
+        .arg(test_path.as_str())
+        .spawn()
+        .context("spawning kotlinc on test script")?
+        .wait()
+        .context("waiting for kotlinc on test script")?;
+    if !test_kotlinc_status.success() {
+        bail!("kotlinc failed compiling Kotlin test {}", test_path);
+    }
+
+    // Run with FFM native-access flags + java.library.path. Top-level
+    // `fun main()` in `Foo.kt` lands as class `FooKt` after kotlinc.
+    let main_class = format!("{}Kt", test_path.file_stem().unwrap());
+    let run_classpath = calc_classpath(vec![&bindings_jar, &test_classes_dir, &stdlib_jar]);
+    let run_status = Command::new("java")
+        .arg("-ea")
+        .arg("--enable-native-access=ALL-UNNAMED")
+        .arg(format!("-Djava.library.path={}", native_lib_dir))
+        .arg("-classpath")
+        .arg(run_classpath)
+        .arg(&main_class)
+        .spawn()
+        .context("spawning java to run Kotlin test")?
+        .wait()
+        .context("waiting for java to run Kotlin test")?;
+    if !run_status.success() {
+        bail!("Kotlin test {main_class} failed at runtime");
+    }
+
+    Ok(())
+}
+
+/// Locate the `kotlinc` binary. Honors `KOTLINC` env var first
+/// (CI override), then falls back to `which kotlinc`. Returns
+/// `None` when neither resolves so callers can skip gracefully.
+fn kotlinc_path() -> Option<Utf8PathBuf> {
+    if let Ok(p) = env::var("KOTLINC") {
+        let p = Utf8PathBuf::from(p);
+        if p.is_file() {
+            return Some(p);
+        }
+    }
+    let output = Command::new("which").arg("kotlinc").output().ok()?;
+    if !output.status.success() {
+        return None;
+    }
+    let trimmed = String::from_utf8(output.stdout).ok()?.trim().to_string();
+    if trimmed.is_empty() {
+        None
+    } else {
+        Some(Utf8PathBuf::from(trimmed))
+    }
+}
+
+/// Resolve the bundled `kotlin-stdlib.jar` next to a given
+/// `kotlinc` install. Two known layouts:
+/// - Homebrew: `<prefix>/bin/kotlinc` → `<prefix>/libexec/lib/kotlin-stdlib.jar`
+///   (the `bin/kotlinc` is a launcher script; the real install
+///   sits under `libexec/`).
+/// - Most Linux distros / SDKMAN: `<prefix>/bin/kotlinc` → `<prefix>/lib/kotlin-stdlib.jar`.
+fn kotlin_stdlib_jar(kotlinc: &Utf8Path) -> Result<Utf8PathBuf> {
+    let resolved = std::fs::canonicalize(kotlinc.as_std_path())
+        .with_context(|| format!("canonicalizing kotlinc at {kotlinc}"))?;
+    let resolved = Utf8PathBuf::try_from(resolved)
+        .map_err(|e| anyhow::anyhow!("non-UTF8 kotlinc path: {e}"))?;
+    let bin_dir = resolved
+        .parent()
+        .with_context(|| format!("kotlinc has no parent dir: {resolved}"))?;
+    let prefix = bin_dir
+        .parent()
+        .with_context(|| format!("kotlinc bin/ has no parent: {bin_dir}"))?;
+
+    for candidate in [
+        prefix.join("libexec").join("lib").join("kotlin-stdlib.jar"),
+        prefix.join("lib").join("kotlin-stdlib.jar"),
+    ] {
+        if candidate.is_file() {
+            return Ok(candidate);
+        }
+    }
+    bail!(
+        "could not find kotlin-stdlib.jar under {} (tried libexec/lib/ and lib/)",
+        prefix
+    );
+}
+
+/// Copy the cdylib into `out_dir/native/` and create the
+/// `lib<name>.<ext>` symlink that `System.loadLibrary` expects.
+/// Extracted from the original symlink dance in `run_test()` so
+/// the Java and Kotlin harnesses share a single canonical
+/// implementation.
+fn prepare_native_lib_dir(out_dir: &Utf8Path, cdylib_path: &Utf8Path) -> Result<Utf8PathBuf> {
+    let native_lib_dir = out_dir.join("native");
+    fs::create_dir_all(&native_lib_dir)?;
+    let cdylib_filename = cdylib_path.file_name().unwrap();
+    let cdylib_dest = native_lib_dir.join(cdylib_filename);
+    fs::copy(cdylib_path, &cdylib_dest)?;
+
+    let extension = cdylib_path.extension().unwrap();
+    let lib_base_name = cdylib_filename
+        .strip_prefix("lib")
+        .unwrap_or(cdylib_filename)
+        .split('-')
+        .next()
+        .unwrap_or(cdylib_filename);
+    let expected_lib_name = format!("lib{}.{}", lib_base_name, extension);
+    let symlink_path = native_lib_dir.join(&expected_lib_name);
+    if !symlink_path.exists() {
+        std::os::unix::fs::symlink(cdylib_dest.file_name().unwrap(), &symlink_path)?;
+    }
+    Ok(native_lib_dir)
+}
+
 /// Get the uniffi_toml of the fixture if it exists.
 /// It looks for it in the root directory of the project `name`.
 fn find_uniffi_toml(name: &str) -> Result<Option<Utf8PathBuf>> {
@@ -371,4 +557,15 @@ fn test_library_override_absolute_path() -> Result<()> {
         "scripts/TestArithmetic.java",
         "arithmetic",
     )
+}
+
+/// Kotlin smoke test: generate Kotlin bindings for the upstream
+/// `arithmetic` example, compile with `kotlinc`, run the result
+/// in a JVM with FFM native access enabled. `#[ignore]` keeps
+/// this off the default `cargo test` cycle so devs without
+/// `kotlinc` aren't blocked; opt in with `cargo test -- --ignored`.
+#[test]
+#[ignore = "requires kotlinc; opt in with `cargo test -- --ignored`"]
+fn test_arithmetic_kotlin() -> Result<()> {
+    run_kotlin_test("uniffi-example-arithmetic", "scripts/TestArithmetic.kt")
 }
