@@ -47,9 +47,11 @@ internal object UniffiCallbackInterface{{ name }} {
 
     // Async callback method `{{ meth.name() }}` upcall: Rust is
     // calling INTO our Kotlin `suspend fun` impl. We launch the
-    // user's coroutine via `UniffiAsyncHelpers.uniffiTraitInterfaceCallAsync`,
-    // which routes success / failure back to Rust through the
-    // completion callback Rust handed us in `uniffiFutureCallback`.
+    // user's coroutine via `UniffiAsyncHelpers.uniffiTraitInterfaceCallAsync`
+    // (or `uniffiTraitInterfaceCallAsyncWithError` for throwing
+    // methods); either path routes success / failure back to Rust
+    // through the completion callback Rust handed us in
+    // `uniffiFutureCallback`.
     internal object {{ meth.name()|class_name(ci) }}Callback : {{ ffi_callback.name()|ffi_callback_name }}.Fn {
         override fun callback(
             {%- for arg in ffi_callback.arguments() %}

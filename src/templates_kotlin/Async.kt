@@ -115,9 +115,11 @@ internal object UniffiAsyncHelpers {
     // ────────────────────────────────────────────────────────────────
 
     // Foreign-future handle map: Job per in-flight Kotlin coroutine.
-    // Rust's drop callback removes + cancels; success/failure paths
-    // remove via the same map (the coroutine itself completes
-    // naturally and Rust drops separately).
+    // Entries are removed by Rust's dropped callback (which also
+    // cancels the Job if it is still running). On success or failure
+    // the coroutine completes naturally; the entry stays until Rust
+    // signals it has dropped the foreign future, which is the
+    // standard handoff pattern (Rust holds the Arc until then).
     val foreignFutureHandleMap = UniffiHandleMap<kotlinx.coroutines.Job>()
 
     // FFI dropped-callback: Rust signalling that it's no longer
@@ -168,6 +170,12 @@ internal object UniffiAsyncHelpers {
     // the catch-block returns before falling through to handleSuccess.
     // In extreme circumstances (e.g. invoking the completion stub
     // itself throws) we may leak the Arc — better than double-free.
+    //
+    // CoroutineStart.LAZY is load-bearing: a fast-completing
+    // `makeCall` would otherwise race the dropped-callback wiring,
+    // and the success callback could fire before Rust received the
+    // handle to cancel against. We start the Job only after the
+    // handle is in the map and Rust has the dropped-callback struct.
     @OptIn(kotlinx.coroutines.DelicateCoroutinesApi::class)
     inline fun <T> uniffiTraitInterfaceCallAsync(
         crossinline makeCall: suspend () -> T,
@@ -175,14 +183,16 @@ internal object UniffiAsyncHelpers {
         crossinline handleError: (java.lang.foreign.MemorySegment) -> Unit,
         uniffiOutDroppedCallback: java.lang.foreign.MemorySegment,
     ) {
-        val job = kotlinx.coroutines.GlobalScope.launch coroutineBlock@ {
+        val job = kotlinx.coroutines.GlobalScope.launch(
+            start = kotlinx.coroutines.CoroutineStart.LAZY,
+        ) coroutineBlock@ {
             val result: T = try {
                 makeCall()
             } catch (e: Exception) {
                 handleError(
                     UniffiRustCallStatus.create(
                         UniffiRustCallStatus.UNIFFI_CALL_UNEXPECTED_ERROR,
-                        FfiConverterString.lower(e.toString()),
+                        FfiConverterString.lower(e.stackTraceToString()),
                     )
                 )
                 return@coroutineBlock
@@ -191,6 +201,7 @@ internal object UniffiAsyncHelpers {
         }
         val handle = foreignFutureHandleMap.insert(job)
         writeDroppedCallback(uniffiOutDroppedCallback, handle)
+        job.start()
     }
 
     // Same as `uniffiTraitInterfaceCallAsync` but with typed-error
@@ -206,7 +217,9 @@ internal object UniffiAsyncHelpers {
         crossinline lowerError: (E) -> java.lang.foreign.MemorySegment,
         uniffiOutDroppedCallback: java.lang.foreign.MemorySegment,
     ) {
-        val job = kotlinx.coroutines.GlobalScope.launch coroutineBlock@ {
+        val job = kotlinx.coroutines.GlobalScope.launch(
+            start = kotlinx.coroutines.CoroutineStart.LAZY,
+        ) coroutineBlock@ {
             val result: T = try {
                 makeCall()
             } catch (e: Exception) {
@@ -221,7 +234,7 @@ internal object UniffiAsyncHelpers {
                     handleError(
                         UniffiRustCallStatus.create(
                             UniffiRustCallStatus.UNIFFI_CALL_UNEXPECTED_ERROR,
-                            FfiConverterString.lower(e.toString()),
+                            FfiConverterString.lower(e.stackTraceToString()),
                         )
                     )
                 }
@@ -231,6 +244,7 @@ internal object UniffiAsyncHelpers {
         }
         val handle = foreignFutureHandleMap.insert(job)
         writeDroppedCallback(uniffiOutDroppedCallback, handle)
+        job.start()
     }
 
     // For testing — exposed as `public` so consumer integration
