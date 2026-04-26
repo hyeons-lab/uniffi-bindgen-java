@@ -32,8 +32,10 @@ jobs:
         uses: fwilhe2/setup-kotlin@v1
         with:
           version: 2.3.20
-      - name: Install Rust toolchain (per rust-toolchain.toml)
-        run: rustup show active-toolchain || rustup show
+      - name: Install Rust toolchain (keep in sync with rust-toolchain.toml)
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.94.0
       - uses: Swatinem/rust-cache@v2
       - name: Run Kotlin runtime tests
         run: cargo test --test tests kotlin -- --ignored
