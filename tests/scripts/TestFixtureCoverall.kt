@@ -20,7 +20,10 @@ fun main() {
         check(someDict.text == "text")
         check(someDict.maybeText == "maybe_text")
         check(someDict.someBytes.contentEquals("some_bytes".toByteArray(Charsets.UTF_8)))
-        check(someDict.maybeSomeBytes.contentEquals("maybe_some_bytes".toByteArray(Charsets.UTF_8)))
+        // `!!` on the optional makes "must be present" an explicit
+        // precondition rather than relying on the nullable
+        // `ByteArray?.contentEquals` extension to silently return false.
+        check(someDict.maybeSomeBytes!!.contentEquals("maybe_some_bytes".toByteArray(Charsets.UTF_8)))
         check(someDict.aBool)
         check(someDict.maybeABool == false)
         check(someDict.unsigned8 == 1.toByte())
