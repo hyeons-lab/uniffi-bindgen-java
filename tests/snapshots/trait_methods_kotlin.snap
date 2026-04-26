@@ -725,87 +725,84 @@ package uniffi.trait_methods_kt
 
 sealed class TraitEnum : Comparable<TraitEnum> {
     object None : TraitEnum() {
-        
 
-    override fun toString(): String =
-        FfiConverterString.lift(UniffiHelpers.uniffiRustCall { _allocator, _status ->
-            UniffiLib.uniffi_uniffi_fixture_trait_methods_kt_fn_method_traitenum_uniffi_trait_display(_allocator, FfiConverterTypeTraitEnum.lower(this), _status)
-        })
+        override fun toString(): String =
+            FfiConverterString.lift(UniffiHelpers.uniffiRustCall { _allocator, _status ->
+                UniffiLib.uniffi_uniffi_fixture_trait_methods_kt_fn_method_traitenum_uniffi_trait_display(_allocator, FfiConverterTypeTraitEnum.lower(this), _status)
+            })
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is TraitEnum) return false
-        return FfiConverterBoolean.lift(UniffiHelpers.uniffiRustCall { _allocator, _status ->
-            UniffiLib.uniffi_uniffi_fixture_trait_methods_kt_fn_method_traitenum_uniffi_trait_eq_eq(FfiConverterTypeTraitEnum.lower(this), FfiConverterTypeTraitEnum.lower(other), _status)
-        })
-    }
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is TraitEnum) return false
+            return FfiConverterBoolean.lift(UniffiHelpers.uniffiRustCall { _allocator, _status ->
+                UniffiLib.uniffi_uniffi_fixture_trait_methods_kt_fn_method_traitenum_uniffi_trait_eq_eq(FfiConverterTypeTraitEnum.lower(this), FfiConverterTypeTraitEnum.lower(other), _status)
+            })
+        }
 
-    override fun hashCode(): Int =
-        FfiConverterLong.lift(UniffiHelpers.uniffiRustCall { _allocator, _status ->
-            UniffiLib.uniffi_uniffi_fixture_trait_methods_kt_fn_method_traitenum_uniffi_trait_hash(FfiConverterTypeTraitEnum.lower(this), _status)
-        }).toInt()
+        override fun hashCode(): Int =
+            FfiConverterLong.lift(UniffiHelpers.uniffiRustCall { _allocator, _status ->
+                UniffiLib.uniffi_uniffi_fixture_trait_methods_kt_fn_method_traitenum_uniffi_trait_hash(FfiConverterTypeTraitEnum.lower(this), _status)
+            }).toInt()
 
-    override fun compareTo(other: TraitEnum): Int =
-        FfiConverterByte.lift(UniffiHelpers.uniffiRustCall { _allocator, _status ->
-            UniffiLib.uniffi_uniffi_fixture_trait_methods_kt_fn_method_traitenum_uniffi_trait_ord_cmp(FfiConverterTypeTraitEnum.lower(this), FfiConverterTypeTraitEnum.lower(other), _status)
-        }).toInt()
+        override fun compareTo(other: TraitEnum): Int =
+            FfiConverterByte.lift(UniffiHelpers.uniffiRustCall { _allocator, _status ->
+                UniffiLib.uniffi_uniffi_fixture_trait_methods_kt_fn_method_traitenum_uniffi_trait_ord_cmp(FfiConverterTypeTraitEnum.lower(this), FfiConverterTypeTraitEnum.lower(other), _status)
+            }).toInt()
     }
     data class S(
         val v1: String
     ) : TraitEnum() {
-        
 
-    override fun toString(): String =
-        FfiConverterString.lift(UniffiHelpers.uniffiRustCall { _allocator, _status ->
-            UniffiLib.uniffi_uniffi_fixture_trait_methods_kt_fn_method_traitenum_uniffi_trait_display(_allocator, FfiConverterTypeTraitEnum.lower(this), _status)
-        })
+        override fun toString(): String =
+            FfiConverterString.lift(UniffiHelpers.uniffiRustCall { _allocator, _status ->
+                UniffiLib.uniffi_uniffi_fixture_trait_methods_kt_fn_method_traitenum_uniffi_trait_display(_allocator, FfiConverterTypeTraitEnum.lower(this), _status)
+            })
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is TraitEnum) return false
-        return FfiConverterBoolean.lift(UniffiHelpers.uniffiRustCall { _allocator, _status ->
-            UniffiLib.uniffi_uniffi_fixture_trait_methods_kt_fn_method_traitenum_uniffi_trait_eq_eq(FfiConverterTypeTraitEnum.lower(this), FfiConverterTypeTraitEnum.lower(other), _status)
-        })
-    }
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is TraitEnum) return false
+            return FfiConverterBoolean.lift(UniffiHelpers.uniffiRustCall { _allocator, _status ->
+                UniffiLib.uniffi_uniffi_fixture_trait_methods_kt_fn_method_traitenum_uniffi_trait_eq_eq(FfiConverterTypeTraitEnum.lower(this), FfiConverterTypeTraitEnum.lower(other), _status)
+            })
+        }
 
-    override fun hashCode(): Int =
-        FfiConverterLong.lift(UniffiHelpers.uniffiRustCall { _allocator, _status ->
-            UniffiLib.uniffi_uniffi_fixture_trait_methods_kt_fn_method_traitenum_uniffi_trait_hash(FfiConverterTypeTraitEnum.lower(this), _status)
-        }).toInt()
+        override fun hashCode(): Int =
+            FfiConverterLong.lift(UniffiHelpers.uniffiRustCall { _allocator, _status ->
+                UniffiLib.uniffi_uniffi_fixture_trait_methods_kt_fn_method_traitenum_uniffi_trait_hash(FfiConverterTypeTraitEnum.lower(this), _status)
+            }).toInt()
 
-    override fun compareTo(other: TraitEnum): Int =
-        FfiConverterByte.lift(UniffiHelpers.uniffiRustCall { _allocator, _status ->
-            UniffiLib.uniffi_uniffi_fixture_trait_methods_kt_fn_method_traitenum_uniffi_trait_ord_cmp(FfiConverterTypeTraitEnum.lower(this), FfiConverterTypeTraitEnum.lower(other), _status)
-        }).toInt()
+        override fun compareTo(other: TraitEnum): Int =
+            FfiConverterByte.lift(UniffiHelpers.uniffiRustCall { _allocator, _status ->
+                UniffiLib.uniffi_uniffi_fixture_trait_methods_kt_fn_method_traitenum_uniffi_trait_ord_cmp(FfiConverterTypeTraitEnum.lower(this), FfiConverterTypeTraitEnum.lower(other), _status)
+            }).toInt()
     }
     data class P(
         val v1: Int,
         val v2: Int
     ) : TraitEnum() {
-        
 
-    override fun toString(): String =
-        FfiConverterString.lift(UniffiHelpers.uniffiRustCall { _allocator, _status ->
-            UniffiLib.uniffi_uniffi_fixture_trait_methods_kt_fn_method_traitenum_uniffi_trait_display(_allocator, FfiConverterTypeTraitEnum.lower(this), _status)
-        })
+        override fun toString(): String =
+            FfiConverterString.lift(UniffiHelpers.uniffiRustCall { _allocator, _status ->
+                UniffiLib.uniffi_uniffi_fixture_trait_methods_kt_fn_method_traitenum_uniffi_trait_display(_allocator, FfiConverterTypeTraitEnum.lower(this), _status)
+            })
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is TraitEnum) return false
-        return FfiConverterBoolean.lift(UniffiHelpers.uniffiRustCall { _allocator, _status ->
-            UniffiLib.uniffi_uniffi_fixture_trait_methods_kt_fn_method_traitenum_uniffi_trait_eq_eq(FfiConverterTypeTraitEnum.lower(this), FfiConverterTypeTraitEnum.lower(other), _status)
-        })
-    }
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is TraitEnum) return false
+            return FfiConverterBoolean.lift(UniffiHelpers.uniffiRustCall { _allocator, _status ->
+                UniffiLib.uniffi_uniffi_fixture_trait_methods_kt_fn_method_traitenum_uniffi_trait_eq_eq(FfiConverterTypeTraitEnum.lower(this), FfiConverterTypeTraitEnum.lower(other), _status)
+            })
+        }
 
-    override fun hashCode(): Int =
-        FfiConverterLong.lift(UniffiHelpers.uniffiRustCall { _allocator, _status ->
-            UniffiLib.uniffi_uniffi_fixture_trait_methods_kt_fn_method_traitenum_uniffi_trait_hash(FfiConverterTypeTraitEnum.lower(this), _status)
-        }).toInt()
+        override fun hashCode(): Int =
+            FfiConverterLong.lift(UniffiHelpers.uniffiRustCall { _allocator, _status ->
+                UniffiLib.uniffi_uniffi_fixture_trait_methods_kt_fn_method_traitenum_uniffi_trait_hash(FfiConverterTypeTraitEnum.lower(this), _status)
+            }).toInt()
 
-    override fun compareTo(other: TraitEnum): Int =
-        FfiConverterByte.lift(UniffiHelpers.uniffiRustCall { _allocator, _status ->
-            UniffiLib.uniffi_uniffi_fixture_trait_methods_kt_fn_method_traitenum_uniffi_trait_ord_cmp(FfiConverterTypeTraitEnum.lower(this), FfiConverterTypeTraitEnum.lower(other), _status)
-        }).toInt()
+        override fun compareTo(other: TraitEnum): Int =
+            FfiConverterByte.lift(UniffiHelpers.uniffiRustCall { _allocator, _status ->
+                UniffiLib.uniffi_uniffi_fixture_trait_methods_kt_fn_method_traitenum_uniffi_trait_ord_cmp(FfiConverterTypeTraitEnum.lower(this), FfiConverterTypeTraitEnum.lower(other), _status)
+            }).toInt()
     }
 }
 
@@ -821,7 +818,6 @@ sealed class TraitErr(message: String) : kotlin.Exception(message), Comparable<T
         val code: Int,
         val reason: String
     ) : TraitErr("code=${code}, reason=${reason}")
-    
 
     override fun toString(): String =
         FfiConverterString.lift(UniffiHelpers.uniffiRustCall { _allocator, _status ->

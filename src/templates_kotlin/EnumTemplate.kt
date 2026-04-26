@@ -20,7 +20,7 @@ enum class {{ type_name }} {
 {%- if let Some(fmt) = flat_fmt %}
 
     override fun toString(): String =
-        {{ fmt.return_type().unwrap()|lift_fn }}({% call kotlin::trait_ffi_call(fmt) %})
+        {{ fmt.return_type().unwrap()|lift_fn }}({% call kotlin::trait_ffi_call(fmt, "    ") %})
 {%- endif %}
 }
 
@@ -77,11 +77,11 @@ sealed class {{ type_name }}{% if uniffi_trait_methods.ord_cmp.is_some() %} : Co
         val {% call kotlin::field_name(field, loop.index) %}: {{ field|type_name(ci, config) }}{% if !loop.last %},{% endif %}
         {%- endfor %}
     ) : {{ type_name }}(){% if has_trait_impls %} {
-        {% call kotlin::uniffi_trait_impls(uniffi_trait_methods) %}
+    {%- call kotlin::uniffi_trait_impls(uniffi_trait_methods, "        ") %}
     }{% endif %}
     {%- else %}
     object {{ variant.name()|class_name(ci) }} : {{ type_name }}(){% if has_trait_impls %} {
-        {% call kotlin::uniffi_trait_impls(uniffi_trait_methods) %}
+    {%- call kotlin::uniffi_trait_impls(uniffi_trait_methods, "        ") %}
     }{% endif %}
     {%- endif %}
     {%- endfor %}
