@@ -50,10 +50,10 @@ class {{ impl_class_name }} internal constructor(
     {%- match obj.primary_constructor() %}
     {%- when Some(cons) %}
     {%-     if cons.is_async() %}
-    // Async constructors are not supported in this revision of the
-    // Kotlin backend. The primary constructor for `{{ impl_class_name }}` is
-    // `async` in the UDL, so it's omitted here; use a named constructor
-    // (if any) or wait for the async Kotlin phase to land.
+    // Primary constructor `{{ cons.name() }}` is `async`. Kotlin
+    // constructors cannot be `suspend`, so it's emitted as a
+    // `companion object` factory (`{{ impl_class_name }}.{{ cons.name()|fn_name }}(...)`)
+    // below.
     {%-     else %}
     constructor({% call kotlin::arg_list(cons) %}) : this(
         UniffiWithHandle,
@@ -142,17 +142,30 @@ class {{ impl_class_name }} internal constructor(
     {%- endif %}
     {% endfor %}
 
+    {#- Companion object emitted when there are alternate constructors
+        OR when the primary constructor is async (and therefore
+        demoted to a companion-object `suspend fun` factory because
+        Kotlin constructors cannot be `suspend`). The two-arm
+        structure avoids needing a Rust-side helper to compute the
+        disjunction — askama only sees the inner `is_async()` check
+        in the no-alternates arm. #}
     {%- if !obj.alternate_constructors().is_empty() %}
     companion object {
-        {% for cons in obj.alternate_constructors() -%}
+        {%- if let Some(cons) = obj.primary_constructor() -%}
         {%- if cons.is_async() %}
-        // Async named constructor `{{ cons.name() }}` skipped — async
-        // unsupported in this revision of the Kotlin backend.
-        {%- else %}
         {% call kotlin::named_constructor_decl(impl_class_name, cons, "        ") %}
+        {%- endif -%}
         {%- endif %}
+        {% for cons in obj.alternate_constructors() -%}
+        {% call kotlin::named_constructor_decl(impl_class_name, cons, "        ") %}
         {% endfor %}
     }
+    {%- else if let Some(cons) = obj.primary_constructor() %}
+    {%- if cons.is_async() %}
+    companion object {
+        {% call kotlin::named_constructor_decl(impl_class_name, cons, "        ") %}
+    }
+    {%- endif %}
     {%- endif %}
     {#- `#[uniffi::export(Eq, Ord, Hash, Display, Debug)]` proc-macro
        trait overrides. Each override routes through a Rust-side FFI

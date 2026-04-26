@@ -806,7 +806,6 @@ class Sprite internal constructor(
     
     companion object {
         
-        
         @JvmStatic
         fun newRelativeTo(reference: Point, direction: Vector): Sprite =
             Sprite(

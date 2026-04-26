@@ -197,6 +197,16 @@ UniffiAsyncHelpers.uniffiRustCallAsync(
 // Kotlin idioms: `@JvmStatic` so Java consumers see it as a static
 // method, primary constructor delegation via
 // `<Type>(UniffiWithHandle, <ffi-call>)`.
+//
+// Async branch: Kotlin constructors can't be `suspend`, so async
+// constructors (primary or alternate) get demoted to companion-object
+// `suspend fun` factories. The FFI call returns a future handle which
+// the standard `call_async` machinery polls, completes, and lifts via
+// `FfiConverterType<Name>.lift(it)` — equivalent to running through
+// `<Name>(UniffiWithHandle, value)` without going through the
+// constructor delegation. `@JvmStatic` is harmless on a `suspend fun`
+// (Java sees it as a static method with a trailing `Continuation`
+// parameter); kept for symmetry with the non-async sibling.
 #}
 {%- macro named_constructor_decl(type_name, callable, indent) -%}
 {%- match callable.throws_type() %}
@@ -205,6 +215,10 @@ UniffiAsyncHelpers.uniffiRustCallAsync(
 {%- when None %}
 {%- endmatch %}
 {{ indent }}@JvmStatic
+{%- if callable.is_async() %}
+{{ indent }}suspend fun {{ callable.name()|fn_name }}({% call arg_list(callable) %}): {{ type_name }} =
+{{ indent }}    {% call call_async(callable, indent) %}
+{%- else %}
 {{ indent }}fun {{ callable.name()|fn_name }}({% call arg_list(callable) %}): {{ type_name }} =
 {{ indent }}    {{ type_name }}(
 {{ indent }}        UniffiWithHandle,
@@ -212,6 +226,7 @@ UniffiAsyncHelpers.uniffiRustCallAsync(
 {{ indent }}            UniffiLib.{{ callable.ffi_func().name() }}({% call call_args(callable, false) %})
 {{ indent }}        },
 {{ indent }}    )
+{%- endif %}
 {%- endmacro -%}
 
 {#
