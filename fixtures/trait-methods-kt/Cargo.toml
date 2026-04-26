@@ -9,3 +9,4 @@ name = "uniffi_fixture_trait_methods_kt"
 
 [dependencies]
 uniffi = { git = "https://github.com/mozilla/uniffi-rs.git", tag = "v0.31.0" }
+thiserror = "2"
