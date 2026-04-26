@@ -174,4 +174,61 @@ impl std::hash::Hash for TraitErr {
     }
 }
 
+// --- P3l-traits-c: trait method exports on non-flat enums ---
+
+// Non-flat enum with all four trait exports. Variants are a mix of
+// no-fields (`None` → Kotlin `object`), single-field (`S(String)` →
+// `data class`), and multi-field positional (`P(i32, i32)` →
+// `data class` with `v1`/`v2`). Custom trait impls compare only by
+// discriminant — non-derive impls so any test sees a Rust roundtrip
+// rather than the data-class structural default.
+#[derive(uniffi::Enum, Debug, Clone)]
+#[uniffi::export(Display, Eq, Ord, Hash)]
+pub enum TraitEnum {
+    None,
+    S(String),
+    P(i32, i32),
+}
+
+impl std::fmt::Display for TraitEnum {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::None => write!(f, "TraitEnum::None"),
+            Self::S(s) => write!(f, "TraitEnum::S({s:?})"),
+            Self::P(a, b) => write!(f, "TraitEnum::P({a}, {b})"),
+        }
+    }
+}
+
+impl PartialEq for TraitEnum {
+    fn eq(&self, other: &Self) -> bool {
+        std::mem::discriminant(self) == std::mem::discriminant(other)
+    }
+}
+
+impl Eq for TraitEnum {}
+
+impl PartialOrd for TraitEnum {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for TraitEnum {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        let rank = |v: &Self| match v {
+            Self::None => 0,
+            Self::S(_) => 1,
+            Self::P(..) => 2,
+        };
+        rank(self).cmp(&rank(other))
+    }
+}
+
+impl std::hash::Hash for TraitEnum {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        std::mem::discriminant(self).hash(state)
+    }
+}
+
 uniffi::setup_scaffolding!("trait_methods_kt");
