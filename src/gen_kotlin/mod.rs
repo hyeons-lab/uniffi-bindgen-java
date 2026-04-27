@@ -684,11 +684,13 @@ impl<'a> KotlinWrapper<'a> {
     /// pre-Askama Kotlin entrypoint; a more Kotlin-idiomatic camel-case
     /// conversion can be introduced later with a visible snapshot diff.
     pub fn namespace_class_name(&self) -> String {
-        let mut chars = self.ci.namespace().chars();
-        match chars.next() {
-            Some(c) => c.to_uppercase().chain(chars).collect(),
-            None => String::new(),
-        }
+        // PascalCase from snake_case so multi-word namespaces (e.g.
+        // `primitive_arrays`) render as idiomatic Kotlin class names
+        // (`PrimitiveArrays`), matching the Java backend's behaviour.
+        // Capitalizing only the first character produced
+        // `Primitive_arrays`, which is technically valid but jarring
+        // for Kotlin consumers.
+        self.ci.namespace().to_upper_camel_case()
     }
 
     /// Ordered list of zero-arg `UniffiCallbackInterface<Name>.register`

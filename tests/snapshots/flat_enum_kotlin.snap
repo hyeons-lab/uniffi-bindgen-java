@@ -420,10 +420,10 @@ object FfiConverterTypeAnimal : FfiConverterRustBuffer<Animal> {
 }
 
 
-// === FILE: uniffi/flat_enum/Flat_enum.kt ===
+// === FILE: uniffi/flat_enum/FlatEnum.kt ===
 package uniffi.flat_enum
 
-object Flat_enum {
+object FlatEnum {
 
 
     fun roundTrip(animal: Animal): Animal =

@@ -605,10 +605,10 @@ object RustBuffer {
 }
 
 
-// === FILE: uniffi/simple_callback/Simple_callback.kt ===
+// === FILE: uniffi/simple_callback/SimpleCallback.kt ===
 package uniffi.simple_callback
 
-object Simple_callback {
+object SimpleCallback {
 
 
     fun invokeGreeter(greeter: Greeter, name: String): String =

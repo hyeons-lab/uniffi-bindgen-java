@@ -25,10 +25,10 @@ class ApiExceptionErrorHandler : UniffiRustCallStatusErrorHandler<ApiException> 
 }
 
 
-// === FILE: uniffi/error_data/Error_data.kt ===
+// === FILE: uniffi/error_data/ErrorData.kt ===
 package uniffi.error_data
 
-object Error_data {
+object ErrorData {
 
 
     @Throws(ApiException::class)
