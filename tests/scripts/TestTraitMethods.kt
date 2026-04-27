@@ -3,7 +3,9 @@
 // objects, flat enums, errors, and non-flat enums. Each override is
 // routed through Rust via FFI, so the Kotlin assertions verify both
 // the toString/equals/hashCode/compareTo plumbing and the Rust-side
-// custom impls (which compare by string field only, ignoring `i`).
+// custom impls, whose comparison behavior is type-specific
+// (TraitRec ignores `i`; TraitObj uses `val`; TraitErr/TraitEnum
+// compare by discriminant only).
 import uniffi.trait_methods_kt.TraitEnum
 import uniffi.trait_methods_kt.TraitErr
 import uniffi.trait_methods_kt.TraitFlatEnum
