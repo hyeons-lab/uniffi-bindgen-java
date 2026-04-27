@@ -773,3 +773,14 @@ fn test_trait_methods_kotlin() -> Result<()> {
         "scripts/TestTraitMethods.kt",
     )
 }
+
+/// Kotlin runtime test for the upstream `proc-macro` fixture:
+/// `#[uniffi::export]` proc-macro path on records, flat enums,
+/// non-flat (sealed) enums, and objects implementing a separately-
+/// declared `Trait`. Validates the record/enum method emission
+/// added on this branch.
+#[test]
+#[ignore = "requires kotlinc; opt in with `cargo test -- --ignored`"]
+fn test_proc_macro_kotlin() -> Result<()> {
+    run_kotlin_test("uniffi-fixture-proc-macro", "scripts/TestProcMacro.kt")
+}
