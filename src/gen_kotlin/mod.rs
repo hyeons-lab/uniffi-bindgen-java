@@ -678,18 +678,11 @@ impl<'a> KotlinWrapper<'a> {
         Self { config, ci }
     }
 
-    /// Kotlin namespace-object name. Uppercases the first character only,
-    /// leaving the rest untouched (e.g. `primitive_arrays` →
-    /// `Primitive_arrays`). Mirrors the behavior inherited from the
-    /// pre-Askama Kotlin entrypoint; a more Kotlin-idiomatic camel-case
-    /// conversion can be introduced later with a visible snapshot diff.
+    /// Kotlin namespace-object name. PascalCase from the crate's
+    /// snake_case namespace (e.g. `primitive_arrays` → `PrimitiveArrays`),
+    /// matching the Java backend's behaviour and Kotlin class-naming
+    /// conventions.
     pub fn namespace_class_name(&self) -> String {
-        // PascalCase from snake_case so multi-word namespaces (e.g.
-        // `primitive_arrays`) render as idiomatic Kotlin class names
-        // (`PrimitiveArrays`), matching the Java backend's behaviour.
-        // Capitalizing only the first character produced
-        // `Primitive_arrays`, which is technically valid but jarring
-        // for Kotlin consumers.
         self.ci.namespace().to_upper_camel_case()
     }
 
