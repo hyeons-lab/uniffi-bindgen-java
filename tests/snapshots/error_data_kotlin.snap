@@ -7,11 +7,11 @@ package uniffi.error_data
 
 sealed class ApiException(message: String) : kotlin.Exception(message) {
     class Network(
-        val reason: String
+        val reason: kotlin.String
     ) : ApiException("reason=${reason}")
     class Server(
-        val code: Int,
-        val reason: String
+        val code: kotlin.Int,
+        val reason: kotlin.String
     ) : ApiException("code=${code}, reason=${reason}")
 }
 
@@ -32,7 +32,7 @@ object ErrorData {
 
 
     @Throws(ApiException::class)
-    fun tryCall(networkFailure: Boolean): String =
+    fun tryCall(networkFailure: kotlin.Boolean): kotlin.String =
         FfiConverterString.lift(
             UniffiHelpers.uniffiRustCallWithError(ApiExceptionErrorHandler()) { _allocator, _status ->
                 UniffiLib.uniffi_uniffi_fixture_error_data_fn_func_try_call(_allocator, FfiConverterBoolean.lower(networkFailure), _status)

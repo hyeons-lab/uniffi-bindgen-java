@@ -39,7 +39,7 @@ data class CustomTypesDemo(
 package customtypes
 
 data class ExampleCustomType(
-    val value: String,
+    val value: kotlin.String,
 )
 
 
@@ -706,7 +706,7 @@ object ForeignBytes {
 package customtypes
 
 data class Handle(
-    val value: Long,
+    val value: kotlin.Long,
 )
 
 
@@ -843,7 +843,7 @@ object RustBuffer {
 package customtypes
 
 data class TimeIntervalMs(
-    val value: Long,
+    val value: kotlin.Long,
 )
 
 
@@ -851,7 +851,7 @@ data class TimeIntervalMs(
 package customtypes
 
 data class TimeIntervalSecDbl(
-    val value: Double,
+    val value: kotlin.Double,
 )
 
 
@@ -859,7 +859,7 @@ data class TimeIntervalSecDbl(
 package customtypes
 
 data class TimeIntervalSecFlt(
-    val value: Float,
+    val value: kotlin.Float,
 )
 
 

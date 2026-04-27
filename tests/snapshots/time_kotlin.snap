@@ -26,7 +26,7 @@ object Chronological {
         )
 
 
-    fun equal(a: java.time.Instant, b: java.time.Instant): Boolean =
+    fun equal(a: java.time.Instant, b: java.time.Instant): kotlin.Boolean =
         FfiConverterBoolean.lift(
             UniffiHelpers.uniffiRustCall { _allocator, _status ->
                 UniffiLib.uniffi_uniffi_chronological_fn_func_equal(FfiConverterTimestamp.lower(a), FfiConverterTimestamp.lower(b), _status)
@@ -43,7 +43,7 @@ object Chronological {
 
 
     @Throws(ChronologicalException::class)
-    fun getSecondsBeforeUnixEpoch(a: java.time.Instant): Long =
+    fun getSecondsBeforeUnixEpoch(a: java.time.Instant): kotlin.Long =
         UniffiHelpers.uniffiRustCallWithErrorLong(ChronologicalExceptionErrorHandler()) { _, _status ->
             UniffiLib.uniffi_uniffi_chronological_fn_func_get_seconds_before_unix_epoch(FfiConverterTimestamp.lower(a), _status)
         }
@@ -57,7 +57,7 @@ object Chronological {
         )
 
 
-    fun optional(a: java.time.Instant?, b: java.time.Duration?): Boolean =
+    fun optional(a: java.time.Instant?, b: java.time.Duration?): kotlin.Boolean =
         FfiConverterBoolean.lift(
             UniffiHelpers.uniffiRustCall { _allocator, _status ->
                 UniffiLib.uniffi_uniffi_chronological_fn_func_optional(FfiConverterOptionalTimestamp.lower(a), FfiConverterOptionalDuration.lower(b), _status)
@@ -84,7 +84,7 @@ object Chronological {
 
 
     @Throws(ChronologicalException::class)
-    fun setSecondsBeforeUnixEpoch(seconds: Long): java.time.Instant =
+    fun setSecondsBeforeUnixEpoch(seconds: kotlin.Long): java.time.Instant =
         FfiConverterTimestamp.lift(
             UniffiHelpers.uniffiRustCallWithError(ChronologicalExceptionErrorHandler()) { _allocator, _status ->
                 UniffiLib.uniffi_uniffi_chronological_fn_func_set_seconds_before_unix_epoch(_allocator, seconds, _status)
@@ -92,7 +92,7 @@ object Chronological {
         )
 
 
-    fun toStringTimestamp(a: java.time.Instant): String =
+    fun toStringTimestamp(a: java.time.Instant): kotlin.String =
         FfiConverterString.lift(
             UniffiHelpers.uniffiRustCall { _allocator, _status ->
                 UniffiLib.uniffi_uniffi_chronological_fn_func_to_string_timestamp(_allocator, FfiConverterTimestamp.lower(a), _status)

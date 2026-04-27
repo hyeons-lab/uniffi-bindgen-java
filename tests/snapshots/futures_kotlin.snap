@@ -24,12 +24,12 @@ class AsyncExceptionErrorHandler : UniffiRustCallStatusErrorHandler<AsyncExcepti
 package uniffi.fixture.futures
 
 interface AsyncParser {
-    fun asString(delayMs: Int, `value`: Int): String
+    fun asString(delayMs: kotlin.Int, `value`: kotlin.Int): kotlin.String
     @Throws(ParserException::class)
-    fun tryFromString(delayMs: Int, `value`: String): Int
-    fun delay(delayMs: Int)
+    fun tryFromString(delayMs: kotlin.Int, `value`: kotlin.String): kotlin.Int
+    fun delay(delayMs: kotlin.Int)
     @Throws(ParserException::class)
-    fun tryDelay(delayMs: String)
+    fun tryDelay(delayMs: kotlin.String)
 }
 
 
@@ -146,7 +146,7 @@ class AsyncParserImpl internal constructor(
 
     
     
-    override suspend fun asString(delayMs: Int, `value`: Int): String =
+    override suspend fun asString(delayMs: kotlin.Int, `value`: kotlin.Int): kotlin.String =
         UniffiAsyncHelpers.uniffiRustCallAsync(
             callWithHandle { uniffiHandle ->
                 UniffiLib.uniffi_uniffi_futures_fn_method_asyncparser_as_string(uniffiHandle, delayMs, `value`)
@@ -165,7 +165,7 @@ class AsyncParserImpl internal constructor(
     
     
     @Throws(ParserException::class)
-    override suspend fun tryFromString(delayMs: Int, `value`: String): Int =
+    override suspend fun tryFromString(delayMs: kotlin.Int, `value`: kotlin.String): kotlin.Int =
         UniffiAsyncHelpers.uniffiRustCallAsync(
             callWithHandle { uniffiHandle ->
                 UniffiLib.uniffi_uniffi_futures_fn_method_asyncparser_try_from_string(uniffiHandle, delayMs, FfiConverterString.lower(`value`))
@@ -183,7 +183,7 @@ class AsyncParserImpl internal constructor(
         )
     
     
-    override suspend fun delay(delayMs: Int) =
+    override suspend fun delay(delayMs: kotlin.Int) =
         UniffiAsyncHelpers.uniffiRustCallAsync(
             callWithHandle { uniffiHandle ->
                 UniffiLib.uniffi_uniffi_futures_fn_method_asyncparser_delay(uniffiHandle, delayMs)
@@ -202,7 +202,7 @@ class AsyncParserImpl internal constructor(
     
     
     @Throws(ParserException::class)
-    override suspend fun tryDelay(delayMs: String) =
+    override suspend fun tryDelay(delayMs: kotlin.String) =
         UniffiAsyncHelpers.uniffiRustCallAsync(
             callWithHandle { uniffiHandle ->
                 UniffiLib.uniffi_uniffi_futures_fn_method_asyncparser_try_delay(uniffiHandle, FfiConverterString.lower(delayMs))
@@ -1190,7 +1190,7 @@ package uniffi.fixture.futures
 object Futures {
 
 
-    suspend fun alwaysReady(): Boolean =
+    suspend fun alwaysReady(): kotlin.Boolean =
         UniffiAsyncHelpers.uniffiRustCallAsync(
             UniffiLib.uniffi_uniffi_futures_fn_func_always_ready(),
             // pollFunc
@@ -1206,7 +1206,7 @@ object Futures {
         )
 
 
-    suspend fun asStringUsingTrait(obj: AsyncParser, delayMs: Int, `value`: Int): String =
+    suspend fun asStringUsingTrait(obj: AsyncParser, delayMs: kotlin.Int, `value`: kotlin.Int): kotlin.String =
         UniffiAsyncHelpers.uniffiRustCallAsync(
             UniffiLib.uniffi_uniffi_futures_fn_func_as_string_using_trait(FfiConverterTypeAsyncParser.lower(obj), delayMs, `value`),
             // pollFunc
@@ -1222,7 +1222,7 @@ object Futures {
         )
 
 
-    suspend fun asyncMaybeNewMegaphone(y: Boolean): Megaphone? =
+    suspend fun asyncMaybeNewMegaphone(y: kotlin.Boolean): Megaphone? =
         UniffiAsyncHelpers.uniffiRustCallAsync(
             UniffiLib.uniffi_uniffi_futures_fn_func_async_maybe_new_megaphone(FfiConverterBoolean.lower(y)),
             // pollFunc
@@ -1254,7 +1254,7 @@ object Futures {
         )
 
 
-    suspend fun brokenSleep(ms: Short, failAfter: Short) =
+    suspend fun brokenSleep(ms: kotlin.Short, failAfter: kotlin.Short) =
         UniffiAsyncHelpers.uniffiRustCallAsync(
             UniffiLib.uniffi_uniffi_futures_fn_func_broken_sleep(ms, failAfter),
             // pollFunc
@@ -1270,7 +1270,7 @@ object Futures {
         )
 
 
-    suspend fun cancelDelayUsingTrait(obj: AsyncParser, delayMs: Int) =
+    suspend fun cancelDelayUsingTrait(obj: AsyncParser, delayMs: kotlin.Int) =
         UniffiAsyncHelpers.uniffiRustCallAsync(
             UniffiLib.uniffi_uniffi_futures_fn_func_cancel_delay_using_trait(FfiConverterTypeAsyncParser.lower(obj), delayMs),
             // pollFunc
@@ -1286,7 +1286,7 @@ object Futures {
         )
 
 
-    suspend fun delayUsingTrait(obj: AsyncParser, delayMs: Int) =
+    suspend fun delayUsingTrait(obj: AsyncParser, delayMs: kotlin.Int) =
         UniffiAsyncHelpers.uniffiRustCallAsync(
             UniffiLib.uniffi_uniffi_futures_fn_func_delay_using_trait(FfiConverterTypeAsyncParser.lower(obj), delayMs),
             // pollFunc
@@ -1303,7 +1303,7 @@ object Futures {
 
 
     @Throws(MyException::class)
-    suspend fun fallibleMe(doFail: Boolean): Byte =
+    suspend fun fallibleMe(doFail: kotlin.Boolean): kotlin.Byte =
         UniffiAsyncHelpers.uniffiRustCallAsync(
             UniffiLib.uniffi_uniffi_futures_fn_func_fallible_me(FfiConverterBoolean.lower(doFail)),
             // pollFunc
@@ -1320,7 +1320,7 @@ object Futures {
 
 
     @Throws(MyException::class)
-    suspend fun fallibleStruct(doFail: Boolean): Megaphone =
+    suspend fun fallibleStruct(doFail: kotlin.Boolean): Megaphone =
         UniffiAsyncHelpers.uniffiRustCallAsync(
             UniffiLib.uniffi_uniffi_futures_fn_func_fallible_struct(FfiConverterBoolean.lower(doFail)),
             // pollFunc
@@ -1352,7 +1352,7 @@ object Futures {
         )
 
 
-    fun greet(who: String): String =
+    fun greet(who: kotlin.String): kotlin.String =
         FfiConverterString.lift(
             UniffiHelpers.uniffiRustCall { _allocator, _status ->
                 UniffiLib.uniffi_uniffi_futures_fn_func_greet(_allocator, FfiConverterString.lower(who), _status)
@@ -1368,7 +1368,7 @@ object Futures {
         )
 
 
-    suspend fun newMyRecord(a: String, b: Int): MyRecord =
+    suspend fun newMyRecord(a: kotlin.String, b: kotlin.Int): MyRecord =
         UniffiAsyncHelpers.uniffiRustCallAsync(
             UniffiLib.uniffi_uniffi_futures_fn_func_new_my_record(FfiConverterString.lower(a), b),
             // pollFunc
@@ -1384,7 +1384,7 @@ object Futures {
         )
 
 
-    suspend fun say(): String =
+    suspend fun say(): kotlin.String =
         UniffiAsyncHelpers.uniffiRustCallAsync(
             UniffiLib.uniffi_uniffi_futures_fn_func_say(),
             // pollFunc
@@ -1400,7 +1400,7 @@ object Futures {
         )
 
 
-    suspend fun sayAfter(ms: Short, who: String): String =
+    suspend fun sayAfter(ms: kotlin.Short, who: kotlin.String): kotlin.String =
         UniffiAsyncHelpers.uniffiRustCallAsync(
             UniffiLib.uniffi_uniffi_futures_fn_func_say_after(ms, FfiConverterString.lower(who)),
             // pollFunc
@@ -1416,7 +1416,7 @@ object Futures {
         )
 
 
-    suspend fun sayAfterWithMegaphone(megaphone: Megaphone, ms: Short, who: String): String =
+    suspend fun sayAfterWithMegaphone(megaphone: Megaphone, ms: kotlin.Short, who: kotlin.String): kotlin.String =
         UniffiAsyncHelpers.uniffiRustCallAsync(
             UniffiLib.uniffi_uniffi_futures_fn_func_say_after_with_megaphone(FfiConverterTypeMegaphone.lower(megaphone), ms, FfiConverterString.lower(who)),
             // pollFunc
@@ -1432,7 +1432,7 @@ object Futures {
         )
 
 
-    suspend fun sayAfterWithTokio(ms: Short, who: String): String =
+    suspend fun sayAfterWithTokio(ms: kotlin.Short, who: kotlin.String): kotlin.String =
         UniffiAsyncHelpers.uniffiRustCallAsync(
             UniffiLib.uniffi_uniffi_futures_fn_func_say_after_with_tokio(ms, FfiConverterString.lower(who)),
             // pollFunc
@@ -1448,7 +1448,7 @@ object Futures {
         )
 
 
-    suspend fun sleep(ms: Short): Boolean =
+    suspend fun sleep(ms: kotlin.Short): kotlin.Boolean =
         UniffiAsyncHelpers.uniffiRustCallAsync(
             UniffiLib.uniffi_uniffi_futures_fn_func_sleep(ms),
             // pollFunc
@@ -1464,7 +1464,7 @@ object Futures {
         )
 
 
-    suspend fun sleepNoReturn(ms: Short) =
+    suspend fun sleepNoReturn(ms: kotlin.Short) =
         UniffiAsyncHelpers.uniffiRustCallAsync(
             UniffiLib.uniffi_uniffi_futures_fn_func_sleep_no_return(ms),
             // pollFunc
@@ -1481,7 +1481,7 @@ object Futures {
 
 
     @Throws(ParserException::class)
-    suspend fun tryDelayUsingTrait(obj: AsyncParser, delayMs: String) =
+    suspend fun tryDelayUsingTrait(obj: AsyncParser, delayMs: kotlin.String) =
         UniffiAsyncHelpers.uniffiRustCallAsync(
             UniffiLib.uniffi_uniffi_futures_fn_func_try_delay_using_trait(FfiConverterTypeAsyncParser.lower(obj), FfiConverterString.lower(delayMs)),
             // pollFunc
@@ -1498,7 +1498,7 @@ object Futures {
 
 
     @Throws(ParserException::class)
-    suspend fun tryFromStringUsingTrait(obj: AsyncParser, delayMs: Int, `value`: String): Int =
+    suspend fun tryFromStringUsingTrait(obj: AsyncParser, delayMs: kotlin.Int, `value`: kotlin.String): kotlin.Int =
         UniffiAsyncHelpers.uniffiRustCallAsync(
             UniffiLib.uniffi_uniffi_futures_fn_func_try_from_string_using_trait(FfiConverterTypeAsyncParser.lower(obj), delayMs, FfiConverterString.lower(`value`)),
             // pollFunc
@@ -1670,7 +1670,7 @@ class Megaphone internal constructor(
     
     
     @Throws(MyException::class)
-    suspend fun fallibleMe(doFail: Boolean): Byte =
+    suspend fun fallibleMe(doFail: kotlin.Boolean): kotlin.Byte =
         UniffiAsyncHelpers.uniffiRustCallAsync(
             callWithHandle { uniffiHandle ->
                 UniffiLib.uniffi_uniffi_futures_fn_method_megaphone_fallible_me(uniffiHandle, FfiConverterBoolean.lower(doFail))
@@ -1688,7 +1688,7 @@ class Megaphone internal constructor(
         )
     
     
-    suspend fun sayAfter(ms: Short, who: String): String =
+    suspend fun sayAfter(ms: kotlin.Short, who: kotlin.String): kotlin.String =
         UniffiAsyncHelpers.uniffiRustCallAsync(
             callWithHandle { uniffiHandle ->
                 UniffiLib.uniffi_uniffi_futures_fn_method_megaphone_say_after(uniffiHandle, ms, FfiConverterString.lower(who))
@@ -1706,7 +1706,7 @@ class Megaphone internal constructor(
         )
     
     
-    suspend fun sayAfterWithTokio(ms: Short, who: String): String =
+    suspend fun sayAfterWithTokio(ms: kotlin.Short, who: kotlin.String): kotlin.String =
         UniffiAsyncHelpers.uniffiRustCallAsync(
             callWithHandle { uniffiHandle ->
                 UniffiLib.uniffi_uniffi_futures_fn_method_megaphone_say_after_with_tokio(uniffiHandle, ms, FfiConverterString.lower(who))
@@ -1724,7 +1724,7 @@ class Megaphone internal constructor(
         )
     
     
-    fun sayNow(who: String): String =
+    fun sayNow(who: kotlin.String): kotlin.String =
         FfiConverterString.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -1734,7 +1734,7 @@ class Megaphone internal constructor(
         )
     
     
-    suspend fun silence(): String =
+    suspend fun silence(): kotlin.String =
         UniffiAsyncHelpers.uniffiRustCallAsync(
             callWithHandle { uniffiHandle ->
                 UniffiLib.uniffi_uniffi_futures_fn_method_megaphone_silence(uniffiHandle)
@@ -1811,8 +1811,8 @@ class MyExceptionErrorHandler : UniffiRustCallStatusErrorHandler<MyException> {
 package uniffi.fixture.futures
 
 data class MyRecord(
-    val a: String,
-    val b: Int
+    val a: kotlin.String,
+    val b: kotlin.Int
 )
 
 
@@ -2192,7 +2192,7 @@ class SayAfterTrait internal constructor(
 
     
     
-    suspend fun sayAfter(ms: Short, who: String): String =
+    suspend fun sayAfter(ms: kotlin.Short, who: kotlin.String): kotlin.String =
         UniffiAsyncHelpers.uniffiRustCallAsync(
             callWithHandle { uniffiHandle ->
                 UniffiLib.uniffi_uniffi_futures_fn_method_sayaftertrait_say_after(uniffiHandle, ms, FfiConverterString.lower(who))
@@ -2325,7 +2325,7 @@ class SayAfterUdlTrait internal constructor(
 
     
     
-    suspend fun sayAfter(ms: Short, who: String): String =
+    suspend fun sayAfter(ms: kotlin.Short, who: kotlin.String): kotlin.String =
         UniffiAsyncHelpers.uniffiRustCallAsync(
             callWithHandle { uniffiHandle ->
                 UniffiLib.uniffi_uniffi_futures_fn_method_sayafterudltrait_say_after(uniffiHandle, ms, FfiConverterString.lower(who))
@@ -2349,8 +2349,8 @@ class SayAfterUdlTrait internal constructor(
 package uniffi.fixture.futures
 
 data class SharedResourceOptions(
-    val releaseAfterMs: Short,
-    val timeoutMs: Short
+    val releaseAfterMs: kotlin.Short,
+    val timeoutMs: kotlin.Short
 )
 
 
@@ -2608,7 +2608,7 @@ class UdlMegaphone internal constructor(
 
     
     
-    suspend fun sayAfter(ms: Short, who: String): String =
+    suspend fun sayAfter(ms: kotlin.Short, who: kotlin.String): kotlin.String =
         UniffiAsyncHelpers.uniffiRustCallAsync(
             callWithHandle { uniffiHandle ->
                 UniffiLib.uniffi_uniffi_futures_fn_method_udlmegaphone_say_after(uniffiHandle, ms, FfiConverterString.lower(who))
@@ -3121,7 +3121,7 @@ internal object UniffiCallbackInterfaceAsyncParser {
                     java.lang.foreign.ValueLayout.JAVA_LONG,
                     UniffiForeignFutureResultRustBuffer.LAYOUT,
                 )
-            val uniffiHandleSuccess: (String) -> Unit = { uniffiValue ->
+            val uniffiHandleSuccess: (kotlin.String) -> Unit = { uniffiValue ->
                 val uniffiResult = java.lang.foreign.Arena.ofAuto().allocate(UniffiForeignFutureResultRustBuffer.LAYOUT)
                 UniffiForeignFutureResultRustBuffer.setreturnValue(uniffiResult, FfiConverterString.lower(uniffiValue))
                 // callStatus left zeroed = SUCCESS.
@@ -3180,7 +3180,7 @@ internal object UniffiCallbackInterfaceAsyncParser {
                     java.lang.foreign.ValueLayout.JAVA_LONG,
                     UniffiForeignFutureResultI32.LAYOUT,
                 )
-            val uniffiHandleSuccess: (Int) -> Unit = { uniffiValue ->
+            val uniffiHandleSuccess: (kotlin.Int) -> Unit = { uniffiValue ->
                 val uniffiResult = java.lang.foreign.Arena.ofAuto().allocate(UniffiForeignFutureResultI32.LAYOUT)
                 UniffiForeignFutureResultI32.setreturnValue(uniffiResult, FfiConverterInt.lower(uniffiValue))
                 // callStatus left zeroed = SUCCESS.
@@ -3203,7 +3203,7 @@ internal object UniffiCallbackInterfaceAsyncParser {
                     throw AssertionError("invokeExact failed", t)
                 }
             }
-            UniffiAsyncHelpers.uniffiTraitInterfaceCallAsyncWithError<Int, ParserException>(
+            UniffiAsyncHelpers.uniffiTraitInterfaceCallAsyncWithError<kotlin.Int, ParserException>(
                 makeCall = { uniffiObj.tryFromString(
                     FfiConverterInt.lift(delayMs),
                     FfiConverterString.lift(`value`)
