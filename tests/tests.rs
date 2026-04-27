@@ -714,3 +714,36 @@ fn test_omit_checksums_kotlin() -> Result<()> {
         "scripts/TestOmitChecksums/TestOmitChecksums.kt",
     )
 }
+
+/// Kotlin runtime test for the upstream `geometry` example: data
+/// classes (records) round-tripped through namespace functions,
+/// including a nullable-Point return path.
+#[test]
+#[ignore = "requires kotlinc; opt in with `cargo test -- --ignored`"]
+fn test_geometry_kotlin() -> Result<()> {
+    run_kotlin_test("uniffi-example-geometry", "scripts/TestGeometry.kt")
+}
+
+/// Kotlin runtime test for the upstream `sprites` example: object
+/// wrapper with primary constructor (nullable `Point?`), companion-
+/// object `newRelativeTo` factory, `AutoCloseable` via `.use {}`,
+/// post-close `IllegalStateException`, and a namespace function.
+#[test]
+#[ignore = "requires kotlinc; opt in with `cargo test -- --ignored`"]
+fn test_sprites_kotlin() -> Result<()> {
+    run_kotlin_test("uniffi-example-sprites", "scripts/TestSprites.kt")
+}
+
+/// Kotlin runtime test for the local `primitive-arrays` fixture:
+/// every primitive array type (`FloatArray`, `DoubleArray`,
+/// `ShortArray`, `IntArray`, `LongArray`, `BooleanArray`),
+/// signed + unsigned variants, plus empty + large (10k element)
+/// arrays.
+#[test]
+#[ignore = "requires kotlinc; opt in with `cargo test -- --ignored`"]
+fn test_primitive_arrays_kotlin() -> Result<()> {
+    run_kotlin_test(
+        "uniffi-fixture-primitive-arrays",
+        "scripts/TestPrimitiveArrays.kt",
+    )
+}

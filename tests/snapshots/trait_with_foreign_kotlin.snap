@@ -756,10 +756,10 @@ object RustBuffer {
 }
 
 
-// === FILE: uniffi/trait_with_foreign/Trait_with_foreign.kt ===
+// === FILE: uniffi/trait_with_foreign/TraitWithForeign.kt ===
 package uniffi.trait_with_foreign
 
-object Trait_with_foreign {
+object TraitWithForeign {
 
 
     fun makeRustCounter(start: Int): Counter =
