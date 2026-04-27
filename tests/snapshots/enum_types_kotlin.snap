@@ -221,10 +221,10 @@ enum class AnimalUInt {
 }
 
 
-// === FILE: uniffi/enum_types/Enum_types.kt ===
+// === FILE: uniffi/enum_types/EnumTypes.kt ===
 package uniffi.enum_types
 
-object Enum_types {
+object EnumTypes {
 
 
     fun getAnimal(a: Animal?): Animal =

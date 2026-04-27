@@ -515,10 +515,10 @@ internal object NamespaceLibrary {
 }
 
 
-// === FILE: uniffi/primitive_arrays/Primitive_arrays.kt ===
+// === FILE: uniffi/primitive_arrays/PrimitiveArrays.kt ===
 package uniffi.primitive_arrays
 
-object Primitive_arrays {
+object PrimitiveArrays {
 
 
     fun countTrue(`data`: BooleanArray): Int =

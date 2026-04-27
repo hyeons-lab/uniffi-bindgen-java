@@ -582,10 +582,10 @@ object RustBuffer {
 }
 
 
-// === FILE: uniffi/string_map/String_map.kt ===
+// === FILE: uniffi/string_map/StringMap.kt ===
 package uniffi.string_map
 
-object String_map {
+object StringMap {
 
 
     fun roundTrip(m: Map<String, Int>): Map<String, Int> =

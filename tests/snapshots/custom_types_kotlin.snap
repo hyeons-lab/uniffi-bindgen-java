@@ -2,22 +2,10 @@
 source: tests/snapshots.rs
 expression: combined
 ---
-// === FILE: customtypes/CustomTypesDemo.kt ===
+// === FILE: customtypes/CustomTypes.kt ===
 package customtypes
 
-data class CustomTypesDemo(
-    val url: Url,
-    val handle: Handle,
-    val timeIntervalMs: TimeIntervalMs,
-    val timeIntervalSecDbl: TimeIntervalSecDbl,
-    val timeIntervalSecFlt: TimeIntervalSecFlt
-)
-
-
-// === FILE: customtypes/Custom_types.kt ===
-package customtypes
-
-object Custom_types {
+object CustomTypes {
 
 
     fun getCustomTypesDemo(demo: CustomTypesDemo?): CustomTypesDemo =
@@ -35,6 +23,18 @@ object Custom_types {
             }
         )
 }
+// === FILE: customtypes/CustomTypesDemo.kt ===
+package customtypes
+
+data class CustomTypesDemo(
+    val url: Url,
+    val handle: Handle,
+    val timeIntervalMs: TimeIntervalMs,
+    val timeIntervalSecDbl: TimeIntervalSecDbl,
+    val timeIntervalSecFlt: TimeIntervalSecFlt
+)
+
+
 // === FILE: customtypes/ExampleCustomType.kt ===
 package customtypes
 
