@@ -14,6 +14,13 @@ use super::{CodeType, Config};
 use paste::paste;
 use uniffi_bindgen::interface::ComponentInterface;
 
+// Primitive type labels are fully-qualified (`kotlin.String`,
+// `kotlin.Int`, etc) to avoid name shadowing inside sealed class
+// variant declarations. A non-flat enum variant named `String` (e.g.
+// `MixedEnum.String(s: String)`) would otherwise be parsed by Kotlin
+// as `s: MixedEnum.String` (the variant) instead of `s: kotlin.String`
+// (the built-in). Mirrors upstream uniffi-rs's
+// `format!("kotlin.{class_name}")` choice.
 macro_rules! impl_code_type_for_primitive {
     ($T:ident, $type_label:literal, $canonical_name:literal, $primitive_label:literal) => {
         paste! {
@@ -22,7 +29,7 @@ macro_rules! impl_code_type_for_primitive {
 
             impl CodeType for $T {
                 fn type_label(&self, _ci: &ComponentInterface, _config: &Config) -> String {
-                    $type_label.into()
+                    concat!("kotlin.", $type_label).into()
                 }
 
                 fn type_label_primitive(&self) -> Option<String> {
@@ -41,7 +48,7 @@ macro_rules! impl_code_type_for_primitive {
 pub struct BytesCodeType;
 impl CodeType for BytesCodeType {
     fn type_label(&self, _ci: &ComponentInterface, _config: &Config) -> String {
-        "ByteArray".to_string()
+        "kotlin.ByteArray".to_string()
     }
 
     fn canonical_name(&self) -> String {
@@ -53,7 +60,7 @@ impl CodeType for BytesCodeType {
 pub struct StringCodeType;
 impl CodeType for StringCodeType {
     fn type_label(&self, _ci: &ComponentInterface, _config: &Config) -> String {
-        "String".to_string()
+        "kotlin.String".to_string()
     }
 
     fn canonical_name(&self) -> String {

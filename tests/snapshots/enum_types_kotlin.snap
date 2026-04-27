@@ -196,7 +196,7 @@ class AnimalObject internal constructor(
 package uniffi.enum_types
 
 data class AnimalRecord(
-    val name: String
+    val name: kotlin.String
 )
 
 
@@ -989,8 +989,8 @@ package uniffi.enum_types
 
 sealed class NamedEnumWithDefaults {
     data class I(
-        val d: Byte,
-        val e: Byte
+        val d: kotlin.Byte,
+        val e: kotlin.Byte
     ) : NamedEnumWithDefaults()
 }
 

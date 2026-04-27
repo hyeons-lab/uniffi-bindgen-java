@@ -591,8 +591,8 @@ internal object NamespaceLibrary {
 package uniffi.sprites
 
 data class Point(
-    val x: Double,
-    val y: Double
+    val x: kotlin.Double,
+    val y: kotlin.Double
 )
 
 
@@ -3952,6 +3952,6 @@ internal class UniffiSlabAllocator(layout: java.lang.foreign.MemoryLayout, slots
 package uniffi.sprites
 
 data class Vector(
-    val dx: Double,
-    val dy: Double
+    val dx: kotlin.Double,
+    val dy: kotlin.Double
 )

@@ -17,11 +17,11 @@ package uniffi.coverall
 
 sealed class ComplexException(message: String) : kotlin.Exception(message) {
     class OsException(
-        val code: Short,
-        val extendedCode: Short
+        val code: kotlin.Short,
+        val extendedCode: kotlin.Short
     ) : ComplexException("code=${code}, extendedCode=${extendedCode}")
     class PermissionDenied(
-        val reason: String
+        val reason: kotlin.String
     ) : ComplexException("reason=${reason}")
     class UnknownException(
     ) : ComplexException("")
@@ -42,11 +42,11 @@ package uniffi.coverall
 
 sealed class ComplexMacroException(message: String) : kotlin.Exception(message) {
     class OsException(
-        val code: Short,
-        val extendedCode: Short
+        val code: kotlin.Short,
+        val extendedCode: kotlin.Short
     ) : ComplexMacroException("code=${code}, extendedCode=${extendedCode}")
     class PermissionDenied(
-        val reason: String
+        val reason: kotlin.String
     ) : ComplexMacroException("reason=${reason}")
     class UnknownException(
     ) : ComplexMacroException("")
@@ -68,7 +68,7 @@ package uniffi.coverall
 object Coverall {
 
 
-    fun ancestorNames(node: NodeTrait): List<String> =
+    fun ancestorNames(node: NodeTrait): List<kotlin.String> =
         FfiConverterSequenceString.lift(
             UniffiHelpers.uniffiRustCall { _allocator, _status ->
                 UniffiLib.uniffi_uniffi_coverall_fn_func_ancestor_names(_allocator, FfiConverterTypeNodeTrait.lower(node), _status)
@@ -76,7 +76,7 @@ object Coverall {
         )
 
 
-    suspend fun asyncBool(b: Boolean): Boolean =
+    suspend fun asyncBool(b: kotlin.Boolean): kotlin.Boolean =
         UniffiAsyncHelpers.uniffiRustCallAsync(
             UniffiLib.uniffi_uniffi_coverall_fn_func_async_bool(FfiConverterBoolean.lower(b)),
             // pollFunc
@@ -109,7 +109,7 @@ object Coverall {
 
 
     @Throws(ComplexException::class)
-    fun divideByText(`value`: Float, valueAsText: String): Float =
+    fun divideByText(`value`: kotlin.Float, valueAsText: kotlin.String): kotlin.Float =
         UniffiHelpers.uniffiRustCallWithErrorFloat(ComplexExceptionErrorHandler()) { _, _status ->
             UniffiLib.uniffi_uniffi_coverall_fn_func_divide_by_text(`value`, FfiConverterString.lower(valueAsText), _status)
         }
@@ -131,7 +131,7 @@ object Coverall {
         )
 
 
-    fun getMaybeObject(index: Byte): MaybeObject =
+    fun getMaybeObject(index: kotlin.Byte): MaybeObject =
         FfiConverterTypeMaybeObject.lift(
             UniffiHelpers.uniffiRustCall { _allocator, _status ->
                 UniffiLib.uniffi_uniffi_coverall_fn_func_get_maybe_object(_allocator, index, _status)
@@ -139,7 +139,7 @@ object Coverall {
         )
 
 
-    fun getMaybeSimpleDict(index: Byte): MaybeSimpleDict =
+    fun getMaybeSimpleDict(index: kotlin.Byte): MaybeSimpleDict =
         FfiConverterTypeMaybeSimpleDict.lift(
             UniffiHelpers.uniffiRustCall { _allocator, _status ->
                 UniffiLib.uniffi_uniffi_coverall_fn_func_get_maybe_simple_dict(_allocator, index, _status)
@@ -147,7 +147,7 @@ object Coverall {
         )
 
 
-    fun getNumAlive(): Long =
+    fun getNumAlive(): kotlin.Long =
         UniffiHelpers.uniffiRustCallLong { _, _status ->
             UniffiLib.uniffi_uniffi_coverall_fn_func_get_num_alive(_status)
         }
@@ -161,7 +161,7 @@ object Coverall {
         )
 
 
-    fun getSimpleFlatMacroEnum(index: Byte): SimpleFlatMacroEnum =
+    fun getSimpleFlatMacroEnum(index: kotlin.Byte): SimpleFlatMacroEnum =
         FfiConverterTypeSimpleFlatMacroEnum.lift(
             UniffiHelpers.uniffiRustCall { _allocator, _status ->
                 UniffiLib.uniffi_uniffi_coverall_fn_func_get_simple_flat_macro_enum(_allocator, index, _status)
@@ -210,7 +210,7 @@ object Coverall {
 
 
     @Throws(CoverallException::class)
-    fun println(text: String) {
+    fun println(text: kotlin.String) {
         UniffiHelpers.uniffiRustCallVoidWithError(CoverallExceptionErrorHandler()) { _, _status ->
             UniffiLib.uniffi_uniffi_coverall_fn_func_println(FfiConverterString.lower(text), _status)
         }
@@ -295,14 +295,14 @@ object Coverall {
 
 
     @Throws(HtmlException::class)
-    fun validateHtml(source: String) {
+    fun validateHtml(source: kotlin.String) {
         UniffiHelpers.uniffiRustCallVoidWithError(HtmlExceptionErrorHandler()) { _, _status ->
             UniffiLib.uniffi_uniffi_coverall_fn_func_validate_html(FfiConverterString.lower(source), _status)
         }
     }
 
 
-    fun concatWithStringUtil(stringUtil: StringUtil, a: String, b: String): String =
+    fun concatWithStringUtil(stringUtil: StringUtil, a: kotlin.String, b: kotlin.String): kotlin.String =
         FfiConverterString.lift(
             UniffiHelpers.uniffiRustCall { _allocator, _status ->
                 UniffiLib.uniffi_uniffi_coverall_fn_func_concat_with_string_util(_allocator, FfiConverterTypeStringUtil.lower(stringUtil), FfiConverterString.lower(a), FfiConverterString.lower(b), _status)
@@ -432,7 +432,7 @@ class Coveralls internal constructor(
      * connected Rust peer. Any method call on a fake object will fail.
      */
     constructor(@Suppress("UNUSED_PARAMETER") noHandle: NoHandle) : this(UniffiWithHandle, 0L)
-    constructor(name: String) : this(
+    constructor(name: kotlin.String) : this(
         UniffiWithHandle,
         UniffiHelpers.uniffiRustCall { _allocator, _status ->
             UniffiLib.uniffi_uniffi_coverall_fn_constructor_coveralls_new(FfiConverterString.lower(name), _status)
@@ -547,7 +547,7 @@ class Coveralls internal constructor(
     
     
     @Throws(CoverallException::class)
-    fun falliblePanic(message: String) {
+    fun falliblePanic(message: kotlin.String) {
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallVoidWithError(CoverallExceptionErrorHandler()) { _, _status ->
                 UniffiLib.uniffi_uniffi_coverall_fn_method_coveralls_fallible_panic(uniffiHandle, FfiConverterString.lower(message), _status)
@@ -556,7 +556,7 @@ class Coveralls internal constructor(
     }
     
     
-    fun getDict(key: String, `value`: Long): Map<String, Long> =
+    fun getDict(key: kotlin.String, `value`: kotlin.Long): Map<kotlin.String, kotlin.Long> =
         FfiConverterMapStringLong.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -566,7 +566,7 @@ class Coveralls internal constructor(
         )
     
     
-    fun getDict2(key: String, `value`: Long): Map<String, Long> =
+    fun getDict2(key: kotlin.String, `value`: kotlin.Long): Map<kotlin.String, kotlin.Long> =
         FfiConverterMapStringLong.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -576,7 +576,7 @@ class Coveralls internal constructor(
         )
     
     
-    fun getDict3(key: Int, `value`: Long): Map<Int, Long> =
+    fun getDict3(key: kotlin.Int, `value`: kotlin.Long): Map<kotlin.Int, kotlin.Long> =
         FfiConverterMapIntLong.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -586,7 +586,7 @@ class Coveralls internal constructor(
         )
     
     
-    fun getName(): String =
+    fun getName(): kotlin.String =
         FfiConverterString.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -616,7 +616,7 @@ class Coveralls internal constructor(
         )
     
     
-    fun getStatus(status: String): String =
+    fun getStatus(status: kotlin.String): kotlin.String =
         FfiConverterString.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -627,7 +627,7 @@ class Coveralls internal constructor(
     
     
     @Throws(CoverallException::class)
-    fun maybeThrow(shouldThrow: Boolean): Boolean =
+    fun maybeThrow(shouldThrow: kotlin.Boolean): kotlin.Boolean =
         FfiConverterBoolean.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCallWithError(CoverallExceptionErrorHandler()) { _allocator, _status ->
@@ -638,7 +638,7 @@ class Coveralls internal constructor(
     
     
     @Throws(ComplexException::class)
-    fun maybeThrowComplex(input: Byte): Boolean =
+    fun maybeThrowComplex(input: kotlin.Byte): kotlin.Boolean =
         FfiConverterBoolean.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCallWithError(ComplexExceptionErrorHandler()) { _allocator, _status ->
@@ -649,7 +649,7 @@ class Coveralls internal constructor(
     
     
     @Throws(CoverallException::class)
-    fun maybeThrowInto(shouldThrow: Boolean): Boolean =
+    fun maybeThrowInto(shouldThrow: kotlin.Boolean): kotlin.Boolean =
         FfiConverterBoolean.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCallWithError(CoverallExceptionErrorHandler()) { _allocator, _status ->
@@ -659,7 +659,7 @@ class Coveralls internal constructor(
         )
     
     
-    fun panic(message: String) {
+    fun panic(message: kotlin.String) {
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallVoid { _, _status ->
                 UniffiLib.uniffi_uniffi_coverall_fn_method_coveralls_panic(uniffiHandle, FfiConverterString.lower(message), _status)
@@ -668,7 +668,7 @@ class Coveralls internal constructor(
     }
     
     
-    fun reverse(`value`: ByteArray): ByteArray =
+    fun reverse(`value`: kotlin.ByteArray): kotlin.ByteArray =
         FfiConverterByteArray.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -688,7 +688,7 @@ class Coveralls internal constructor(
         )
     
     
-    fun strongCount(): Long =
+    fun strongCount(): kotlin.Long =
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallLong { _, _status ->
                 UniffiLib.uniffi_uniffi_coverall_fn_method_coveralls_strong_count(uniffiHandle, _status)
@@ -715,7 +715,7 @@ class Coveralls internal constructor(
     }
     
     
-    fun takeOtherPanic(message: String) {
+    fun takeOtherPanic(message: kotlin.String) {
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallVoid { _, _status ->
                 UniffiLib.uniffi_uniffi_coverall_fn_method_coveralls_take_other_panic(uniffiHandle, FfiConverterString.lower(message), _status)
@@ -727,7 +727,7 @@ class Coveralls internal constructor(
         
         @Throws(CoverallException::class)
         @JvmStatic
-        fun fallibleNew(name: String, shouldFail: Boolean): Coveralls =
+        fun fallibleNew(name: kotlin.String, shouldFail: kotlin.Boolean): Coveralls =
             Coveralls(
                 UniffiWithHandle,
                 UniffiHelpers.uniffiRustCallWithError(CoverallExceptionErrorHandler()) { _allocator, _status ->
@@ -736,7 +736,7 @@ class Coveralls internal constructor(
             )
         
         @JvmStatic
-        fun panickingNew(message: String): Coveralls =
+        fun panickingNew(message: kotlin.String): Coveralls =
             Coveralls(
                 UniffiWithHandle,
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -752,11 +752,11 @@ class Coveralls internal constructor(
 package uniffi.coverall
 
 data class DictWithDefaults(
-    val name: String,
-    val category: String?,
-    val integer: Long,
-    val itemList: List<String>,
-    val itemMap: Map<String, String>
+    val name: kotlin.String,
+    val category: kotlin.String?,
+    val integer: kotlin.Long,
+    val itemList: List<kotlin.String>,
+    val itemMap: Map<kotlin.String, kotlin.String>
 )
 
 
@@ -1250,10 +1250,10 @@ object FfiConverterLong : FfiConverter<Long, Long> {
 // === FILE: uniffi/coverall/FfiConverterMapIntLong.kt ===
 package uniffi.coverall
 
-object FfiConverterMapIntLong : FfiConverterRustBuffer<Map<Int, Long>> {
-    override fun read(buf: java.nio.ByteBuffer): Map<Int, Long> {
+object FfiConverterMapIntLong : FfiConverterRustBuffer<Map<kotlin.Int, kotlin.Long>> {
+    override fun read(buf: java.nio.ByteBuffer): Map<kotlin.Int, kotlin.Long> {
         val len = buf.getInt()
-        val map = HashMap<Int, Long>(len)
+        val map = HashMap<kotlin.Int, kotlin.Long>(len)
         repeat(len) {
             val k = FfiConverterInt.read(buf)
             val v = FfiConverterLong.read(buf)
@@ -1262,13 +1262,13 @@ object FfiConverterMapIntLong : FfiConverterRustBuffer<Map<Int, Long>> {
         return map
     }
 
-    override fun allocationSize(value: Map<Int, Long>): Long {
+    override fun allocationSize(value: Map<kotlin.Int, kotlin.Long>): Long {
         return 4L + value.entries.sumOf {
             FfiConverterInt.allocationSize(it.key) + FfiConverterLong.allocationSize(it.value)
         }
     }
 
-    override fun write(value: Map<Int, Long>, buf: java.nio.ByteBuffer) {
+    override fun write(value: Map<kotlin.Int, kotlin.Long>, buf: java.nio.ByteBuffer) {
         buf.putInt(value.size)
         for ((k, v) in value) {
             FfiConverterInt.write(k, buf)
@@ -1280,10 +1280,10 @@ object FfiConverterMapIntLong : FfiConverterRustBuffer<Map<Int, Long>> {
 // === FILE: uniffi/coverall/FfiConverterMapStringLong.kt ===
 package uniffi.coverall
 
-object FfiConverterMapStringLong : FfiConverterRustBuffer<Map<String, Long>> {
-    override fun read(buf: java.nio.ByteBuffer): Map<String, Long> {
+object FfiConverterMapStringLong : FfiConverterRustBuffer<Map<kotlin.String, kotlin.Long>> {
+    override fun read(buf: java.nio.ByteBuffer): Map<kotlin.String, kotlin.Long> {
         val len = buf.getInt()
-        val map = HashMap<String, Long>(len)
+        val map = HashMap<kotlin.String, kotlin.Long>(len)
         repeat(len) {
             val k = FfiConverterString.read(buf)
             val v = FfiConverterLong.read(buf)
@@ -1292,13 +1292,13 @@ object FfiConverterMapStringLong : FfiConverterRustBuffer<Map<String, Long>> {
         return map
     }
 
-    override fun allocationSize(value: Map<String, Long>): Long {
+    override fun allocationSize(value: Map<kotlin.String, kotlin.Long>): Long {
         return 4L + value.entries.sumOf {
             FfiConverterString.allocationSize(it.key) + FfiConverterLong.allocationSize(it.value)
         }
     }
 
-    override fun write(value: Map<String, Long>, buf: java.nio.ByteBuffer) {
+    override fun write(value: Map<kotlin.String, kotlin.Long>, buf: java.nio.ByteBuffer) {
         buf.putInt(value.size)
         for ((k, v) in value) {
             FfiConverterString.write(k, buf)
@@ -1310,10 +1310,10 @@ object FfiConverterMapStringLong : FfiConverterRustBuffer<Map<String, Long>> {
 // === FILE: uniffi/coverall/FfiConverterMapStringOptionalTypeCoveralls.kt ===
 package uniffi.coverall
 
-object FfiConverterMapStringOptionalTypeCoveralls : FfiConverterRustBuffer<Map<String, Coveralls?>> {
-    override fun read(buf: java.nio.ByteBuffer): Map<String, Coveralls?> {
+object FfiConverterMapStringOptionalTypeCoveralls : FfiConverterRustBuffer<Map<kotlin.String, Coveralls?>> {
+    override fun read(buf: java.nio.ByteBuffer): Map<kotlin.String, Coveralls?> {
         val len = buf.getInt()
-        val map = HashMap<String, Coveralls?>(len)
+        val map = HashMap<kotlin.String, Coveralls?>(len)
         repeat(len) {
             val k = FfiConverterString.read(buf)
             val v = FfiConverterOptionalTypeCoveralls.read(buf)
@@ -1322,13 +1322,13 @@ object FfiConverterMapStringOptionalTypeCoveralls : FfiConverterRustBuffer<Map<S
         return map
     }
 
-    override fun allocationSize(value: Map<String, Coveralls?>): Long {
+    override fun allocationSize(value: Map<kotlin.String, Coveralls?>): Long {
         return 4L + value.entries.sumOf {
             FfiConverterString.allocationSize(it.key) + FfiConverterOptionalTypeCoveralls.allocationSize(it.value)
         }
     }
 
-    override fun write(value: Map<String, Coveralls?>, buf: java.nio.ByteBuffer) {
+    override fun write(value: Map<kotlin.String, Coveralls?>, buf: java.nio.ByteBuffer) {
         buf.putInt(value.size)
         for ((k, v) in value) {
             FfiConverterString.write(k, buf)
@@ -1340,10 +1340,10 @@ object FfiConverterMapStringOptionalTypeCoveralls : FfiConverterRustBuffer<Map<S
 // === FILE: uniffi/coverall/FfiConverterMapStringString.kt ===
 package uniffi.coverall
 
-object FfiConverterMapStringString : FfiConverterRustBuffer<Map<String, String>> {
-    override fun read(buf: java.nio.ByteBuffer): Map<String, String> {
+object FfiConverterMapStringString : FfiConverterRustBuffer<Map<kotlin.String, kotlin.String>> {
+    override fun read(buf: java.nio.ByteBuffer): Map<kotlin.String, kotlin.String> {
         val len = buf.getInt()
-        val map = HashMap<String, String>(len)
+        val map = HashMap<kotlin.String, kotlin.String>(len)
         repeat(len) {
             val k = FfiConverterString.read(buf)
             val v = FfiConverterString.read(buf)
@@ -1352,13 +1352,13 @@ object FfiConverterMapStringString : FfiConverterRustBuffer<Map<String, String>>
         return map
     }
 
-    override fun allocationSize(value: Map<String, String>): Long {
+    override fun allocationSize(value: Map<kotlin.String, kotlin.String>): Long {
         return 4L + value.entries.sumOf {
             FfiConverterString.allocationSize(it.key) + FfiConverterString.allocationSize(it.value)
         }
     }
 
-    override fun write(value: Map<String, String>, buf: java.nio.ByteBuffer) {
+    override fun write(value: Map<kotlin.String, kotlin.String>, buf: java.nio.ByteBuffer) {
         buf.putInt(value.size)
         for ((k, v) in value) {
             FfiConverterString.write(k, buf)
@@ -1370,10 +1370,10 @@ object FfiConverterMapStringString : FfiConverterRustBuffer<Map<String, String>>
 // === FILE: uniffi/coverall/FfiConverterMapStringTypeCoverallFlatError.kt ===
 package uniffi.coverall
 
-object FfiConverterMapStringTypeCoverallFlatError : FfiConverterRustBuffer<Map<String, CoverallFlatException>> {
-    override fun read(buf: java.nio.ByteBuffer): Map<String, CoverallFlatException> {
+object FfiConverterMapStringTypeCoverallFlatError : FfiConverterRustBuffer<Map<kotlin.String, CoverallFlatException>> {
+    override fun read(buf: java.nio.ByteBuffer): Map<kotlin.String, CoverallFlatException> {
         val len = buf.getInt()
-        val map = HashMap<String, CoverallFlatException>(len)
+        val map = HashMap<kotlin.String, CoverallFlatException>(len)
         repeat(len) {
             val k = FfiConverterString.read(buf)
             val v = FfiConverterTypeCoverallFlatError.read(buf)
@@ -1382,13 +1382,13 @@ object FfiConverterMapStringTypeCoverallFlatError : FfiConverterRustBuffer<Map<S
         return map
     }
 
-    override fun allocationSize(value: Map<String, CoverallFlatException>): Long {
+    override fun allocationSize(value: Map<kotlin.String, CoverallFlatException>): Long {
         return 4L + value.entries.sumOf {
             FfiConverterString.allocationSize(it.key) + FfiConverterTypeCoverallFlatError.allocationSize(it.value)
         }
     }
 
-    override fun write(value: Map<String, CoverallFlatException>, buf: java.nio.ByteBuffer) {
+    override fun write(value: Map<kotlin.String, CoverallFlatException>, buf: java.nio.ByteBuffer) {
         buf.putInt(value.size)
         for ((k, v) in value) {
             FfiConverterString.write(k, buf)
@@ -1403,22 +1403,22 @@ package uniffi.coverall
 // Kotlin uses its type system to express nullability directly via `T?`,
 // so the `lift` / `lower` boundary handles a null sentinel byte without
 // any wrapper class on the Kotlin side.
-object FfiConverterOptionalBoolean : FfiConverterRustBuffer<Boolean?> {
-    override fun read(buf: java.nio.ByteBuffer): Boolean? {
+object FfiConverterOptionalBoolean : FfiConverterRustBuffer<kotlin.Boolean?> {
+    override fun read(buf: java.nio.ByteBuffer): kotlin.Boolean? {
         if (buf.get() == 0.toByte()) {
             return null
         }
         return FfiConverterBoolean.read(buf)
     }
 
-    override fun allocationSize(value: Boolean?): Long {
+    override fun allocationSize(value: kotlin.Boolean?): Long {
         if (value == null) {
             return 1L
         }
         return 1L + FfiConverterBoolean.allocationSize(value)
     }
 
-    override fun write(value: Boolean?, buf: java.nio.ByteBuffer) {
+    override fun write(value: kotlin.Boolean?, buf: java.nio.ByteBuffer) {
         if (value == null) {
             buf.put(0.toByte())
         } else {
@@ -1434,22 +1434,22 @@ package uniffi.coverall
 // Kotlin uses its type system to express nullability directly via `T?`,
 // so the `lift` / `lower` boundary handles a null sentinel byte without
 // any wrapper class on the Kotlin side.
-object FfiConverterOptionalByte : FfiConverterRustBuffer<Byte?> {
-    override fun read(buf: java.nio.ByteBuffer): Byte? {
+object FfiConverterOptionalByte : FfiConverterRustBuffer<kotlin.Byte?> {
+    override fun read(buf: java.nio.ByteBuffer): kotlin.Byte? {
         if (buf.get() == 0.toByte()) {
             return null
         }
         return FfiConverterByte.read(buf)
     }
 
-    override fun allocationSize(value: Byte?): Long {
+    override fun allocationSize(value: kotlin.Byte?): Long {
         if (value == null) {
             return 1L
         }
         return 1L + FfiConverterByte.allocationSize(value)
     }
 
-    override fun write(value: Byte?, buf: java.nio.ByteBuffer) {
+    override fun write(value: kotlin.Byte?, buf: java.nio.ByteBuffer) {
         if (value == null) {
             buf.put(0.toByte())
         } else {
@@ -1465,22 +1465,22 @@ package uniffi.coverall
 // Kotlin uses its type system to express nullability directly via `T?`,
 // so the `lift` / `lower` boundary handles a null sentinel byte without
 // any wrapper class on the Kotlin side.
-object FfiConverterOptionalByteArray : FfiConverterRustBuffer<ByteArray?> {
-    override fun read(buf: java.nio.ByteBuffer): ByteArray? {
+object FfiConverterOptionalByteArray : FfiConverterRustBuffer<kotlin.ByteArray?> {
+    override fun read(buf: java.nio.ByteBuffer): kotlin.ByteArray? {
         if (buf.get() == 0.toByte()) {
             return null
         }
         return FfiConverterByteArray.read(buf)
     }
 
-    override fun allocationSize(value: ByteArray?): Long {
+    override fun allocationSize(value: kotlin.ByteArray?): Long {
         if (value == null) {
             return 1L
         }
         return 1L + FfiConverterByteArray.allocationSize(value)
     }
 
-    override fun write(value: ByteArray?, buf: java.nio.ByteBuffer) {
+    override fun write(value: kotlin.ByteArray?, buf: java.nio.ByteBuffer) {
         if (value == null) {
             buf.put(0.toByte())
         } else {
@@ -1496,22 +1496,22 @@ package uniffi.coverall
 // Kotlin uses its type system to express nullability directly via `T?`,
 // so the `lift` / `lower` boundary handles a null sentinel byte without
 // any wrapper class on the Kotlin side.
-object FfiConverterOptionalDouble : FfiConverterRustBuffer<Double?> {
-    override fun read(buf: java.nio.ByteBuffer): Double? {
+object FfiConverterOptionalDouble : FfiConverterRustBuffer<kotlin.Double?> {
+    override fun read(buf: java.nio.ByteBuffer): kotlin.Double? {
         if (buf.get() == 0.toByte()) {
             return null
         }
         return FfiConverterDouble.read(buf)
     }
 
-    override fun allocationSize(value: Double?): Long {
+    override fun allocationSize(value: kotlin.Double?): Long {
         if (value == null) {
             return 1L
         }
         return 1L + FfiConverterDouble.allocationSize(value)
     }
 
-    override fun write(value: Double?, buf: java.nio.ByteBuffer) {
+    override fun write(value: kotlin.Double?, buf: java.nio.ByteBuffer) {
         if (value == null) {
             buf.put(0.toByte())
         } else {
@@ -1527,22 +1527,22 @@ package uniffi.coverall
 // Kotlin uses its type system to express nullability directly via `T?`,
 // so the `lift` / `lower` boundary handles a null sentinel byte without
 // any wrapper class on the Kotlin side.
-object FfiConverterOptionalFloat : FfiConverterRustBuffer<Float?> {
-    override fun read(buf: java.nio.ByteBuffer): Float? {
+object FfiConverterOptionalFloat : FfiConverterRustBuffer<kotlin.Float?> {
+    override fun read(buf: java.nio.ByteBuffer): kotlin.Float? {
         if (buf.get() == 0.toByte()) {
             return null
         }
         return FfiConverterFloat.read(buf)
     }
 
-    override fun allocationSize(value: Float?): Long {
+    override fun allocationSize(value: kotlin.Float?): Long {
         if (value == null) {
             return 1L
         }
         return 1L + FfiConverterFloat.allocationSize(value)
     }
 
-    override fun write(value: Float?, buf: java.nio.ByteBuffer) {
+    override fun write(value: kotlin.Float?, buf: java.nio.ByteBuffer) {
         if (value == null) {
             buf.put(0.toByte())
         } else {
@@ -1558,22 +1558,22 @@ package uniffi.coverall
 // Kotlin uses its type system to express nullability directly via `T?`,
 // so the `lift` / `lower` boundary handles a null sentinel byte without
 // any wrapper class on the Kotlin side.
-object FfiConverterOptionalLong : FfiConverterRustBuffer<Long?> {
-    override fun read(buf: java.nio.ByteBuffer): Long? {
+object FfiConverterOptionalLong : FfiConverterRustBuffer<kotlin.Long?> {
+    override fun read(buf: java.nio.ByteBuffer): kotlin.Long? {
         if (buf.get() == 0.toByte()) {
             return null
         }
         return FfiConverterLong.read(buf)
     }
 
-    override fun allocationSize(value: Long?): Long {
+    override fun allocationSize(value: kotlin.Long?): Long {
         if (value == null) {
             return 1L
         }
         return 1L + FfiConverterLong.allocationSize(value)
     }
 
-    override fun write(value: Long?, buf: java.nio.ByteBuffer) {
+    override fun write(value: kotlin.Long?, buf: java.nio.ByteBuffer) {
         if (value == null) {
             buf.put(0.toByte())
         } else {
@@ -1589,22 +1589,22 @@ package uniffi.coverall
 // Kotlin uses its type system to express nullability directly via `T?`,
 // so the `lift` / `lower` boundary handles a null sentinel byte without
 // any wrapper class on the Kotlin side.
-object FfiConverterOptionalShort : FfiConverterRustBuffer<Short?> {
-    override fun read(buf: java.nio.ByteBuffer): Short? {
+object FfiConverterOptionalShort : FfiConverterRustBuffer<kotlin.Short?> {
+    override fun read(buf: java.nio.ByteBuffer): kotlin.Short? {
         if (buf.get() == 0.toByte()) {
             return null
         }
         return FfiConverterShort.read(buf)
     }
 
-    override fun allocationSize(value: Short?): Long {
+    override fun allocationSize(value: kotlin.Short?): Long {
         if (value == null) {
             return 1L
         }
         return 1L + FfiConverterShort.allocationSize(value)
     }
 
-    override fun write(value: Short?, buf: java.nio.ByteBuffer) {
+    override fun write(value: kotlin.Short?, buf: java.nio.ByteBuffer) {
         if (value == null) {
             buf.put(0.toByte())
         } else {
@@ -1620,22 +1620,22 @@ package uniffi.coverall
 // Kotlin uses its type system to express nullability directly via `T?`,
 // so the `lift` / `lower` boundary handles a null sentinel byte without
 // any wrapper class on the Kotlin side.
-object FfiConverterOptionalString : FfiConverterRustBuffer<String?> {
-    override fun read(buf: java.nio.ByteBuffer): String? {
+object FfiConverterOptionalString : FfiConverterRustBuffer<kotlin.String?> {
+    override fun read(buf: java.nio.ByteBuffer): kotlin.String? {
         if (buf.get() == 0.toByte()) {
             return null
         }
         return FfiConverterString.read(buf)
     }
 
-    override fun allocationSize(value: String?): Long {
+    override fun allocationSize(value: kotlin.String?): Long {
         if (value == null) {
             return 1L
         }
         return 1L + FfiConverterString.allocationSize(value)
     }
 
-    override fun write(value: String?, buf: java.nio.ByteBuffer) {
+    override fun write(value: kotlin.String?, buf: java.nio.ByteBuffer) {
         if (value == null) {
             buf.put(0.toByte())
         } else {
@@ -1896,19 +1896,19 @@ object FfiConverterSequenceOptionalTypeCoveralls : FfiConverterRustBuffer<List<C
 // === FILE: uniffi/coverall/FfiConverterSequenceString.kt ===
 package uniffi.coverall
 
-object FfiConverterSequenceString : FfiConverterRustBuffer<List<String>> {
-    override fun read(buf: java.nio.ByteBuffer): List<String> {
+object FfiConverterSequenceString : FfiConverterRustBuffer<List<kotlin.String>> {
+    override fun read(buf: java.nio.ByteBuffer): List<kotlin.String> {
         val len = buf.getInt()
-        val list = ArrayList<String>(len)
+        val list = ArrayList<kotlin.String>(len)
         repeat(len) { list.add(FfiConverterString.read(buf)) }
         return list
     }
 
-    override fun allocationSize(value: List<String>): Long {
+    override fun allocationSize(value: List<kotlin.String>): Long {
         return 4L + value.sumOf { FfiConverterString.allocationSize(it) }
     }
 
-    override fun write(value: List<String>, buf: java.nio.ByteBuffer) {
+    override fun write(value: List<kotlin.String>, buf: java.nio.ByteBuffer) {
         buf.putInt(value.size)
         value.forEach { FfiConverterString.write(it, buf) }
     }
@@ -3167,13 +3167,13 @@ object ForeignBytes {
 package uniffi.coverall
 
 interface Getters {
-    fun getBool(v: Boolean, arg2: Boolean): Boolean
-    fun getList(v: IntArray, arg2: Boolean): IntArray
-    fun getNothing(v: String)
+    fun getBool(v: kotlin.Boolean, arg2: kotlin.Boolean): kotlin.Boolean
+    fun getList(v: IntArray, arg2: kotlin.Boolean): IntArray
+    fun getNothing(v: kotlin.String)
     @Throws(ComplexException::class)
-    fun getOption(v: String, arg2: Boolean): String?
+    fun getOption(v: kotlin.String, arg2: kotlin.Boolean): kotlin.String?
     @Throws(CoverallException::class)
-    fun getString(v: String, arg2: Boolean): String
+    fun getString(v: kotlin.String, arg2: kotlin.Boolean): kotlin.String
     fun roundTripObject(coveralls: Coveralls): Coveralls
 }
 
@@ -3291,7 +3291,7 @@ class GettersImpl internal constructor(
 
     
     
-    override fun getBool(v: Boolean, arg2: Boolean): Boolean =
+    override fun getBool(v: kotlin.Boolean, arg2: kotlin.Boolean): kotlin.Boolean =
         FfiConverterBoolean.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -3301,7 +3301,7 @@ class GettersImpl internal constructor(
         )
     
     
-    override fun getList(v: IntArray, arg2: Boolean): IntArray =
+    override fun getList(v: IntArray, arg2: kotlin.Boolean): IntArray =
         FfiConverterInt32Array.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -3311,7 +3311,7 @@ class GettersImpl internal constructor(
         )
     
     
-    override fun getNothing(v: String) {
+    override fun getNothing(v: kotlin.String) {
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallVoid { _, _status ->
                 UniffiLib.uniffi_uniffi_coverall_fn_method_getters_get_nothing(uniffiHandle, FfiConverterString.lower(v), _status)
@@ -3321,7 +3321,7 @@ class GettersImpl internal constructor(
     
     
     @Throws(ComplexException::class)
-    override fun getOption(v: String, arg2: Boolean): String? =
+    override fun getOption(v: kotlin.String, arg2: kotlin.Boolean): kotlin.String? =
         FfiConverterOptionalString.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCallWithError(ComplexExceptionErrorHandler()) { _allocator, _status ->
@@ -3332,7 +3332,7 @@ class GettersImpl internal constructor(
     
     
     @Throws(CoverallException::class)
-    override fun getString(v: String, arg2: Boolean): String =
+    override fun getString(v: kotlin.String, arg2: kotlin.Boolean): kotlin.String =
         FfiConverterString.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCallWithError(CoverallExceptionErrorHandler()) { _allocator, _status ->
@@ -3491,7 +3491,7 @@ class IFirst internal constructor(
 
     
     
-    fun compare(other: ISecond?): Boolean =
+    fun compare(other: ISecond?): kotlin.Boolean =
         FfiConverterBoolean.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -3622,7 +3622,7 @@ class ISecond internal constructor(
 
     
     
-    fun compare(other: IFirst?): Boolean =
+    fun compare(other: IFirst?): kotlin.Boolean =
         FfiConverterBoolean.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -3985,7 +3985,7 @@ class Node internal constructor(
      * connected Rust peer. Any method call on a fake object will fail.
      */
     constructor(@Suppress("UNUSED_PARAMETER") noHandle: NoHandle) : this(UniffiWithHandle, 0L)
-    constructor(name: String) : this(
+    constructor(name: kotlin.String) : this(
         UniffiWithHandle,
         UniffiHelpers.uniffiRustCall { _allocator, _status ->
             UniffiLib.uniffi_uniffi_coverall_fn_constructor_node_new(FfiConverterString.lower(name), _status)
@@ -4071,7 +4071,7 @@ class Node internal constructor(
 
     
     
-    fun describeParent(): String =
+    fun describeParent(): kotlin.String =
         FfiConverterString.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -4091,7 +4091,7 @@ class Node internal constructor(
         )
     
     
-    fun name(): String =
+    fun name(): kotlin.String =
         FfiConverterString.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -4110,7 +4110,7 @@ class Node internal constructor(
     }
     
     
-    fun strongCount(): Long =
+    fun strongCount(): kotlin.Long =
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallLong { _, _status ->
                 UniffiLib.uniffi_uniffi_coverall_fn_method_node_strong_count(uniffiHandle, _status)
@@ -4132,9 +4132,9 @@ package uniffi.coverall
 
 interface NodeTrait {
     fun getParent(): NodeTrait?
-    fun name(): String
+    fun name(): kotlin.String
     fun setParent(parent: NodeTrait?)
-    fun strongCount(): Long
+    fun strongCount(): kotlin.Long
 }
 
 
@@ -4261,7 +4261,7 @@ class NodeTraitImpl internal constructor(
         )
     
     
-    override fun name(): String =
+    override fun name(): kotlin.String =
         FfiConverterString.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -4280,7 +4280,7 @@ class NodeTraitImpl internal constructor(
     }
     
     
-    override fun strongCount(): Long =
+    override fun strongCount(): kotlin.Long =
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallLong { _, _status ->
                 UniffiLib.uniffi_uniffi_coverall_fn_method_nodetrait_strong_count(uniffiHandle, _status)
@@ -4460,7 +4460,7 @@ sealed class ReturnOnlyEnum {
         val l: List<CoverallFlatException>
     ) : ReturnOnlyEnum()
     data class Four(
-        val m: Map<String, CoverallFlatException>
+        val m: Map<kotlin.String, CoverallFlatException>
     ) : ReturnOnlyEnum()
 }
 
@@ -4570,29 +4570,29 @@ object RustBuffer {
 package uniffi.coverall
 
 data class SimpleDict(
-    val text: String,
-    val maybeText: String?,
-    val someBytes: ByteArray,
-    val maybeSomeBytes: ByteArray?,
-    val aBool: Boolean,
-    val maybeABool: Boolean?,
-    val unsigned8: Byte,
-    val maybeUnsigned8: Byte?,
-    val unsigned16: Short,
-    val maybeUnsigned16: Short?,
-    val unsigned64: Long,
-    val maybeUnsigned64: Long?,
-    val signed8: Byte,
-    val maybeSigned8: Byte?,
-    val signed64: Long,
-    val maybeSigned64: Long?,
-    val float32: Float,
-    val maybeFloat32: Float?,
-    val float64: Double,
-    val maybeFloat64: Double?,
+    val text: kotlin.String,
+    val maybeText: kotlin.String?,
+    val someBytes: kotlin.ByteArray,
+    val maybeSomeBytes: kotlin.ByteArray?,
+    val aBool: kotlin.Boolean,
+    val maybeABool: kotlin.Boolean?,
+    val unsigned8: kotlin.Byte,
+    val maybeUnsigned8: kotlin.Byte?,
+    val unsigned16: kotlin.Short,
+    val maybeUnsigned16: kotlin.Short?,
+    val unsigned64: kotlin.Long,
+    val maybeUnsigned64: kotlin.Long?,
+    val signed8: kotlin.Byte,
+    val maybeSigned8: kotlin.Byte?,
+    val signed64: kotlin.Long,
+    val maybeSigned64: kotlin.Long?,
+    val float32: kotlin.Float,
+    val maybeFloat32: kotlin.Float?,
+    val float64: kotlin.Double,
+    val maybeFloat64: kotlin.Double?,
     val coveralls: Coveralls?,
     val coverallsList: List<Coveralls?>,
-    val coverallsMap: Map<String, Coveralls?>,
+    val coverallsMap: Map<kotlin.String, Coveralls?>,
     val testTrait: NodeTrait?
 )
 
@@ -4602,10 +4602,10 @@ package uniffi.coverall
 
 sealed class SimpleFlatMacroEnum {
     data class First(
-        val `val`: String
+        val `val`: kotlin.String
     ) : SimpleFlatMacroEnum()
     data class Second(
-        val num: Short
+        val num: kotlin.Short
     ) : SimpleFlatMacroEnum()
 }
 
@@ -4723,7 +4723,7 @@ class StringUtil internal constructor(
 
     
     
-    fun concat(a: String, b: String): String =
+    fun concat(a: kotlin.String, b: kotlin.String): kotlin.String =
         FfiConverterString.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -4768,7 +4768,7 @@ class StringUtilObject internal constructor(
      * connected Rust peer. Any method call on a fake object will fail.
      */
     constructor(@Suppress("UNUSED_PARAMETER") noHandle: NoHandle) : this(UniffiWithHandle, 0L)
-    constructor(separator: String) : this(
+    constructor(separator: kotlin.String) : this(
         UniffiWithHandle,
         UniffiHelpers.uniffiRustCall { _allocator, _status ->
             UniffiLib.uniffi_uniffi_coverall_fn_constructor_stringutilobject_new(FfiConverterString.lower(separator), _status)
@@ -4854,7 +4854,7 @@ class StringUtilObject internal constructor(
 
     
     
-    fun concat(a: String, b: String): String =
+    fun concat(a: kotlin.String, b: kotlin.String): kotlin.String =
         FfiConverterString.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -4985,7 +4985,7 @@ class ThreadsafeCounter internal constructor(
 
     
     
-    fun busyWait(ms: Int) {
+    fun busyWait(ms: kotlin.Int) {
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallVoid { _, _status ->
                 UniffiLib.uniffi_uniffi_coverall_fn_method_threadsafecounter_busy_wait(uniffiHandle, ms, _status)
@@ -4994,7 +4994,7 @@ class ThreadsafeCounter internal constructor(
     }
     
     
-    fun incrementIfBusy(): Int =
+    fun incrementIfBusy(): kotlin.Int =
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallInt { _, _status ->
                 UniffiLib.uniffi_uniffi_coverall_fn_method_threadsafecounter_increment_if_busy(uniffiHandle, _status)
@@ -5380,7 +5380,7 @@ internal object UniffiCallbackInterfaceGetters {
                     FfiConverterBoolean.lift(arg2)
                 )
             }
-            val writeReturn = java.util.function.Consumer<Boolean> { uniffiValue ->
+            val writeReturn = java.util.function.Consumer<kotlin.Boolean> { uniffiValue ->
                 val outReturn = uniffiOutReturn.reinterpret(java.lang.foreign.ValueLayout.JAVA_BYTE.byteSize())
                 outReturn.set(java.lang.foreign.ValueLayout.JAVA_BYTE, 0L, FfiConverterBoolean.lower(uniffiValue))
             }
@@ -5453,7 +5453,7 @@ internal object UniffiCallbackInterfaceGetters {
                     FfiConverterBoolean.lift(arg2)
                 )
             }
-            val writeReturn = java.util.function.Consumer<String?> { uniffiValue ->
+            val writeReturn = java.util.function.Consumer<kotlin.String?> { uniffiValue ->
                 val outReturn = uniffiOutReturn.reinterpret(RustBuffer.LAYOUT.byteSize())
                 val lowered = FfiConverterOptionalString.lower(uniffiValue)
                 java.lang.foreign.MemorySegment.copy(lowered, 0L, outReturn, 0L, RustBuffer.LAYOUT.byteSize())
@@ -5484,7 +5484,7 @@ internal object UniffiCallbackInterfaceGetters {
                     FfiConverterBoolean.lift(arg2)
                 )
             }
-            val writeReturn = java.util.function.Consumer<String> { uniffiValue ->
+            val writeReturn = java.util.function.Consumer<kotlin.String> { uniffiValue ->
                 val outReturn = uniffiOutReturn.reinterpret(RustBuffer.LAYOUT.byteSize())
                 val lowered = FfiConverterString.lower(uniffiValue)
                 java.lang.foreign.MemorySegment.copy(lowered, 0L, outReturn, 0L, RustBuffer.LAYOUT.byteSize())
@@ -5861,7 +5861,7 @@ internal object UniffiCallbackInterfaceNodeTrait {
                 uniffiObj.name(
                 )
             }
-            val writeReturn = java.util.function.Consumer<String> { uniffiValue ->
+            val writeReturn = java.util.function.Consumer<kotlin.String> { uniffiValue ->
                 val outReturn = uniffiOutReturn.reinterpret(RustBuffer.LAYOUT.byteSize())
                 val lowered = FfiConverterString.lower(uniffiValue)
                 java.lang.foreign.MemorySegment.copy(lowered, 0L, outReturn, 0L, RustBuffer.LAYOUT.byteSize())
@@ -5906,7 +5906,7 @@ internal object UniffiCallbackInterfaceNodeTrait {
                 uniffiObj.strongCount(
                 )
             }
-            val writeReturn = java.util.function.Consumer<Long> { uniffiValue ->
+            val writeReturn = java.util.function.Consumer<kotlin.Long> { uniffiValue ->
                 val outReturn = uniffiOutReturn.reinterpret(java.lang.foreign.ValueLayout.JAVA_LONG.byteSize())
                 outReturn.set(java.lang.foreign.ValueLayout.JAVA_LONG_UNALIGNED, 0L, FfiConverterLong.lower(uniffiValue))
             }

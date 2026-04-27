@@ -472,7 +472,7 @@ object ForeignBytes {
 package uniffi.simple_callback
 
 interface Greeter {
-    fun greet(name: String): String
+    fun greet(name: kotlin.String): kotlin.String
 }
 
 
@@ -611,7 +611,7 @@ package uniffi.simple_callback
 object SimpleCallback {
 
 
-    fun invokeGreeter(greeter: Greeter, name: String): String =
+    fun invokeGreeter(greeter: Greeter, name: kotlin.String): kotlin.String =
         FfiConverterString.lift(
             UniffiHelpers.uniffiRustCall { _allocator, _status ->
                 UniffiLib.uniffi_uniffi_fixture_simple_callback_fn_func_invoke_greeter(_allocator, FfiConverterTypeGreeter.lower(greeter), FfiConverterString.lower(name), _status)
@@ -736,7 +736,7 @@ internal object UniffiCallbackInterfaceGreeter {
                     FfiConverterString.lift(name)
                 )
             }
-            val writeReturn = java.util.function.Consumer<String> { uniffiValue ->
+            val writeReturn = java.util.function.Consumer<kotlin.String> { uniffiValue ->
                 val outReturn = uniffiOutReturn.reinterpret(RustBuffer.LAYOUT.byteSize())
                 val lowered = FfiConverterString.lower(uniffiValue)
                 java.lang.foreign.MemorySegment.copy(lowered, 0L, outReturn, 0L, RustBuffer.LAYOUT.byteSize())

@@ -9,19 +9,19 @@ object Arithmetic {
 
 
     @Throws(ArithmeticException::class)
-    fun add(a: Long, b: Long): Long =
+    fun add(a: kotlin.Long, b: kotlin.Long): kotlin.Long =
         UniffiHelpers.uniffiRustCallWithErrorLong(ArithmeticExceptionErrorHandler()) { _, _status ->
             UniffiLib.uniffi_arithmetical_fn_func_add(a, b, _status)
         }
 
 
-    fun div(dividend: Long, divisor: Long): Long =
+    fun div(dividend: kotlin.Long, divisor: kotlin.Long): kotlin.Long =
         UniffiHelpers.uniffiRustCallLong { _, _status ->
             UniffiLib.uniffi_arithmetical_fn_func_div(dividend, divisor, _status)
         }
 
 
-    fun equal(a: Long, b: Long): Boolean =
+    fun equal(a: kotlin.Long, b: kotlin.Long): kotlin.Boolean =
         FfiConverterBoolean.lift(
             UniffiHelpers.uniffiRustCall { _allocator, _status ->
                 UniffiLib.uniffi_arithmetical_fn_func_equal(a, b, _status)
@@ -30,7 +30,7 @@ object Arithmetic {
 
 
     @Throws(ArithmeticException::class)
-    fun sub(a: Long, b: Long): Long =
+    fun sub(a: kotlin.Long, b: kotlin.Long): kotlin.Long =
         UniffiHelpers.uniffiRustCallWithErrorLong(ArithmeticExceptionErrorHandler()) { _, _status ->
             UniffiLib.uniffi_arithmetical_fn_func_sub(a, b, _status)
         }
