@@ -10,18 +10,22 @@
    after the last variant is required by Kotlin syntax when the
    enum body has any further declarations. #}
 {%- let flat_fmt = uniffi_trait_methods.display_fmt.as_ref().or(uniffi_trait_methods.debug_fmt.as_ref()) %}
+{%- let has_methods = !e.methods().is_empty() %}
 // UNIFFI:FILE {{ type_name }}.kt
 package {{ config.package_name() }}
 
 enum class {{ type_name }} {
     {%- for variant in e.variants() %}
     {{ variant|variant_name }}{% if !loop.last %},{% endif %}
-    {%- endfor %}{% if e.variants().is_empty() || flat_fmt.is_some() %};{% endif %}
+    {%- endfor %}{% if e.variants().is_empty() || flat_fmt.is_some() || has_methods %};{% endif %}
 {%- if let Some(fmt) = flat_fmt %}
 
     override fun toString(): String =
         {{ fmt.return_type().unwrap()|lift_fn }}({% call kotlin::trait_ffi_call(fmt, "    ") %})
 {%- endif %}
+{%- for meth in e.methods() %}
+{% call kotlin::func_decl(meth, "    ") %}
+{%- endfor %}
 }
 
 // UNIFFI:FILE {{ ffi_converter_name }}.kt
@@ -85,6 +89,15 @@ sealed class {{ type_name }}{% if uniffi_trait_methods.ord_cmp.is_some() %} : Co
     }{% endif %}
     {%- endif %}
     {%- endfor %}
+{#- Methods (non-trait) live at the parent sealed-class level. They
+   take `&Self = &Enum` on the Rust side, so the FFI call lowers
+   `this` via the parent enum's FfiConverter and dispatches based on
+   the discriminant. Trait overrides stay per-variant (above) because
+   data-class auto-generated equals/hashCode/toString would shadow
+   parent overrides; non-trait methods don't have that conflict. -#}
+{%- for meth in e.methods() %}
+{% call kotlin::func_decl(meth, "    ") %}
+{%- endfor %}
 }
 
 // UNIFFI:FILE {{ ffi_converter_name }}.kt
