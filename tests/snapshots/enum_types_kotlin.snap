@@ -1028,16 +1028,16 @@ internal object NamespaceLibrary {
             throw RuntimeException("UniFFI contract version mismatch: try cleaning and rebuilding your project")
         }
     }
-
-    // API checksum verification is skipped in this revision of the Kotlin
-    // backend — it requires a per-function checksum loop
-    // (`ci.iter_checksums()`) plus matching `MethodHandle`s on `UniffiLib`,
-    // neither of which exist yet. The runtime is otherwise complete enough
-    // to build and load; mismatches surface at call time rather than init
-    // time until this is wired up.
     fun uniffiCheckApiChecksums() {
-        // TODO: emit `if (UniffiLib.<name>() != <checksum>.toShort()) throw ...`
-        // once per-function FFI wrappers are generated.
+        if (UniffiLib.uniffi_enum_types_checksum_func_get_animal() != 14101.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_enum_types_checksum_func_get_animal_enum() != 34809.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_enum_types_checksum_method_animalobject_get_record() != 52667.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
     }
 }
 
@@ -3953,8 +3953,7 @@ internal object UniffiLib {
     // proceeds in textual order).
     init {
         NamespaceLibrary.uniffiCheckContractApiVersion()
-        // Checksum verification is skipped in this revision; see
-        // NamespaceLibrary.uniffiCheckApiChecksums().
+        NamespaceLibrary.uniffiCheckApiChecksums()
     }
 }
 

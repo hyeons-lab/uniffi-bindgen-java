@@ -444,14 +444,12 @@ fn bindgen_loader_with_config_override(
     let maybe_base = find_uniffi_toml(fixture_name)?.and_then(read_file_contents);
     let maybe_extras = read_file_contents(test_path.with_file_name("uniffi-extras.toml"));
 
-    // Concatenate base + extras (in order), preserving the original
-    // semantics: a missing file contributes nothing, both missing
-    // means no override.
-    let merged: String = itertools::Itertools::intersperse(
-        vec![maybe_base, maybe_extras].into_iter().flatten(),
-        "\n".to_string(),
-    )
-    .collect();
+    // Structural merge: parse base + extras as TOML tables, recursively
+    // merge with extras winning, then serialize. String concatenation
+    // doesn't work because both files can declare the same `[bindings.<lang>]`
+    // section header (e.g. fixture pins `package_name`, extras adds
+    // `omit_checksums`) — TOML rejects duplicate-key headers.
+    let merged = merge_toml_overrides(maybe_base.as_deref(), maybe_extras.as_deref())?;
 
     let mut paths = BindgenPaths::default();
     if !merged.is_empty() {
@@ -467,6 +465,37 @@ fn bindgen_loader_with_config_override(
     }
     paths.add_cargo_metadata_layer(false)?;
     Ok(BindgenLoader::new(paths))
+}
+
+/// Merge two TOML override sources into a single serialized document.
+/// Recursively merges tables; on key collision, `extras` wins. Empty
+/// inputs are treated as None. Empty result means "no override."
+fn merge_toml_overrides(base: Option<&str>, extras: Option<&str>) -> Result<String> {
+    fn merge_tables(base: &mut toml::Table, overlay: toml::Table) {
+        for (k, v) in overlay {
+            if let (Some(toml::Value::Table(b)), toml::Value::Table(o)) = (base.get_mut(&k), &v) {
+                merge_tables(b, o.clone());
+            } else {
+                base.insert(k, v);
+            }
+        }
+    }
+
+    let parse = |s: Option<&str>| -> Result<Option<toml::Table>> {
+        match s {
+            Some(s) if !s.trim().is_empty() => Ok(Some(toml::from_str(s).context("parse toml")?)),
+            _ => Ok(None),
+        }
+    };
+
+    Ok(match (parse(base)?, parse(extras)?) {
+        (Some(mut b), Some(e)) => {
+            merge_tables(&mut b, e);
+            toml::to_string(&b).context("serialize merged toml")?
+        }
+        (Some(t), None) | (None, Some(t)) => toml::to_string(&t).context("serialize toml")?,
+        (None, None) => String::new(),
+    })
 }
 
 /// Copy the cdylib into `out_dir/native/` and create the
@@ -668,4 +697,20 @@ fn test_arithmetic_kotlin() -> Result<()> {
 #[ignore = "requires kotlinc; opt in with `cargo test -- --ignored`"]
 fn test_coverall_kotlin() -> Result<()> {
     run_kotlin_test("uniffi-fixture-coverall", "scripts/TestFixtureCoverall.kt")
+}
+
+/// Kotlin runtime test for `omit_checksums = true`. Reuses the
+/// upstream `arithmetic` fixture but with the sibling
+/// `tests/scripts/TestOmitChecksums/uniffi-extras.toml` flipping the
+/// flag for both Java and Kotlin. If the codegen gating works, the
+/// generated Kotlin bindings have neither `uniffiCheckApiChecksums()`
+/// nor an init-time call; the fact that they still load and basic
+/// operations work is the regression signal.
+#[test]
+#[ignore = "requires kotlinc; opt in with `cargo test -- --ignored`"]
+fn test_omit_checksums_kotlin() -> Result<()> {
+    run_kotlin_test(
+        "uniffi-example-arithmetic",
+        "scripts/TestOmitChecksums/TestOmitChecksums.kt",
+    )
 }

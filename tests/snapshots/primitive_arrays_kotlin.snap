@@ -465,16 +465,52 @@ internal object NamespaceLibrary {
             throw RuntimeException("UniFFI contract version mismatch: try cleaning and rebuilding your project")
         }
     }
-
-    // API checksum verification is skipped in this revision of the Kotlin
-    // backend — it requires a per-function checksum loop
-    // (`ci.iter_checksums()`) plus matching `MethodHandle`s on `UniffiLib`,
-    // neither of which exist yet. The runtime is otherwise complete enough
-    // to build and load; mismatches surface at call time rather than init
-    // time until this is wired up.
     fun uniffiCheckApiChecksums() {
-        // TODO: emit `if (UniffiLib.<name>() != <checksum>.toShort()) throw ...`
-        // once per-function FFI wrappers are generated.
+        if (UniffiLib.uniffi_uniffi_fixture_primitive_arrays_checksum_func_count_true() != 52835.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_bool() != 45859.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_float32() != 27449.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_float64() != 35336.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_int16() != 30660.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_int32() != 29919.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_int64() != 48710.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_uint16() != 62483.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_uint32() != 8655.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_fixture_primitive_arrays_checksum_func_roundtrip_uint64() != 55744.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_fixture_primitive_arrays_checksum_func_sum_float32() != 30065.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_fixture_primitive_arrays_checksum_func_sum_float64() != 11346.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_fixture_primitive_arrays_checksum_func_sum_int16() != 56706.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_fixture_primitive_arrays_checksum_func_sum_int32() != 43425.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_fixture_primitive_arrays_checksum_func_sum_int64() != 43531.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
     }
 }
 
@@ -3755,8 +3791,7 @@ internal object UniffiLib {
     // proceeds in textual order).
     init {
         NamespaceLibrary.uniffiCheckContractApiVersion()
-        // Checksum verification is skipped in this revision; see
-        // NamespaceLibrary.uniffiCheckApiChecksums().
+        NamespaceLibrary.uniffiCheckApiChecksums()
     }
 }
 
