@@ -1849,16 +1849,133 @@ internal object NamespaceLibrary {
             throw RuntimeException("UniFFI contract version mismatch: try cleaning and rebuilding your project")
         }
     }
-
-    // API checksum verification is skipped in this revision of the Kotlin
-    // backend — it requires a per-function checksum loop
-    // (`ci.iter_checksums()`) plus matching `MethodHandle`s on `UniffiLib`,
-    // neither of which exist yet. The runtime is otherwise complete enough
-    // to build and load; mismatches surface at call time rather than init
-    // time until this is wired up.
     fun uniffiCheckApiChecksums() {
-        // TODO: emit `if (UniffiLib.<name>() != <checksum>.toShort()) throw ...`
-        // once per-function FFI wrappers are generated.
+        if (UniffiLib.uniffi_uniffi_futures_checksum_func_always_ready() != 42784.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_futures_checksum_func_as_string_using_trait() != 57132.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_futures_checksum_func_async_maybe_new_megaphone() != 57660.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_futures_checksum_func_async_new_megaphone() != 13250.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_futures_checksum_func_broken_sleep() != 63103.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_futures_checksum_func_cancel_delay_using_trait() != 800.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_futures_checksum_func_delay_using_trait() != 18130.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_futures_checksum_func_fallible_me() != 38752.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_futures_checksum_func_fallible_struct() != 65481.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_futures_checksum_func_get_say_after_traits() != 24943.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_futures_checksum_func_get_say_after_udl_traits() != 49244.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_futures_checksum_func_greet() != 50094.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_futures_checksum_func_new_megaphone() != 44818.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_futures_checksum_func_new_my_record() != 58856.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_futures_checksum_func_say() != 10766.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_futures_checksum_func_say_after() != 42943.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_futures_checksum_func_say_after_with_megaphone() != 22626.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_futures_checksum_func_say_after_with_tokio() != 54462.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_futures_checksum_func_sleep() != 9742.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_futures_checksum_func_sleep_no_return() != 48287.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_futures_checksum_func_try_delay_using_trait() != 9784.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_futures_checksum_func_try_from_string_using_trait() != 28005.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_futures_checksum_func_use_shared_resource() != 63057.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_futures_checksum_func_void() != 46382.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_futures_checksum_method_asyncparser_as_string() != 48468.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_futures_checksum_method_asyncparser_try_from_string() != 9404.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_futures_checksum_method_asyncparser_delay() != 37680.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_futures_checksum_method_asyncparser_try_delay() != 58627.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_futures_checksum_method_megaphone_fallible_me() != 58656.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_futures_checksum_method_megaphone_say_after() != 28597.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_futures_checksum_method_megaphone_say_after_with_tokio() != 13955.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_futures_checksum_method_megaphone_say_now() != 7134.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_futures_checksum_method_megaphone_silence() != 10995.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_futures_checksum_method_sayaftertrait_say_after() != 28425.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_futures_checksum_method_sayafterudltrait_say_after() != 24670.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_futures_checksum_method_udlmegaphone_say_after() != 17313.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_futures_checksum_constructor_falliblemegaphone_new() != 40979.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_futures_checksum_constructor_megaphone_new() != 60950.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_futures_checksum_constructor_megaphone_secondary() != 4975.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_futures_checksum_constructor_testobject_new() != 64172.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_futures_checksum_constructor_udlmegaphone_new() != 41645.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_futures_checksum_constructor_udlmegaphone_secondary() != 10841.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
     }
 }
 
@@ -7982,8 +8099,7 @@ internal object UniffiLib {
     // proceeds in textual order).
     init {
         NamespaceLibrary.uniffiCheckContractApiVersion()
-        // Checksum verification is skipped in this revision; see
-        // NamespaceLibrary.uniffiCheckApiChecksums().
+        NamespaceLibrary.uniffiCheckApiChecksums()
         UniffiCallbackInterfaceAsyncParser.register()
     }
 }
