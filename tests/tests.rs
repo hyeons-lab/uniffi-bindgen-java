@@ -791,8 +791,9 @@ fn test_proc_macro_kotlin() -> Result<()> {
 /// signature, the `uniffiRustCallAsync` helper, the future
 /// poll/complete/free triple) all hang together end-to-end. The
 /// coverall round-trip's `Coverall.asyncBool` already exercises a
-/// boolean-return suspend, but futures' `Futures.sayAfter` covers the
-/// `RustBuffer` (string return) async path too.
+/// boolean-return suspend; the example's
+/// `UniffiExampleFutures.sayAfter` covers the `RustBuffer` (string
+/// return) async path too.
 #[test]
 #[ignore = "requires kotlinc; opt in with `cargo test -- --ignored`"]
 fn test_futures_kotlin() -> Result<()> {
