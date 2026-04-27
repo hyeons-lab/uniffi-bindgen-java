@@ -1,2 +1,5 @@
 [bindings.java]
 omit_checksums = true
+
+[bindings.kotlin]
+omit_checksums = true
