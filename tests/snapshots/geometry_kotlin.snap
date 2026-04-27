@@ -511,7 +511,7 @@ package uniffi.geometry
 object Geometry {
 
 
-    fun gradient(ln: Line): Double =
+    fun gradient(ln: Line): kotlin.Double =
         UniffiHelpers.uniffiRustCallDouble { _, _status ->
             UniffiLib.uniffi_uniffi_geometry_fn_func_gradient(FfiConverterTypeLine.lower(ln), _status)
         }
@@ -587,8 +587,8 @@ internal object NamespaceLibrary {
 package uniffi.geometry
 
 data class Point(
-    val coordX: Double,
-    val coordY: Double
+    val coordX: kotlin.Double,
+    val coordY: kotlin.Double
 )
 
 

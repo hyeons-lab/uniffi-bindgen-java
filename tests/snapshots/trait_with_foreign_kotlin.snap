@@ -6,7 +6,7 @@ expression: combined
 package uniffi.trait_with_foreign
 
 interface Counter {
-    fun nextValue(): Int
+    fun nextValue(): kotlin.Int
 }
 
 
@@ -123,7 +123,7 @@ class CounterImpl internal constructor(
 
     
     
-    override fun nextValue(): Int =
+    override fun nextValue(): kotlin.Int =
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallInt { _, _status ->
                 UniffiLib.uniffi_uniffi_fixture_trait_with_foreign_fn_method_counter_next_value(uniffiHandle, _status)
@@ -762,7 +762,7 @@ package uniffi.trait_with_foreign
 object TraitWithForeign {
 
 
-    fun makeRustCounter(start: Int): Counter =
+    fun makeRustCounter(start: kotlin.Int): Counter =
         FfiConverterTypeCounter.lift(
             UniffiHelpers.uniffiRustCall { _allocator, _status ->
                 UniffiLib.uniffi_uniffi_fixture_trait_with_foreign_fn_func_make_rust_counter(start, _status)
@@ -770,7 +770,7 @@ object TraitWithForeign {
         )
 
 
-    fun useCounter(counter: Counter): Int =
+    fun useCounter(counter: Counter): kotlin.Int =
         UniffiHelpers.uniffiRustCallInt { _, _status ->
             UniffiLib.uniffi_uniffi_fixture_trait_with_foreign_fn_func_use_counter(FfiConverterTypeCounter.lower(counter), _status)
         }
@@ -977,7 +977,7 @@ internal object UniffiCallbackInterfaceCounter {
                 uniffiObj.nextValue(
                 )
             }
-            val writeReturn = java.util.function.Consumer<Int> { uniffiValue ->
+            val writeReturn = java.util.function.Consumer<kotlin.Int> { uniffiValue ->
                 val outReturn = uniffiOutReturn.reinterpret(java.lang.foreign.ValueLayout.JAVA_INT.byteSize())
                 outReturn.set(java.lang.foreign.ValueLayout.JAVA_INT_UNALIGNED, 0L, FfiConverterInt.lower(uniffiValue))
             }

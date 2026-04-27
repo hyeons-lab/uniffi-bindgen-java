@@ -744,7 +744,7 @@ sealed class TraitEnum : Comparable<TraitEnum> {
             }).toInt()
     }
     data class S(
-        val v1: String
+        val v1: kotlin.String
     ) : TraitEnum() {
 
         override fun toString(): String =
@@ -771,8 +771,8 @@ sealed class TraitEnum : Comparable<TraitEnum> {
             }).toInt()
     }
     data class P(
-        val v1: Int,
-        val v2: Int
+        val v1: kotlin.Int,
+        val v2: kotlin.Int
     ) : TraitEnum() {
 
         override fun toString(): String =
@@ -806,11 +806,11 @@ package uniffi.trait_methods_kt
 
 sealed class TraitErr(message: String) : kotlin.Exception(message), Comparable<TraitErr> {
     class Network(
-        val reason: String
+        val reason: kotlin.String
     ) : TraitErr("reason=${reason}")
     class Server(
-        val code: Int,
-        val reason: String
+        val code: kotlin.Int,
+        val reason: kotlin.String
     ) : TraitErr("code=${code}, reason=${reason}")
 
     override fun toString(): String =
@@ -895,7 +895,7 @@ class TraitObj internal constructor(
      * connected Rust peer. Any method call on a fake object will fail.
      */
     constructor(@Suppress("UNUSED_PARAMETER") noHandle: NoHandle) : this(UniffiWithHandle, 0L)
-    constructor(`val`: String) : this(
+    constructor(`val`: kotlin.String) : this(
         UniffiWithHandle,
         UniffiHelpers.uniffiRustCall { _allocator, _status ->
             UniffiLib.uniffi_uniffi_fixture_trait_methods_kt_fn_constructor_traitobj_new(FfiConverterString.lower(`val`), _status)
@@ -1018,8 +1018,8 @@ class TraitObj internal constructor(
 package uniffi.trait_methods_kt
 
 data class TraitRec(
-    val s: String,
-    val i: Int
+    val s: kotlin.String,
+    val i: kotlin.Int
 ) : Comparable<TraitRec> {
 
     override fun toString(): String =

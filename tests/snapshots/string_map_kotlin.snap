@@ -309,10 +309,10 @@ object FfiConverterLong : FfiConverter<Long, Long> {
 // === FILE: uniffi/string_map/FfiConverterMapStringInt.kt ===
 package uniffi.string_map
 
-object FfiConverterMapStringInt : FfiConverterRustBuffer<Map<String, Int>> {
-    override fun read(buf: java.nio.ByteBuffer): Map<String, Int> {
+object FfiConverterMapStringInt : FfiConverterRustBuffer<Map<kotlin.String, kotlin.Int>> {
+    override fun read(buf: java.nio.ByteBuffer): Map<kotlin.String, kotlin.Int> {
         val len = buf.getInt()
-        val map = HashMap<String, Int>(len)
+        val map = HashMap<kotlin.String, kotlin.Int>(len)
         repeat(len) {
             val k = FfiConverterString.read(buf)
             val v = FfiConverterInt.read(buf)
@@ -321,13 +321,13 @@ object FfiConverterMapStringInt : FfiConverterRustBuffer<Map<String, Int>> {
         return map
     }
 
-    override fun allocationSize(value: Map<String, Int>): Long {
+    override fun allocationSize(value: Map<kotlin.String, kotlin.Int>): Long {
         return 4L + value.entries.sumOf {
             FfiConverterString.allocationSize(it.key) + FfiConverterInt.allocationSize(it.value)
         }
     }
 
-    override fun write(value: Map<String, Int>, buf: java.nio.ByteBuffer) {
+    override fun write(value: Map<kotlin.String, kotlin.Int>, buf: java.nio.ByteBuffer) {
         buf.putInt(value.size)
         for ((k, v) in value) {
             FfiConverterString.write(k, buf)
@@ -588,7 +588,7 @@ package uniffi.string_map
 object StringMap {
 
 
-    fun roundTrip(m: Map<String, Int>): Map<String, Int> =
+    fun roundTrip(m: Map<kotlin.String, kotlin.Int>): Map<kotlin.String, kotlin.Int> =
         FfiConverterMapStringInt.lift(
             UniffiHelpers.uniffiRustCall { _allocator, _status ->
                 UniffiLib.uniffi_uniffi_fixture_string_map_fn_func_round_trip(_allocator, FfiConverterMapStringInt.lower(m), _status)

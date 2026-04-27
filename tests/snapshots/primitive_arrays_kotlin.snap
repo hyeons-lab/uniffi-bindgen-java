@@ -521,7 +521,7 @@ package uniffi.primitive_arrays
 object PrimitiveArrays {
 
 
-    fun countTrue(`data`: BooleanArray): Int =
+    fun countTrue(`data`: BooleanArray): kotlin.Int =
         UniffiHelpers.uniffiRustCallInt { _, _status ->
             UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_count_true(FfiConverterBooleanArray.lower(`data`), _status)
         }
@@ -599,31 +599,31 @@ object PrimitiveArrays {
         )
 
 
-    fun sumFloat32(`data`: FloatArray): Float =
+    fun sumFloat32(`data`: FloatArray): kotlin.Float =
         UniffiHelpers.uniffiRustCallFloat { _, _status ->
             UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_sum_float32(FfiConverterFloat32Array.lower(`data`), _status)
         }
 
 
-    fun sumFloat64(`data`: DoubleArray): Double =
+    fun sumFloat64(`data`: DoubleArray): kotlin.Double =
         UniffiHelpers.uniffiRustCallDouble { _, _status ->
             UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_sum_float64(FfiConverterFloat64Array.lower(`data`), _status)
         }
 
 
-    fun sumInt16(`data`: ShortArray): Short =
+    fun sumInt16(`data`: ShortArray): kotlin.Short =
         UniffiHelpers.uniffiRustCallShort { _, _status ->
             UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_sum_int16(FfiConverterInt16Array.lower(`data`), _status)
         }
 
 
-    fun sumInt32(`data`: IntArray): Int =
+    fun sumInt32(`data`: IntArray): kotlin.Int =
         UniffiHelpers.uniffiRustCallInt { _, _status ->
             UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_sum_int32(FfiConverterInt32Array.lower(`data`), _status)
         }
 
 
-    fun sumInt64(`data`: LongArray): Long =
+    fun sumInt64(`data`: LongArray): kotlin.Long =
         UniffiHelpers.uniffiRustCallLong { _, _status ->
             UniffiLib.uniffi_uniffi_fixture_primitive_arrays_fn_func_sum_int64(FfiConverterInt64Array.lower(`data`), _status)
         }
