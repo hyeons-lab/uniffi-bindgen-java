@@ -747,3 +747,29 @@ fn test_primitive_arrays_kotlin() -> Result<()> {
         "scripts/TestPrimitiveArrays.kt",
     )
 }
+
+/// Kotlin runtime test for the upstream `chronological` fixture:
+/// `java.time.Instant` / `Duration` round-trip through the
+/// Timestamp / Duration codegen ported in PR #34. Includes
+/// pre-epoch timestamps, optional / nullable arguments, and
+/// overflow surfaces as `DateTimeException` from the JVM.
+#[test]
+#[ignore = "requires kotlinc; opt in with `cargo test -- --ignored`"]
+fn test_chronological_kotlin() -> Result<()> {
+    run_kotlin_test("uniffi-fixture-time", "scripts/TestChronological.kt")
+}
+
+/// Kotlin runtime test for the local `trait-methods-kt` fixture:
+/// `#[uniffi::export(Display, Eq, Ord, Hash)]` on records, objects,
+/// flat enums, errors, and non-flat enums. Each override is routed
+/// through Rust via FFI, so the assertions verify both
+/// `toString` / `equals` / `hashCode` / `compareTo` plumbing and
+/// the Rust-side custom impls.
+#[test]
+#[ignore = "requires kotlinc; opt in with `cargo test -- --ignored`"]
+fn test_trait_methods_kotlin() -> Result<()> {
+    run_kotlin_test(
+        "uniffi-fixture-trait-methods-kt",
+        "scripts/TestTraitMethods.kt",
+    )
+}
