@@ -624,10 +624,10 @@ pub struct Config {
     omit_checksums: bool,
 }
 
-// `cdylib_name`, `omit_checksums`, and `android` are defined now so the
-// TOML schema matches the Java backend and later phases don't churn
-// `gen_kotlin::Config` for every new consumer. `#[allow(dead_code)]` until
-// subsequent phases hook them up.
+// `cdylib_name` and `android` are defined now so the TOML schema matches
+// the Java backend and later phases don't churn `gen_kotlin::Config` for
+// every new consumer. `#[allow(dead_code)]` until subsequent phases hook
+// them up.
 impl Config {
     pub fn package_name(&self) -> String {
         self.package_name.clone().unwrap_or_else(|| "uniffi".into())
@@ -638,7 +638,6 @@ impl Config {
         self.cdylib_name.clone().unwrap_or_else(|| "uniffi".into())
     }
 
-    #[allow(dead_code)]
     pub fn omit_checksums(&self) -> bool {
         self.omit_checksums
     }

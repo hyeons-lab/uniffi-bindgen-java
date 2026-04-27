@@ -767,16 +767,40 @@ internal object NamespaceLibrary {
             throw RuntimeException("UniFFI contract version mismatch: try cleaning and rebuilding your project")
         }
     }
-
-    // API checksum verification is skipped in this revision of the Kotlin
-    // backend — it requires a per-function checksum loop
-    // (`ci.iter_checksums()`) plus matching `MethodHandle`s on `UniffiLib`,
-    // neither of which exist yet. The runtime is otherwise complete enough
-    // to build and load; mismatches surface at call time rather than init
-    // time until this is wired up.
     fun uniffiCheckApiChecksums() {
-        // TODO: emit `if (UniffiLib.<name>() != <checksum>.toShort()) throw ...`
-        // once per-function FFI wrappers are generated.
+        if (UniffiLib.uniffi_uniffi_chronological_checksum_func_add() != 17698.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_chronological_checksum_func_diff() != 56501.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_chronological_checksum_func_equal() != 7088.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_chronological_checksum_func_get_pre_epoch_timestamp() != 64636.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_chronological_checksum_func_get_seconds_before_unix_epoch() != 44475.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_chronological_checksum_func_now() != 13195.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_chronological_checksum_func_optional() != 45232.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_chronological_checksum_func_return_duration() != 28279.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_chronological_checksum_func_return_timestamp() != 46812.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_chronological_checksum_func_set_seconds_before_unix_epoch() != 53552.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        if (UniffiLib.uniffi_uniffi_chronological_checksum_func_to_string_timestamp() != 61723.toShort()) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
     }
 }
 
@@ -3788,8 +3812,7 @@ internal object UniffiLib {
     // proceeds in textual order).
     init {
         NamespaceLibrary.uniffiCheckContractApiVersion()
-        // Checksum verification is skipped in this revision; see
-        // NamespaceLibrary.uniffiCheckApiChecksums().
+        NamespaceLibrary.uniffiCheckApiChecksums()
     }
 }
 
