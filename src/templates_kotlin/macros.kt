@@ -77,14 +77,11 @@ uniffiRustCallVoid{% if callable.throws_type().is_some() %}WithError{% endif %}
 {{ indent }}@Throws({{ error_type|type_name(ci, config) }}::class)
 {%- when None %}
 {%- endmatch %}
-{%- let is_method = callable.self_type().is_some() -%}
-{#- Async path: generate `suspend fun` and route through
-    `uniffiRustCallAsync`. Object methods wrap the FFI call in
-    `callWithHandle { uniffiHandle -> ... }` so the in-flight-call
-    counter holds the wrapper alive across the async polling loop;
-    namespace functions invoke the FFI directly. The lift function
-    is `Unit` for void returns (signature unifies on T = Unit) so
-    a single async helper handles both. -#}
+{#- Three self-type cases drive whether the FFI call is wrapped in
+    `callWithHandle { uniffiHandle -> ... }`: only Object methods
+    need the handle-counter dance. Methods on records / enums lower
+    `this` by value via `<type>.lower(this)` (no handle), and
+    namespace functions have no self at all. -#}
 {%- if callable.is_async() %}
 {{ indent }}{% if is_override %}override {% endif %}suspend fun {{ callable.name()|fn_name }}({% call arg_list(callable) %}){% match callable.return_type() %}{% when Some(return_type) %}: {{ return_type|type_name(ci, config) }}{% when None %}{% endmatch %} =
 {{ indent }}    {% call call_async(callable, indent) %}
@@ -92,22 +89,29 @@ uniffiRustCallVoid{% if callable.throws_type().is_some() %}WithError{% endif %}
 {%- match callable.return_type() -%}
 {%- when Some(return_type) -%}
 {%- if return_type|has_primitive_ffi_type %}
-{%- if is_method %}
+{%- match callable.self_type() %}
+{%- when Some with (Type::Object { .. }) %}
 {{ indent }}{% if is_override %}override {% endif %}fun {{ callable.name()|fn_name }}({% call arg_list(callable) %}): {{ return_type|type_name(ci, config) }} =
 {{ indent }}    callWithHandle { uniffiHandle ->
 {{ indent }}        {% call rust_call_prefix(callable) %} { _, _status ->
 {{ indent }}            UniffiLib.{{ callable.ffi_func().name() }}({% call method_call_args(callable, false) %})
 {{ indent }}        }
 {{ indent }}    }
-{%- else %}
+{%- when Some(_) %}
+{{ indent }}{% if is_override %}override {% endif %}fun {{ callable.name()|fn_name }}({% call arg_list(callable) %}): {{ return_type|type_name(ci, config) }} =
+{{ indent }}    {% call rust_call_prefix(callable) %} { _, _status ->
+{{ indent }}        UniffiLib.{{ callable.ffi_func().name() }}({% call value_method_call_args(callable, false) %})
+{{ indent }}    }
+{%- when None %}
 {{ indent }}{% if is_override %}override {% endif %}fun {{ callable.name()|fn_name }}({% call arg_list(callable) %}): {{ return_type|type_name(ci, config) }} =
 {{ indent }}    {% call rust_call_prefix(callable) %} { _, _status ->
 {{ indent }}        UniffiLib.{{ callable.ffi_func().name() }}({% call call_args(callable, false) %})
 {{ indent }}    }
-{%- endif %}
+{%- endmatch %}
 {%- else %}
 {%- let ret_ffi_type = return_type|ffi_type %}
-{%- if is_method %}
+{%- match callable.self_type() %}
+{%- when Some with (Type::Object { .. }) %}
 {{ indent }}{% if is_override %}override {% endif %}fun {{ callable.name()|fn_name }}({% call arg_list(callable) %}): {{ return_type|type_name(ci, config) }} =
 {{ indent }}    {{ return_type|lift_fn }}(
 {{ indent }}        callWithHandle { uniffiHandle ->
@@ -116,17 +120,25 @@ uniffiRustCallVoid{% if callable.throws_type().is_some() %}WithError{% endif %}
 {{ indent }}            }
 {{ indent }}        }
 {{ indent }}    )
-{%- else %}
+{%- when Some(_) %}
+{{ indent }}{% if is_override %}override {% endif %}fun {{ callable.name()|fn_name }}({% call arg_list(callable) %}): {{ return_type|type_name(ci, config) }} =
+{{ indent }}    {{ return_type|lift_fn }}(
+{{ indent }}        {% call rust_call_prefix(callable) %} { _allocator, _status ->
+{{ indent }}            UniffiLib.{{ callable.ffi_func().name() }}({% call value_method_call_args(callable, ret_ffi_type.borrow()|ffi_type_is_struct) %})
+{{ indent }}        }
+{{ indent }}    )
+{%- when None %}
 {{ indent }}{% if is_override %}override {% endif %}fun {{ callable.name()|fn_name }}({% call arg_list(callable) %}): {{ return_type|type_name(ci, config) }} =
 {{ indent }}    {{ return_type|lift_fn }}(
 {{ indent }}        {% call rust_call_prefix(callable) %} { _allocator, _status ->
 {{ indent }}            UniffiLib.{{ callable.ffi_func().name() }}({% call call_args(callable, ret_ffi_type.borrow()|ffi_type_is_struct) %})
 {{ indent }}        }
 {{ indent }}    )
-{%- endif %}
+{%- endmatch %}
 {%- endif %}
 {%- when None %}
-{%- if is_method %}
+{%- match callable.self_type() %}
+{%- when Some with (Type::Object { .. }) %}
 {{ indent }}{% if is_override %}override {% endif %}fun {{ callable.name()|fn_name }}({% call arg_list(callable) %}) {
 {{ indent }}    callWithHandle { uniffiHandle ->
 {{ indent }}        {% call rust_call_prefix(callable) %} { _, _status ->
@@ -134,13 +146,19 @@ uniffiRustCallVoid{% if callable.throws_type().is_some() %}WithError{% endif %}
 {{ indent }}        }
 {{ indent }}    }
 {{ indent }}}
-{%- else %}
+{%- when Some(_) %}
+{{ indent }}{% if is_override %}override {% endif %}fun {{ callable.name()|fn_name }}({% call arg_list(callable) %}) {
+{{ indent }}    {% call rust_call_prefix(callable) %} { _, _status ->
+{{ indent }}        UniffiLib.{{ callable.ffi_func().name() }}({% call value_method_call_args(callable, false) %})
+{{ indent }}    }
+{{ indent }}}
+{%- when None %}
 {{ indent }}{% if is_override %}override {% endif %}fun {{ callable.name()|fn_name }}({% call arg_list(callable) %}) {
 {{ indent }}    {% call rust_call_prefix(callable) %} { _, _status ->
 {{ indent }}        UniffiLib.{{ callable.ffi_func().name() }}({% call call_args(callable, false) %})
 {{ indent }}    }
 {{ indent }}}
-{%- endif %}
+{%- endmatch %}
 {%- endmatch %}
 {%- endif %}
 {%- endmacro -%}
@@ -413,6 +431,21 @@ UniffiHelpers.uniffiRustCall { _allocator, _status ->
 {%- macro method_call_args(callable, needs_allocator) -%}
 {%- if needs_allocator %}_allocator, {% endif -%}
 uniffiHandle
+{%- if !callable.arguments().is_empty() %}, {% call arg_list_lowered(callable) %}{% endif -%}
+, _status
+{%- endmacro -%}
+
+{#
+// Value-method variant of `call_args`: prepends `<type>.lower(this)`
+// as the first Rust arg. Used by methods on records and enums (which
+// pass the entire value through the FFI by `RustBuffer`, no handle).
+#}
+{%- macro value_method_call_args(callable, needs_allocator) -%}
+{%- if needs_allocator %}_allocator, {% endif -%}
+{%- match callable.self_type() %}
+{%- when Some(t) %}{{ t|lower_fn }}(this)
+{%- when None %}{# unreachable — only called when self_type is Some #}
+{%- endmatch %}
 {%- if !callable.arguments().is_empty() %}, {% call arg_list_lowered(callable) %}{% endif -%}
 , _status
 {%- endmacro -%}

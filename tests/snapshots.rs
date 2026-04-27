@@ -183,6 +183,21 @@ fn snapshot_coverall_kotlin() -> Result<()> {
     )
 }
 
+/// Kotlin-side snapshot for the upstream `proc-macro` fixture. Unique
+/// surface: `#[uniffi::export]` *non-trait* methods on records (e.g.
+/// `One.get_inner_value`), flat enums (`MaybeBool.next`), and non-flat
+/// (sealed) enums (`MixedEnum.is_not_none`). These exercise the
+/// record/enum method emission added in the same PR as this snapshot.
+#[test]
+fn snapshot_proc_macro_kotlin() -> Result<()> {
+    snapshot_fixture_for(
+        "uniffi-fixture-proc-macro",
+        "proc_macro_kotlin",
+        Language::Kotlin,
+        "kt",
+    )
+}
+
 /// Kotlin-side snapshot for the in-repo `flat-enum` fixture. P3g adds
 /// flat-enum rendering (`enum class`); this fixture is a deliberately
 /// tiny `enum Animal { Dog, Cat }` plus a round-trip function, so it
