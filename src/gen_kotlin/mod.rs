@@ -624,16 +624,16 @@ pub struct Config {
     omit_checksums: bool,
 }
 
-// `cdylib_name` and `android` are defined now so the TOML schema matches
-// the Java backend and later phases don't churn `gen_kotlin::Config` for
-// every new consumer. `#[allow(dead_code)]` until subsequent phases hook
-// them up.
+// `cdylib_name` is consumed by `NamespaceLibraryTemplate.kt` (resolves
+// the symbol passed to `System.loadLibrary`); `android` is defined for
+// TOML-schema parity with the Java backend but no Kotlin template reads
+// it yet, so it stays `#[allow(dead_code)]` until a subsequent phase
+// hooks Android-specific codegen up.
 impl Config {
     pub fn package_name(&self) -> String {
         self.package_name.clone().unwrap_or_else(|| "uniffi".into())
     }
 
-    #[allow(dead_code)]
     pub fn cdylib_name(&self) -> String {
         self.cdylib_name.clone().unwrap_or_else(|| "uniffi".into())
     }
