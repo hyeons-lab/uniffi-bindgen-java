@@ -625,10 +625,9 @@ pub struct Config {
 }
 
 // `cdylib_name` is consumed by `NamespaceLibraryTemplate.kt` (resolves
-// the symbol passed to `System.loadLibrary`); `android` is defined for
-// TOML-schema parity with the Java backend but no Kotlin template reads
-// it yet, so it stays `#[allow(dead_code)]` until a subsequent phase
-// hooks Android-specific codegen up.
+// the symbol passed to `System.loadLibrary`); `android` is consumed
+// by `generate_bindings` as a post-processing flag that swaps
+// `java.lang.foreign.*` for PanamaPort's `com.v7878.foreign.*`.
 impl Config {
     pub fn package_name(&self) -> String {
         self.package_name.clone().unwrap_or_else(|| "uniffi".into())
@@ -643,9 +642,10 @@ impl Config {
     }
 
     /// Whether to generate PanamaPort imports for Android compatibility.
-    /// Mirrors the `android` flag in the Java config. Later phases consume
-    /// this in the cleaner-helper template.
-    #[allow(dead_code)]
+    /// When true, `generate_bindings` post-processes the rendered output to
+    /// replace `java.lang.foreign.*` with PanamaPort's `com.v7878.foreign.*`
+    /// and `java.lang.invoke.VarHandle` with `com.v7878.invoke.VarHandle`.
+    /// Mirrors the Java backend's `Config::android()`.
     pub fn android(&self) -> bool {
         self.android
     }
@@ -706,9 +706,23 @@ impl<'a> KotlinWrapper<'a> {
 /// into individual `.kt` files via the `// UNIFFI:FILE` markers emitted by
 /// the templates.
 pub fn generate_bindings(config: &Config, ci: &ComponentInterface) -> Result<String> {
-    KotlinWrapper::new(config.clone(), ci)
+    let output = KotlinWrapper::new(config.clone(), ci)
         .render()
-        .context("failed to render Kotlin bindings")
+        .context("failed to render Kotlin bindings")?;
+
+    if config.android() {
+        // PanamaPort provides the FFM API under a different package prefix
+        // for Android (which doesn't have `java.lang.foreign.*`). The API
+        // surface is identical so a global string replacement is enough.
+        // `java.lang.invoke.MethodHandle` / `MethodHandles` / `MethodType`
+        // are available on Android API 26+ and stay unchanged. Mirrors
+        // `gen_java::generate_bindings`'s post-processing.
+        Ok(output
+            .replace("java.lang.foreign.", "com.v7878.foreign.")
+            .replace("java.lang.invoke.VarHandle", "com.v7878.invoke.VarHandle"))
+    } else {
+        Ok(output)
+    }
 }
 
 // Filters exposed to Askama templates. Askama discovers them via the
