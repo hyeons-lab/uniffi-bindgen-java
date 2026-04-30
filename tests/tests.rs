@@ -294,6 +294,145 @@ fn run_kotlin_test(fixture_name: &str, test_file: &str) -> Result<()> {
     Ok(())
 }
 
+/// Run a Kotlin test using an absolute-path library override instead of
+/// `java.library.path`. Mirrors Java's `run_test_with_library_override`
+/// (`tests/tests.rs:78`) so the Kotlin codegen's `loadLibrary()` body is
+/// validated against the same `System.load(...)` for absolute paths
+/// path the Java template uses. Also `#[ignore]`d like its Java sibling.
+fn run_kotlin_test_with_library_override(
+    fixture_name: &str,
+    test_file: &str,
+    namespace: &str,
+) -> Result<()> {
+    let Some(kotlinc) = kotlinc_path() else {
+        eprintln!(
+            "skip: `kotlinc` not found (set KOTLINC or install kotlinc) — \
+             skipping Kotlin library-override test for {fixture_name}"
+        );
+        return Ok(());
+    };
+
+    let test_path = Utf8Path::new(".").join("tests").join(test_file);
+    let test_helper = UniFFITestHelper::new(fixture_name)?;
+    let out_dir_key = Utf8Path::new(".")
+        .join("tests")
+        .join("kotlin-library-override")
+        .join(test_file);
+    let out_dir = test_helper.create_out_dir(env!("CARGO_TARGET_TMPDIR"), &out_dir_key)?;
+    let cdylib_path = test_helper.cdylib_path()?;
+
+    let mut paths = BindgenPaths::default();
+    paths.add_cargo_metadata_layer(false)?;
+    let loader = BindgenLoader::new(paths);
+
+    let mut options = GenerateOptions::new(cdylib_path.clone(), out_dir.clone());
+    options.language = Language::Kotlin;
+    generate(&loader, &options)?;
+
+    // Copy the cdylib to a known absolute path. Drop the cargo build
+    // hash from the basename so Kotlin's loadLibrary("uniffi_arithmetical")
+    // canonical name matches what the test expects to load.
+    let native_lib_dir = out_dir.join("native");
+    fs::create_dir_all(&native_lib_dir)?;
+    let cdylib_filename = cdylib_path.file_name().unwrap();
+    let extension = cdylib_path.extension().unwrap();
+    let lib_base_name = cdylib_filename
+        .strip_prefix("lib")
+        .unwrap_or(cdylib_filename)
+        .split('-')
+        .next()
+        .unwrap_or(cdylib_filename);
+    let canonical_lib_name = format!("lib{lib_base_name}.{extension}");
+    let lib_absolute_path = native_lib_dir.join(&canonical_lib_name);
+    fs::copy(&cdylib_path, &lib_absolute_path)?;
+
+    let needs_coroutines = glob::glob(out_dir.join("**/UniffiAsyncHelpers.kt").as_str())?
+        .next()
+        .is_some();
+    let coroutines_jar = if needs_coroutines {
+        Some(ensure_kotlinx_coroutines_jar()?)
+    } else {
+        None
+    };
+    let coroutines_paths: Vec<&Utf8PathBuf> = coroutines_jar.iter().collect();
+
+    let bindings_jar = out_dir.join(format!("{fixture_name}-kt.jar"));
+    let kt_files: Vec<String> = glob::glob(out_dir.join("**/*.kt").as_str())?
+        .flatten()
+        .map(|p| p.to_string_lossy().into_owned())
+        .collect();
+    if kt_files.is_empty() {
+        bail!("no generated .kt files under {}", out_dir);
+    }
+    let mut kotlinc_cmd = Command::new(kotlinc.as_std_path());
+    kotlinc_cmd.arg("-include-runtime");
+    if needs_coroutines {
+        kotlinc_cmd
+            .arg("-classpath")
+            .arg(calc_classpath(coroutines_paths.clone()));
+    }
+    let kotlinc_status = kotlinc_cmd
+        .arg("-d")
+        .arg(bindings_jar.as_str())
+        .args(&kt_files)
+        .spawn()
+        .with_context(|| format!("spawning kotlinc at {kotlinc}"))?
+        .wait()
+        .context("waiting for kotlinc on bindings")?;
+    if !kotlinc_status.success() {
+        bail!(
+            "kotlinc failed compiling generated bindings under {}",
+            out_dir
+        );
+    }
+
+    let test_classes_dir = out_dir.join("test-classes");
+    fs::create_dir_all(&test_classes_dir)?;
+    let mut test_compile_classpath: Vec<&Utf8PathBuf> = vec![&bindings_jar];
+    test_compile_classpath.extend(coroutines_paths.iter().copied());
+    let test_kotlinc_status = Command::new(kotlinc.as_std_path())
+        .arg("-classpath")
+        .arg(calc_classpath(test_compile_classpath))
+        .arg("-d")
+        .arg(test_classes_dir.as_str())
+        .arg(test_path.as_str())
+        .spawn()
+        .context("spawning kotlinc on test script")?
+        .wait()
+        .context("waiting for kotlinc on test script")?;
+    if !test_kotlinc_status.success() {
+        bail!("kotlinc failed compiling Kotlin test {}", test_path);
+    }
+
+    // Run with library override set to an absolute path and NO
+    // java.library.path. The test only succeeds if the generated
+    // `loadLibrary()` uses `System.load(absolute_path)` rather than
+    // `System.loadLibrary(name)`.
+    let main_class = format!("{}Kt", test_path.file_stem().unwrap());
+    let mut runtime_classpath: Vec<&Utf8PathBuf> = vec![&bindings_jar, &test_classes_dir];
+    runtime_classpath.extend(coroutines_paths.iter().copied());
+    let run_classpath = calc_classpath(runtime_classpath);
+    let run_status = Command::new("java")
+        .arg("-ea")
+        .arg("--enable-native-access=ALL-UNNAMED")
+        .arg(format!(
+            "-Duniffi.component.{namespace}.libraryOverride={lib_absolute_path}"
+        ))
+        // Deliberately NOT setting -Djava.library.path
+        .arg("-classpath")
+        .arg(run_classpath)
+        .arg(&main_class)
+        .spawn()
+        .context("spawning java to run Kotlin library-override test")?
+        .wait()
+        .context("waiting for java to run Kotlin library-override test")?;
+    if !run_status.success() {
+        bail!("Kotlin test {main_class} failed at runtime under library override");
+    }
+
+    Ok(())
+}
+
 /// Pinned Maven coordinate + SHA-256 for `kotlinx-coroutines-core-jvm`.
 /// Bumping the version requires updating both constants together;
 /// `KOTLINX_COROUTINES_SHA256` is verified against the downloaded jar
@@ -673,6 +812,20 @@ fn test_library_override_absolute_path() -> Result<()> {
     run_test_with_library_override(
         "uniffi-example-arithmetic",
         "scripts/TestArithmetic.java",
+        "arithmetic",
+    )
+}
+
+/// Kotlin parallel of `test_library_override_absolute_path`. Validates
+/// that the Kotlin `loadLibrary()` codegen takes the absolute-path
+/// branch (`System.load(name)`) when given a path that starts with
+/// `/`, the same way the Java template does.
+#[test]
+#[ignore = "requires kotlinc; opt in with `cargo test -- --ignored`"]
+fn test_library_override_absolute_path_kotlin() -> Result<()> {
+    run_kotlin_test_with_library_override(
+        "uniffi-example-arithmetic",
+        "scripts/TestArithmetic.kt",
         "arithmetic",
     )
 }
