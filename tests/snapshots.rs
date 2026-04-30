@@ -198,6 +198,25 @@ fn snapshot_proc_macro_kotlin() -> Result<()> {
     )
 }
 
+/// Kotlin-side snapshot for the upstream `rondpoint` example. The
+/// "round trip" fixture exercises every primitive int/float type
+/// (signed + unsigned), strings (incl. zero byte + multi-codepoint
+/// emoji), records of primitives, optionals, flat enums, non-flat
+/// enums with associated data, and three Object types
+/// (`Retourneur` / `Stringifier` / `Optionneur`) wrapping the
+/// round-trip / stringify / optional-defaults methods. No new
+/// codegen surface in this PR — just the broadest fixture not yet
+/// snapshot-validated for the Kotlin backend.
+#[test]
+fn snapshot_rondpoint_kotlin() -> Result<()> {
+    snapshot_fixture_for(
+        "uniffi-example-rondpoint",
+        "rondpoint_kotlin",
+        Language::Kotlin,
+        "kt",
+    )
+}
+
 /// Kotlin-side snapshot for the in-repo `flat-enum` fixture. P3g adds
 /// flat-enum rendering (`enum class`); this fixture is a deliberately
 /// tiny `enum Animal { Dog, Cat }` plus a round-trip function, so it
