@@ -784,3 +784,18 @@ fn test_trait_methods_kotlin() -> Result<()> {
 fn test_proc_macro_kotlin() -> Result<()> {
     run_kotlin_test("uniffi-fixture-proc-macro", "scripts/TestProcMacro.kt")
 }
+
+/// Kotlin runtime test for the upstream `futures` example: a single
+/// `suspend fun` driven by `runBlocking`. Validates that the
+/// `kotlinx.coroutines` plumbing in the bindings (the `suspend fun`
+/// signature, the `uniffiRustCallAsync` helper, the future
+/// poll/complete/free triple) all hang together end-to-end. The
+/// coverall round-trip's `Coverall.asyncBool` already exercises a
+/// boolean-return suspend; the example's
+/// `UniffiExampleFutures.sayAfter` covers the `RustBuffer` (string
+/// return) async path too.
+#[test]
+#[ignore = "requires kotlinc; opt in with `cargo test -- --ignored`"]
+fn test_futures_kotlin() -> Result<()> {
+    run_kotlin_test("uniffi-example-futures", "scripts/TestFutures.kt")
+}
