@@ -799,3 +799,17 @@ fn test_proc_macro_kotlin() -> Result<()> {
 fn test_futures_kotlin() -> Result<()> {
     run_kotlin_test("uniffi-example-futures", "scripts/TestFutures.kt")
 }
+
+/// Kotlin runtime test for the upstream `rondpoint` ("round trip")
+/// example. Comprehensive symmetric lift/lower exercise: every
+/// primitive int / float type (signed + unsigned), strings (incl.
+/// multi-codepoint emoji), records, optional values, flat enums,
+/// non-flat enums with associated data, plus three Object types
+/// (`Retourneur` / `Stringifier` / `Optionneur`) wrapping the
+/// round-trip / stringify / optional-defaults methods. The largest
+/// runtime test in the Kotlin suite.
+#[test]
+#[ignore = "requires kotlinc; opt in with `cargo test -- --ignored`"]
+fn test_rondpoint_kotlin() -> Result<()> {
+    run_kotlin_test("uniffi-example-rondpoint", "scripts/TestRondpoint.kt")
+}
