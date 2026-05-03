@@ -312,9 +312,12 @@ fn run_kotlin_test_with_library_override(
     let out_dir = test_helper.create_out_dir(env!("CARGO_TARGET_TMPDIR"), &out_dir_key)?;
     let cdylib_path = test_helper.cdylib_path()?;
 
-    let mut paths = BindgenPaths::default();
-    paths.add_cargo_metadata_layer(false)?;
-    let loader = BindgenLoader::new(paths);
+    // Use the same loader as `run_kotlin_test` so any
+    // `uniffi.toml` / `uniffi-extras.toml` config the fixture ships
+    // is honoured. Without this, a future library-override test
+    // pointing at a fixture with TOML config would silently generate
+    // different bindings from the regular runtime path.
+    let loader = bindgen_loader_with_config_override(fixture_name, &test_path, &out_dir)?;
 
     let mut options = GenerateOptions::new(cdylib_path.clone(), out_dir.clone());
     options.language = Language::Kotlin;
@@ -623,7 +626,7 @@ fn merge_toml_overrides(base: Option<&str>, extras: Option<&str>) -> Result<Stri
 /// Derive the canonical `lib<name>.<ext>` filename Java's
 /// `System.loadLibrary("<name>")` expects, given the cargo-emitted
 /// cdylib path (which includes a 16-hex-char build hash, e.g.
-/// `libuniffi_arithmetical-CARGO_BUILD_HASH.dylib`). Strips the `lib`
+/// `libuniffi_arithmetic-CARGO_BUILD_HASH.dylib`). Strips the `lib`
 /// prefix, drops the `-<hash>` suffix, then re-emits the canonical
 /// form.
 fn canonical_lib_filename(cdylib_path: &Utf8Path) -> String {
