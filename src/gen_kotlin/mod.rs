@@ -625,10 +625,10 @@ pub struct Config {
 }
 
 // `cdylib_name` is consumed by `NamespaceLibraryTemplate.kt` (resolves
-// the symbol passed to `System.loadLibrary`); `android` is defined for
-// TOML-schema parity with the Java backend but no Kotlin template reads
-// it yet, so it stays `#[allow(dead_code)]` until a subsequent phase
-// hooks Android-specific codegen up.
+// the symbol passed to `System.loadLibrary`); `android` is consumed
+// by `generate_bindings` as a post-processing flag that swaps
+// `java.lang.foreign.*` for PanamaPort's `com.v7878.foreign.*` and
+// `java.lang.invoke.VarHandle` for `com.v7878.invoke.VarHandle`.
 impl Config {
     pub fn package_name(&self) -> String {
         self.package_name.clone().unwrap_or_else(|| "uniffi".into())
@@ -643,9 +643,10 @@ impl Config {
     }
 
     /// Whether to generate PanamaPort imports for Android compatibility.
-    /// Mirrors the `android` flag in the Java config. Later phases consume
-    /// this in the cleaner-helper template.
-    #[allow(dead_code)]
+    /// When true, `generate_bindings` post-processes the rendered output to
+    /// replace `java.lang.foreign.*` with PanamaPort's `com.v7878.foreign.*`
+    /// and `java.lang.invoke.VarHandle` with `com.v7878.invoke.VarHandle`.
+    /// Mirrors the Java backend's `Config::android()`.
     pub fn android(&self) -> bool {
         self.android
     }
@@ -706,9 +707,23 @@ impl<'a> KotlinWrapper<'a> {
 /// into individual `.kt` files via the `// UNIFFI:FILE` markers emitted by
 /// the templates.
 pub fn generate_bindings(config: &Config, ci: &ComponentInterface) -> Result<String> {
-    KotlinWrapper::new(config.clone(), ci)
+    let output = KotlinWrapper::new(config.clone(), ci)
         .render()
-        .context("failed to render Kotlin bindings")
+        .context("failed to render Kotlin bindings")?;
+
+    if config.android() {
+        // PanamaPort provides the FFM API under a different package prefix
+        // for Android (which doesn't have `java.lang.foreign.*`). The API
+        // surface is identical so a global string replacement is enough.
+        // `java.lang.invoke.MethodHandle` / `MethodHandles` / `MethodType`
+        // are available on Android API 26+ and stay unchanged. Mirrors
+        // `gen_java::generate_bindings`'s post-processing.
+        Ok(output
+            .replace("java.lang.foreign.", "com.v7878.foreign.")
+            .replace("java.lang.invoke.VarHandle", "com.v7878.invoke.VarHandle"))
+    } else {
+        Ok(output)
+    }
 }
 
 // Filters exposed to Askama templates. Askama discovers them via the
@@ -1115,5 +1130,89 @@ mod filters {
             }
         }
         Ok(parts.join(",\n        "))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use uniffi_bindgen::interface::ComponentInterface;
+    use uniffi_meta::{
+        FnMetadata, Metadata, MetadataGroup, NamespaceMetadata, ObjectImpl, ObjectMetadata,
+    };
+
+    #[test]
+    fn android_replaces_ffm_package() {
+        // Mirrors `gen_java::tests::android_replaces_ffm_package`. Builds
+        // a small CI (one no-op fn + one Object so `UniffiCleaner.kt` is
+        // emitted — that's the only template that references
+        // `java.lang.invoke.VarHandle`), generates Kotlin bindings with
+        // `android = true`, and asserts the post-processing swaps
+        // `java.lang.foreign.*` / `VarHandle` for the PanamaPort packages
+        // while leaving `java.lang.invoke.MethodHandle` alone.
+        let mut group = MetadataGroup {
+            namespace: NamespaceMetadata {
+                crate_name: "test".to_string(),
+                name: "test".to_string(),
+            },
+            namespace_docstring: None,
+            items: Default::default(),
+        };
+        group.add_item(Metadata::Func(FnMetadata {
+            module_path: "test".to_string(),
+            name: "noop".to_string(),
+            is_async: false,
+            inputs: vec![],
+            return_type: None,
+            throws: None,
+            checksum: None,
+            docstring: None,
+        }));
+        group.add_item(Metadata::Object(ObjectMetadata {
+            module_path: "test".to_string(),
+            name: "Obj".to_string(),
+            remote: false,
+            imp: ObjectImpl::Struct,
+            docstring: None,
+        }));
+
+        let mut ci = ComponentInterface::from_metadata(group).unwrap();
+        ci.derive_ffi_funcs().unwrap();
+
+        let android_config: Config = toml::from_str("android = true").unwrap();
+        let bindings = generate_bindings(&android_config, &ci).unwrap();
+
+        // Sanity: the Object made `UniffiCleaner.kt` part of the output, so
+        // the pre-rewrite bindings really did contain `VarHandle`.
+        assert!(
+            bindings.contains("UniffiCleaner"),
+            "test setup error: Object should produce UniffiCleaner.kt"
+        );
+
+        assert!(
+            !bindings.contains("java.lang.foreign."),
+            "android bindings should not contain java.lang.foreign"
+        );
+        assert!(
+            bindings.contains("com.v7878.foreign."),
+            "android bindings should contain com.v7878.foreign"
+        );
+        // VarHandle gets rewritten to PanamaPort's package: assert both
+        // that `java.lang.invoke.VarHandle` is gone AND that
+        // `com.v7878.invoke.VarHandle` is present, otherwise the absence
+        // assertion would pass vacuously on a CI with no Object types.
+        assert!(
+            !bindings.contains("java.lang.invoke.VarHandle"),
+            "android bindings should not contain java.lang.invoke.VarHandle"
+        );
+        assert!(
+            bindings.contains("com.v7878.invoke.VarHandle"),
+            "android bindings should contain com.v7878.invoke.VarHandle"
+        );
+        // MethodHandle / MethodHandles / MethodType stay (Android API 26+).
+        assert!(
+            bindings.contains("java.lang.invoke.MethodHandle"),
+            "android bindings should preserve java.lang.invoke.MethodHandle"
+        );
     }
 }
