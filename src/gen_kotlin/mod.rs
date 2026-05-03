@@ -1137,16 +1137,19 @@ mod filters {
 mod tests {
     use super::*;
     use uniffi_bindgen::interface::ComponentInterface;
-    use uniffi_meta::{FnMetadata, Metadata, MetadataGroup, NamespaceMetadata};
+    use uniffi_meta::{
+        FnMetadata, Metadata, MetadataGroup, NamespaceMetadata, ObjectImpl, ObjectMetadata,
+    };
 
     #[test]
     fn android_replaces_ffm_package() {
         // Mirrors `gen_java::tests::android_replaces_ffm_package`. Builds
-        // the smallest possible CI (one no-op fn), generates Kotlin
-        // bindings with `android = true`, and asserts the post-processing
-        // swaps `java.lang.foreign.*` / `VarHandle` for the PanamaPort
-        // packages while leaving `java.lang.invoke.MethodHandle` /
-        // `java.lang.Exception` alone.
+        // a small CI (one no-op fn + one Object so `UniffiCleaner.kt` is
+        // emitted — that's the only template that references
+        // `java.lang.invoke.VarHandle`), generates Kotlin bindings with
+        // `android = true`, and asserts the post-processing swaps
+        // `java.lang.foreign.*` / `VarHandle` for the PanamaPort packages
+        // while leaving `java.lang.invoke.MethodHandle` alone.
         let mut group = MetadataGroup {
             namespace: NamespaceMetadata {
                 crate_name: "test".to_string(),
@@ -1165,12 +1168,26 @@ mod tests {
             checksum: None,
             docstring: None,
         }));
+        group.add_item(Metadata::Object(ObjectMetadata {
+            module_path: "test".to_string(),
+            name: "Obj".to_string(),
+            remote: false,
+            imp: ObjectImpl::Struct,
+            docstring: None,
+        }));
 
         let mut ci = ComponentInterface::from_metadata(group).unwrap();
         ci.derive_ffi_funcs().unwrap();
 
         let android_config: Config = toml::from_str("android = true").unwrap();
         let bindings = generate_bindings(&android_config, &ci).unwrap();
+
+        // Sanity: the Object made `UniffiCleaner.kt` part of the output, so
+        // the pre-rewrite bindings really did contain `VarHandle`.
+        assert!(
+            bindings.contains("UniffiCleaner"),
+            "test setup error: Object should produce UniffiCleaner.kt"
+        );
 
         assert!(
             !bindings.contains("java.lang.foreign."),
@@ -1180,10 +1197,17 @@ mod tests {
             bindings.contains("com.v7878.foreign."),
             "android bindings should contain com.v7878.foreign"
         );
-        // VarHandle gets rewritten to PanamaPort's package.
+        // VarHandle gets rewritten to PanamaPort's package: assert both
+        // that `java.lang.invoke.VarHandle` is gone AND that
+        // `com.v7878.invoke.VarHandle` is present, otherwise the absence
+        // assertion would pass vacuously on a CI with no Object types.
         assert!(
             !bindings.contains("java.lang.invoke.VarHandle"),
             "android bindings should not contain java.lang.invoke.VarHandle"
+        );
+        assert!(
+            bindings.contains("com.v7878.invoke.VarHandle"),
+            "android bindings should contain com.v7878.invoke.VarHandle"
         );
         // MethodHandle / MethodHandles / MethodType stay (Android API 26+).
         assert!(
