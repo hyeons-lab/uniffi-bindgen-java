@@ -101,16 +101,7 @@ fn run_test_with_library_override(
     // Copy the cdylib to a known absolute path (no symlink needed since we pass the full path)
     let native_lib_dir = out_dir.join("native");
     fs::create_dir_all(&native_lib_dir)?;
-    let cdylib_filename = cdylib_path.file_name().unwrap();
-    let extension = cdylib_path.extension().unwrap();
-    let lib_base_name = cdylib_filename
-        .strip_prefix("lib")
-        .unwrap_or(cdylib_filename)
-        .split('-')
-        .next()
-        .unwrap_or(cdylib_filename);
-    let canonical_lib_name = format!("lib{}.{}", lib_base_name, extension);
-    let lib_absolute_path = native_lib_dir.join(&canonical_lib_name);
+    let lib_absolute_path = native_lib_dir.join(canonical_lib_filename(&cdylib_path));
     fs::copy(&cdylib_path, &lib_absolute_path)?;
 
     let jar_file = build_jar(fixture_name, &out_dir)?;
@@ -297,8 +288,8 @@ fn run_kotlin_test(fixture_name: &str, test_file: &str) -> Result<()> {
 /// Run a Kotlin test using an absolute-path library override instead of
 /// `java.library.path`. Mirrors Java's `run_test_with_library_override`
 /// (`tests/tests.rs:78`) so the Kotlin codegen's `loadLibrary()` body is
-/// validated against the same `System.load(...)` for absolute paths
-/// path the Java template uses. Also `#[ignore]`d like its Java sibling.
+/// validated against the same `System.load(...)` absolute-path behaviour
+/// the Java template uses. Also `#[ignore]`d like its Java sibling.
 fn run_kotlin_test_with_library_override(
     fixture_name: &str,
     test_file: &str,
@@ -329,21 +320,13 @@ fn run_kotlin_test_with_library_override(
     options.language = Language::Kotlin;
     generate(&loader, &options)?;
 
-    // Copy the cdylib to a known absolute path. Drop the cargo build
-    // hash from the basename so Kotlin's loadLibrary("uniffi_arithmetical")
-    // canonical name matches what the test expects to load.
+    // Copy the cdylib to a known absolute path. The canonical filename
+    // strips the cargo build hash so the path passed via
+    // `-Duniffi.component.<ns>.libraryOverride` matches what the
+    // generated `loadLibrary()` resolves at runtime.
     let native_lib_dir = out_dir.join("native");
     fs::create_dir_all(&native_lib_dir)?;
-    let cdylib_filename = cdylib_path.file_name().unwrap();
-    let extension = cdylib_path.extension().unwrap();
-    let lib_base_name = cdylib_filename
-        .strip_prefix("lib")
-        .unwrap_or(cdylib_filename)
-        .split('-')
-        .next()
-        .unwrap_or(cdylib_filename);
-    let canonical_lib_name = format!("lib{lib_base_name}.{extension}");
-    let lib_absolute_path = native_lib_dir.join(&canonical_lib_name);
+    let lib_absolute_path = native_lib_dir.join(canonical_lib_filename(&cdylib_path));
     fs::copy(&cdylib_path, &lib_absolute_path)?;
 
     let needs_coroutines = glob::glob(out_dir.join("**/UniffiAsyncHelpers.kt").as_str())?
@@ -637,6 +620,24 @@ fn merge_toml_overrides(base: Option<&str>, extras: Option<&str>) -> Result<Stri
     })
 }
 
+/// Derive the canonical `lib<name>.<ext>` filename Java's
+/// `System.loadLibrary("<name>")` expects, given the cargo-emitted
+/// cdylib path (which includes a 16-hex-char build hash, e.g.
+/// `libuniffi_arithmetical-CARGO_BUILD_HASH.dylib`). Strips the `lib`
+/// prefix, drops the `-<hash>` suffix, then re-emits the canonical
+/// form.
+fn canonical_lib_filename(cdylib_path: &Utf8Path) -> String {
+    let cdylib_filename = cdylib_path.file_name().unwrap();
+    let extension = cdylib_path.extension().unwrap();
+    let lib_base_name = cdylib_filename
+        .strip_prefix("lib")
+        .unwrap_or(cdylib_filename)
+        .split('-')
+        .next()
+        .unwrap_or(cdylib_filename);
+    format!("lib{lib_base_name}.{extension}")
+}
+
 /// Copy the cdylib into `out_dir/native/` and create the
 /// `lib<name>.<ext>` symlink that `System.loadLibrary` expects.
 /// Shared by `run_test` (Java) and `run_kotlin_test` (Kotlin) so
@@ -648,15 +649,7 @@ fn prepare_native_lib_dir(out_dir: &Utf8Path, cdylib_path: &Utf8Path) -> Result<
     let cdylib_dest = native_lib_dir.join(cdylib_filename);
     fs::copy(cdylib_path, &cdylib_dest)?;
 
-    let extension = cdylib_path.extension().unwrap();
-    let lib_base_name = cdylib_filename
-        .strip_prefix("lib")
-        .unwrap_or(cdylib_filename)
-        .split('-')
-        .next()
-        .unwrap_or(cdylib_filename);
-    let expected_lib_name = format!("lib{}.{}", lib_base_name, extension);
-    let symlink_path = native_lib_dir.join(&expected_lib_name);
+    let symlink_path = native_lib_dir.join(canonical_lib_filename(cdylib_path));
     if !symlink_path.exists() {
         std::os::unix::fs::symlink(cdylib_dest.file_name().unwrap(), &symlink_path)?;
     }
