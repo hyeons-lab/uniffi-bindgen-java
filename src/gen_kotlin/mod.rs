@@ -627,7 +627,8 @@ pub struct Config {
 // `cdylib_name` is consumed by `NamespaceLibraryTemplate.kt` (resolves
 // the symbol passed to `System.loadLibrary`); `android` is consumed
 // by `generate_bindings` as a post-processing flag that swaps
-// `java.lang.foreign.*` for PanamaPort's `com.v7878.foreign.*`.
+// `java.lang.foreign.*` for PanamaPort's `com.v7878.foreign.*` and
+// `java.lang.invoke.VarHandle` for `com.v7878.invoke.VarHandle`.
 impl Config {
     pub fn package_name(&self) -> String {
         self.package_name.clone().unwrap_or_else(|| "uniffi".into())
@@ -1129,5 +1130,70 @@ mod filters {
             }
         }
         Ok(parts.join(",\n        "))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use uniffi_bindgen::interface::ComponentInterface;
+    use uniffi_meta::{FnMetadata, Metadata, MetadataGroup, NamespaceMetadata};
+
+    #[test]
+    fn android_replaces_ffm_package() {
+        // Mirrors `gen_java::tests::android_replaces_ffm_package`. Builds
+        // the smallest possible CI (one no-op fn), generates Kotlin
+        // bindings with `android = true`, and asserts the post-processing
+        // swaps `java.lang.foreign.*` / `VarHandle` for the PanamaPort
+        // packages while leaving `java.lang.invoke.MethodHandle` /
+        // `java.lang.Exception` alone.
+        let mut group = MetadataGroup {
+            namespace: NamespaceMetadata {
+                crate_name: "test".to_string(),
+                name: "test".to_string(),
+            },
+            namespace_docstring: None,
+            items: Default::default(),
+        };
+        group.add_item(Metadata::Func(FnMetadata {
+            module_path: "test".to_string(),
+            name: "noop".to_string(),
+            is_async: false,
+            inputs: vec![],
+            return_type: None,
+            throws: None,
+            checksum: None,
+            docstring: None,
+        }));
+
+        let mut ci = ComponentInterface::from_metadata(group).unwrap();
+        ci.derive_ffi_funcs().unwrap();
+
+        let android_config: Config = toml::from_str("android = true").unwrap();
+        let bindings = generate_bindings(&android_config, &ci).unwrap();
+
+        assert!(
+            !bindings.contains("java.lang.foreign."),
+            "android bindings should not contain java.lang.foreign"
+        );
+        assert!(
+            bindings.contains("com.v7878.foreign."),
+            "android bindings should contain com.v7878.foreign"
+        );
+        // VarHandle gets rewritten to PanamaPort's package.
+        assert!(
+            !bindings.contains("java.lang.invoke.VarHandle"),
+            "android bindings should not contain java.lang.invoke.VarHandle"
+        );
+        // MethodHandle / MethodHandles / MethodType stay (Android API 26+).
+        assert!(
+            bindings.contains("java.lang.invoke.MethodHandle"),
+            "android bindings should preserve java.lang.invoke.MethodHandle"
+        );
+        // Standard java.lang types are unaffected.
+        assert!(
+            bindings.contains("kotlin.Exception") || bindings.contains("java.lang.Exception"),
+            "android bindings should preserve standard exception types"
+        );
     }
 }
