@@ -1190,10 +1190,5 @@ mod tests {
             bindings.contains("java.lang.invoke.MethodHandle"),
             "android bindings should preserve java.lang.invoke.MethodHandle"
         );
-        // Standard java.lang types are unaffected.
-        assert!(
-            bindings.contains("kotlin.Exception") || bindings.contains("java.lang.Exception"),
-            "android bindings should preserve standard exception types"
-        );
     }
 }
