@@ -826,6 +826,16 @@ fn test_library_override_absolute_path_kotlin() -> Result<()> {
     )
 }
 
+/// Kotlin runtime test for the upstream `rename` fixture. Exercises
+/// both rename surfaces: proc-macro `#[uniffi(name = "...")]` renames
+/// (cross-language) and the `[bindings.kotlin.rename]` TOML block in
+/// the fixture's `uniffi.toml` (Kotlin-only).
+#[test]
+#[ignore = "requires kotlinc; opt in with `cargo test -- --ignored`"]
+fn test_rename_kotlin() -> Result<()> {
+    run_kotlin_test("uniffi-fixture-rename", "scripts/TestRename.kt")
+}
+
 /// Kotlin smoke test: generate Kotlin bindings for the upstream
 /// `arithmetic` example, compile with `kotlinc`, run the result
 /// in a JVM with FFM native access enabled. `#[ignore]` keeps
