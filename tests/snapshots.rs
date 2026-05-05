@@ -217,6 +217,22 @@ fn snapshot_rondpoint_kotlin() -> Result<()> {
     )
 }
 
+/// Kotlin-side snapshot for the upstream `rename` fixture. Validates
+/// both surfaces of name customization: proc-macro `#[uniffi(name =
+/// "...")]` renames (cross-language) and the `[bindings.kotlin.rename]`
+/// TOML block in the fixture's `uniffi.toml` (Kotlin-only). Codegen
+/// here is sensitive to the rename machinery threading correctly
+/// through every type-name-emitting site.
+#[test]
+fn snapshot_rename_kotlin() -> Result<()> {
+    snapshot_fixture_for(
+        "uniffi-fixture-rename",
+        "rename_kotlin",
+        Language::Kotlin,
+        "kt",
+    )
+}
+
 /// Kotlin-side snapshot for the in-repo `flat-enum` fixture. P3g adds
 /// flat-enum rendering (`enum class`); this fixture is a deliberately
 /// tiny `enum Animal { Dog, Cat }` plus a round-trip function, so it
