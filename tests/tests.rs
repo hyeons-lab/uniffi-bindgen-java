@@ -836,6 +836,19 @@ fn test_rename_kotlin() -> Result<()> {
     run_kotlin_test("uniffi-fixture-rename", "scripts/TestRename.kt")
 }
 
+/// Kotlin runtime test for the upstream `custom-types` example.
+/// Validates the `[bindings.kotlin.custom_types.Url]` config in the
+/// fixture's `uniffi.toml` (lift via `URI({}).toURL()`, lower via
+/// `{}.toString()`) plus the round-trip behaviour of the
+/// less-customised custom types (`Handle`, `TimeIntervalMs`,
+/// `TimeIntervalSecDbl`, `TimeIntervalSecFlt`) which wrap their
+/// inner Rust value as data classes.
+#[test]
+#[ignore = "requires kotlinc; opt in with `cargo test -- --ignored`"]
+fn test_custom_types_kotlin() -> Result<()> {
+    run_kotlin_test("uniffi-example-custom-types", "scripts/TestCustomTypes.kt")
+}
+
 /// Kotlin smoke test: generate Kotlin bindings for the upstream
 /// `arithmetic` example, compile with `kotlinc`, run the result
 /// in a JVM with FFM native access enabled. `#[ignore]` keeps
