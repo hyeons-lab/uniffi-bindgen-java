@@ -233,6 +233,23 @@ fn snapshot_rename_kotlin() -> Result<()> {
     )
 }
 
+/// Kotlin-side snapshot for the upstream `ext-types` fixture. The
+/// "imported types lib" pulls types from four sibling crates
+/// (`imported-types-sublib`, `uniffi-one-ns`, `ext-types-custom`,
+/// `custom-types`), exercising cross-crate type imports + the
+/// default `external_packages` package layout
+/// (`uniffi.<crate_name>`). Adds the missing snapshot for ongoing
+/// regression coverage.
+#[test]
+fn snapshot_external_types_kotlin() -> Result<()> {
+    snapshot_fixture_for(
+        "uniffi-fixture-ext-types",
+        "external_types_kotlin",
+        Language::Kotlin,
+        "kt",
+    )
+}
+
 /// Kotlin-side snapshot for the in-repo `flat-enum` fixture. P3g adds
 /// flat-enum rendering (`enum class`); this fixture is a deliberately
 /// tiny `enum Animal { Dog, Cat }` plus a round-trip function, so it
