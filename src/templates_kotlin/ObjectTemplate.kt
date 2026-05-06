@@ -33,7 +33,7 @@ package {{ config.package_name() }}
 class {{ impl_class_name }} internal constructor(
     @Suppress("UNUSED_PARAMETER") phantom: UniffiWithHandle,
     internal val handle: Long,
-) : AutoCloseable, {{ interface_name }}{% if uniffi_trait_methods.ord_cmp.is_some() %}, Comparable<{{ impl_class_name }}>{% endif %} {
+) : AutoCloseable, {{ interface_name }}{% if let Some(cmp) = uniffi_trait_methods.ord_cmp %}, Comparable<{{ cmp.object_name()|class_name(ci) }}>{% endif %} {
     private val wasDestroyed = java.util.concurrent.atomic.AtomicBoolean(false)
     private val callCounter = java.util.concurrent.atomic.AtomicLong(1L)
     // NoHandle wrappers (handle == 0) don't register a cleaner: there's

@@ -9,6 +9,6 @@ interface {{ interface_name }} {
     @Throws({{ error_type|type_name(ci, config) }}::class)
     {%- when None %}
     {%- endmatch %}
-    fun {{ meth.name()|fn_name }}({% call kotlin::arg_list(meth) %}){%- match meth.return_type() -%}{%- when Some(return_type) -%}: {{ return_type|type_name(ci, config) }}{%- when None -%}{%- endmatch %}
+    {% if meth.is_async() %}suspend {% endif %}fun {{ meth.name()|fn_name }}({% call kotlin::arg_list(meth) %}){%- match meth.return_type() -%}{%- when Some(return_type) -%}: {{ return_type|type_name(ci, config) }}{%- when None -%}{%- endmatch %}
     {%- endfor %}
 }

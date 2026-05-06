@@ -24,12 +24,12 @@ class AsyncExceptionErrorHandler : UniffiRustCallStatusErrorHandler<AsyncExcepti
 package uniffi.fixture.futures
 
 interface AsyncParser {
-    fun asString(delayMs: kotlin.Int, `value`: kotlin.Int): kotlin.String
+    suspend fun asString(delayMs: kotlin.Int, `value`: kotlin.Int): kotlin.String
     @Throws(ParserException::class)
-    fun tryFromString(delayMs: kotlin.Int, `value`: kotlin.String): kotlin.Int
-    fun delay(delayMs: kotlin.Int)
+    suspend fun tryFromString(delayMs: kotlin.Int, `value`: kotlin.String): kotlin.Int
+    suspend fun delay(delayMs: kotlin.Int)
     @Throws(ParserException::class)
-    fun tryDelay(delayMs: kotlin.String)
+    suspend fun tryDelay(delayMs: kotlin.String)
 }
 
 
@@ -1789,11 +1789,11 @@ package uniffi.fixture.futures
 
 interface MegaphoneInterface {
     @Throws(MyException::class)
-    fun fallibleMe(doFail: kotlin.Boolean): kotlin.Byte
-    fun sayAfter(ms: kotlin.Short, who: kotlin.String): kotlin.String
-    fun sayAfterWithTokio(ms: kotlin.Short, who: kotlin.String): kotlin.String
+    suspend fun fallibleMe(doFail: kotlin.Boolean): kotlin.Byte
+    suspend fun sayAfter(ms: kotlin.Short, who: kotlin.String): kotlin.String
+    suspend fun sayAfterWithTokio(ms: kotlin.Short, who: kotlin.String): kotlin.String
     fun sayNow(who: kotlin.String): kotlin.String
-    fun silence(): kotlin.String
+    suspend fun silence(): kotlin.String
 }
 
 
@@ -2224,7 +2224,7 @@ class SayAfterTrait internal constructor(
 package uniffi.fixture.futures
 
 interface SayAfterTraitInterface {
-    fun sayAfter(ms: kotlin.Short, who: kotlin.String): kotlin.String
+    suspend fun sayAfter(ms: kotlin.Short, who: kotlin.String): kotlin.String
 }
 
 
@@ -2365,7 +2365,7 @@ class SayAfterUdlTrait internal constructor(
 package uniffi.fixture.futures
 
 interface SayAfterUdlTraitInterface {
-    fun sayAfter(ms: kotlin.Short, who: kotlin.String): kotlin.String
+    suspend fun sayAfter(ms: kotlin.Short, who: kotlin.String): kotlin.String
 }
 
 
@@ -2699,7 +2699,7 @@ class UdlMegaphone internal constructor(
 package uniffi.fixture.futures
 
 interface UdlMegaphoneInterface {
-    fun sayAfter(ms: kotlin.Short, who: kotlin.String): kotlin.String
+    suspend fun sayAfter(ms: kotlin.Short, who: kotlin.String): kotlin.String
 }
 
 
