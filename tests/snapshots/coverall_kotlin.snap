@@ -410,14 +410,15 @@ package uniffi.coverall
 //
 // Structure mirrors `src/templates/ObjectTemplate.java` verbatim at
 // the protocol level — same handshake, same Cleaner integration.
-// `[Trait, WithForeign]` objects (when has_callback_interface is true)
-// implement an additional Kotlin interface so foreign-side
-// implementations can substitute for the Rust wrapper transparently;
-// in that case methods are emitted with `override`.
+// Every Object implements its sibling `<Name>Interface` (method
+// signatures only, no `AutoCloseable`); for `[Trait, WithForeign]`
+// objects this same interface is the user-facing trait declaration
+// that foreign Kotlin classes can implement directly. Methods are
+// emitted with `override` in both cases.
 class Coveralls internal constructor(
     @Suppress("UNUSED_PARAMETER") phantom: UniffiWithHandle,
     internal val handle: Long,
-) : AutoCloseable {
+) : AutoCloseable, CoverallsInterface {
     private val wasDestroyed = java.util.concurrent.atomic.AtomicBoolean(false)
     private val callCounter = java.util.concurrent.atomic.AtomicLong(1L)
     // NoHandle wrappers (handle == 0) don't register a cleaner: there's
@@ -517,8 +518,7 @@ class Coveralls internal constructor(
     }
 
     
-    
-    fun addPatch(patch: Patch) {
+    override fun addPatch(patch: Patch) {
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallVoid { _, _status ->
                 UniffiLib.uniffi_uniffi_coverall_fn_method_coveralls_add_patch(uniffiHandle, FfiConverterTypePatch.lower(patch), _status)
@@ -526,8 +526,7 @@ class Coveralls internal constructor(
         }
     }
     
-    
-    fun addRepair(repair: Repair) {
+    override fun addRepair(repair: Repair) {
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallVoid { _, _status ->
                 UniffiLib.uniffi_uniffi_coverall_fn_method_coveralls_add_repair(uniffiHandle, FfiConverterTypeRepair.lower(repair), _status)
@@ -535,8 +534,7 @@ class Coveralls internal constructor(
         }
     }
     
-    
-    fun cloneMe(): Coveralls =
+    override fun cloneMe(): Coveralls =
         FfiConverterTypeCoveralls.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -545,9 +543,8 @@ class Coveralls internal constructor(
             }
         )
     
-    
     @Throws(CoverallException::class)
-    fun falliblePanic(message: kotlin.String) {
+    override fun falliblePanic(message: kotlin.String) {
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallVoidWithError(CoverallExceptionErrorHandler()) { _, _status ->
                 UniffiLib.uniffi_uniffi_coverall_fn_method_coveralls_fallible_panic(uniffiHandle, FfiConverterString.lower(message), _status)
@@ -555,8 +552,7 @@ class Coveralls internal constructor(
         }
     }
     
-    
-    fun getDict(key: kotlin.String, `value`: kotlin.Long): Map<kotlin.String, kotlin.Long> =
+    override fun getDict(key: kotlin.String, `value`: kotlin.Long): Map<kotlin.String, kotlin.Long> =
         FfiConverterMapStringLong.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -565,8 +561,7 @@ class Coveralls internal constructor(
             }
         )
     
-    
-    fun getDict2(key: kotlin.String, `value`: kotlin.Long): Map<kotlin.String, kotlin.Long> =
+    override fun getDict2(key: kotlin.String, `value`: kotlin.Long): Map<kotlin.String, kotlin.Long> =
         FfiConverterMapStringLong.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -575,8 +570,7 @@ class Coveralls internal constructor(
             }
         )
     
-    
-    fun getDict3(key: kotlin.Int, `value`: kotlin.Long): Map<kotlin.Int, kotlin.Long> =
+    override fun getDict3(key: kotlin.Int, `value`: kotlin.Long): Map<kotlin.Int, kotlin.Long> =
         FfiConverterMapIntLong.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -585,8 +579,7 @@ class Coveralls internal constructor(
             }
         )
     
-    
-    fun getName(): kotlin.String =
+    override fun getName(): kotlin.String =
         FfiConverterString.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -595,8 +588,7 @@ class Coveralls internal constructor(
             }
         )
     
-    
-    fun getOther(): Coveralls? =
+    override fun getOther(): Coveralls? =
         FfiConverterOptionalTypeCoveralls.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -605,8 +597,7 @@ class Coveralls internal constructor(
             }
         )
     
-    
-    fun getRepairs(): List<Repair> =
+    override fun getRepairs(): List<Repair> =
         FfiConverterSequenceTypeRepair.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -615,8 +606,7 @@ class Coveralls internal constructor(
             }
         )
     
-    
-    fun getStatus(status: kotlin.String): kotlin.String =
+    override fun getStatus(status: kotlin.String): kotlin.String =
         FfiConverterString.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -625,9 +615,8 @@ class Coveralls internal constructor(
             }
         )
     
-    
     @Throws(CoverallException::class)
-    fun maybeThrow(shouldThrow: kotlin.Boolean): kotlin.Boolean =
+    override fun maybeThrow(shouldThrow: kotlin.Boolean): kotlin.Boolean =
         FfiConverterBoolean.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCallWithError(CoverallExceptionErrorHandler()) { _allocator, _status ->
@@ -636,9 +625,8 @@ class Coveralls internal constructor(
             }
         )
     
-    
     @Throws(ComplexException::class)
-    fun maybeThrowComplex(input: kotlin.Byte): kotlin.Boolean =
+    override fun maybeThrowComplex(input: kotlin.Byte): kotlin.Boolean =
         FfiConverterBoolean.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCallWithError(ComplexExceptionErrorHandler()) { _allocator, _status ->
@@ -647,9 +635,8 @@ class Coveralls internal constructor(
             }
         )
     
-    
     @Throws(CoverallException::class)
-    fun maybeThrowInto(shouldThrow: kotlin.Boolean): kotlin.Boolean =
+    override fun maybeThrowInto(shouldThrow: kotlin.Boolean): kotlin.Boolean =
         FfiConverterBoolean.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCallWithError(CoverallExceptionErrorHandler()) { _allocator, _status ->
@@ -658,8 +645,7 @@ class Coveralls internal constructor(
             }
         )
     
-    
-    fun panic(message: kotlin.String) {
+    override fun panic(message: kotlin.String) {
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallVoid { _, _status ->
                 UniffiLib.uniffi_uniffi_coverall_fn_method_coveralls_panic(uniffiHandle, FfiConverterString.lower(message), _status)
@@ -667,8 +653,7 @@ class Coveralls internal constructor(
         }
     }
     
-    
-    fun reverse(`value`: kotlin.ByteArray): kotlin.ByteArray =
+    override fun reverse(`value`: kotlin.ByteArray): kotlin.ByteArray =
         FfiConverterByteArray.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -677,8 +662,7 @@ class Coveralls internal constructor(
             }
         )
     
-    
-    fun setAndGetEmptyStruct(emptyStruct: EmptyStruct): EmptyStruct =
+    override fun setAndGetEmptyStruct(emptyStruct: EmptyStruct): EmptyStruct =
         FfiConverterTypeEmptyStruct.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -687,16 +671,14 @@ class Coveralls internal constructor(
             }
         )
     
-    
-    fun strongCount(): kotlin.Long =
+    override fun strongCount(): kotlin.Long =
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallLong { _, _status ->
                 UniffiLib.uniffi_uniffi_coverall_fn_method_coveralls_strong_count(uniffiHandle, _status)
             }
         }
     
-    
-    fun takeOther(other: Coveralls?) {
+    override fun takeOther(other: Coveralls?) {
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallVoid { _, _status ->
                 UniffiLib.uniffi_uniffi_coverall_fn_method_coveralls_take_other(uniffiHandle, FfiConverterOptionalTypeCoveralls.lower(other), _status)
@@ -704,9 +686,8 @@ class Coveralls internal constructor(
         }
     }
     
-    
     @Throws(CoverallException::class)
-    fun takeOtherFallible() {
+    override fun takeOtherFallible() {
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallVoidWithError(CoverallExceptionErrorHandler()) { _, _status ->
                 UniffiLib.uniffi_uniffi_coverall_fn_method_coveralls_take_other_fallible(uniffiHandle, _status)
@@ -714,8 +695,7 @@ class Coveralls internal constructor(
         }
     }
     
-    
-    fun takeOtherPanic(message: kotlin.String) {
+    override fun takeOtherPanic(message: kotlin.String) {
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallVoid { _, _status ->
                 UniffiLib.uniffi_uniffi_coverall_fn_method_coveralls_take_other_panic(uniffiHandle, FfiConverterString.lower(message), _status)
@@ -745,6 +725,39 @@ class Coveralls internal constructor(
             )
         
     }
+}
+
+
+// === FILE: uniffi/coverall/CoverallsInterface.kt ===
+package uniffi.coverall
+
+interface CoverallsInterface {
+    fun addPatch(patch: Patch)
+    fun addRepair(repair: Repair)
+    fun cloneMe(): Coveralls
+    @Throws(CoverallException::class)
+    fun falliblePanic(message: kotlin.String)
+    fun getDict(key: kotlin.String, `value`: kotlin.Long): Map<kotlin.String, kotlin.Long>
+    fun getDict2(key: kotlin.String, `value`: kotlin.Long): Map<kotlin.String, kotlin.Long>
+    fun getDict3(key: kotlin.Int, `value`: kotlin.Long): Map<kotlin.Int, kotlin.Long>
+    fun getName(): kotlin.String
+    fun getOther(): Coveralls?
+    fun getRepairs(): List<Repair>
+    fun getStatus(status: kotlin.String): kotlin.String
+    @Throws(CoverallException::class)
+    fun maybeThrow(shouldThrow: kotlin.Boolean): kotlin.Boolean
+    @Throws(ComplexException::class)
+    fun maybeThrowComplex(input: kotlin.Byte): kotlin.Boolean
+    @Throws(CoverallException::class)
+    fun maybeThrowInto(shouldThrow: kotlin.Boolean): kotlin.Boolean
+    fun panic(message: kotlin.String)
+    fun reverse(`value`: kotlin.ByteArray): kotlin.ByteArray
+    fun setAndGetEmptyStruct(emptyStruct: EmptyStruct): EmptyStruct
+    fun strongCount(): kotlin.Long
+    fun takeOther(other: Coveralls?)
+    @Throws(CoverallException::class)
+    fun takeOtherFallible()
+    fun takeOtherPanic(message: kotlin.String)
 }
 
 
@@ -787,14 +800,15 @@ package uniffi.coverall
 //
 // Structure mirrors `src/templates/ObjectTemplate.java` verbatim at
 // the protocol level — same handshake, same Cleaner integration.
-// `[Trait, WithForeign]` objects (when has_callback_interface is true)
-// implement an additional Kotlin interface so foreign-side
-// implementations can substitute for the Rust wrapper transparently;
-// in that case methods are emitted with `override`.
+// Every Object implements its sibling `<Name>Interface` (method
+// signatures only, no `AutoCloseable`); for `[Trait, WithForeign]`
+// objects this same interface is the user-facing trait declaration
+// that foreign Kotlin classes can implement directly. Methods are
+// emitted with `override` in both cases.
 class FalliblePatch internal constructor(
     @Suppress("UNUSED_PARAMETER") phantom: UniffiWithHandle,
     internal val handle: Long,
-) : AutoCloseable {
+) : AutoCloseable, FalliblePatchInterface {
     private val wasDestroyed = java.util.concurrent.atomic.AtomicBoolean(false)
     private val callCounter = java.util.concurrent.atomic.AtomicLong(1L)
     // NoHandle wrappers (handle == 0) don't register a cleaner: there's
@@ -907,6 +921,13 @@ class FalliblePatch internal constructor(
             )
         
     }
+}
+
+
+// === FILE: uniffi/coverall/FalliblePatchInterface.kt ===
+package uniffi.coverall
+
+interface FalliblePatchInterface {
 }
 
 
@@ -2144,7 +2165,6 @@ object FfiConverterTimestamp : FfiConverterRustBuffer<java.time.Instant> {
     }
 }
 
-
 // === FILE: uniffi/coverall/FfiConverterTypeColor.kt ===
 package uniffi.coverall
 
@@ -2415,7 +2435,6 @@ object FfiConverterTypeCoveralls : FfiConverter<Coveralls, Long> {
     }
 }
 
-
 // === FILE: uniffi/coverall/FfiConverterTypeDictWithDefaults.kt ===
 package uniffi.coverall
 
@@ -2545,7 +2564,6 @@ internal object FfiConverterTypeGetters : FfiConverter<Getters, Long> {
     }
 }
 
-
 // === FILE: uniffi/coverall/FfiConverterTypeHTMLError.kt ===
 package uniffi.coverall
 
@@ -2589,7 +2607,6 @@ object FfiConverterTypeIFirst : FfiConverter<IFirst, Long> {
     }
 }
 
-
 // === FILE: uniffi/coverall/FfiConverterTypeISecond.kt ===
 package uniffi.coverall
 // FfiConverter routes `ISecond` across the FFI as an 8-byte
@@ -2608,7 +2625,6 @@ object FfiConverterTypeISecond : FfiConverter<ISecond, Long> {
         buf.putLong(lower(value))
     }
 }
-
 
 // === FILE: uniffi/coverall/FfiConverterTypeMaybeObject.kt ===
 package uniffi.coverall
@@ -2741,7 +2757,6 @@ internal object FfiConverterTypeNodeTrait : FfiConverter<NodeTrait, Long> {
     }
 }
 
-
 // === FILE: uniffi/coverall/FfiConverterTypeOtherError.kt ===
 package uniffi.coverall
 
@@ -2781,7 +2796,6 @@ object FfiConverterTypePatch : FfiConverter<Patch, Long> {
         buf.putLong(lower(value))
     }
 }
-
 
 // === FILE: uniffi/coverall/FfiConverterTypeRepair.kt ===
 package uniffi.coverall
@@ -3087,7 +3101,6 @@ object FfiConverterTypeStringUtil : FfiConverter<StringUtil, Long> {
     }
 }
 
-
 // === FILE: uniffi/coverall/FfiConverterTypeStringUtilObject.kt ===
 package uniffi.coverall
 // FfiConverter routes `StringUtilObject` across the FFI as an 8-byte
@@ -3106,7 +3119,6 @@ object FfiConverterTypeStringUtilObject : FfiConverter<StringUtilObject, Long> {
         buf.putLong(lower(value))
     }
 }
-
 
 // === FILE: uniffi/coverall/FfiConverterTypeThreadsafeCounter.kt ===
 package uniffi.coverall
@@ -3189,10 +3201,11 @@ package uniffi.coverall
 //
 // Structure mirrors `src/templates/ObjectTemplate.java` verbatim at
 // the protocol level — same handshake, same Cleaner integration.
-// `[Trait, WithForeign]` objects (when has_callback_interface is true)
-// implement an additional Kotlin interface so foreign-side
-// implementations can substitute for the Rust wrapper transparently;
-// in that case methods are emitted with `override`.
+// Every Object implements its sibling `<Name>Interface` (method
+// signatures only, no `AutoCloseable`); for `[Trait, WithForeign]`
+// objects this same interface is the user-facing trait declaration
+// that foreign Kotlin classes can implement directly. Methods are
+// emitted with `override` in both cases.
 class GettersImpl internal constructor(
     @Suppress("UNUSED_PARAMETER") phantom: UniffiWithHandle,
     internal val handle: Long,
@@ -3290,7 +3303,6 @@ class GettersImpl internal constructor(
     }
 
     
-    
     override fun getBool(v: kotlin.Boolean, arg2: kotlin.Boolean): kotlin.Boolean =
         FfiConverterBoolean.lift(
             callWithHandle { uniffiHandle ->
@@ -3299,7 +3311,6 @@ class GettersImpl internal constructor(
                 }
             }
         )
-    
     
     override fun getList(v: IntArray, arg2: kotlin.Boolean): IntArray =
         FfiConverterInt32Array.lift(
@@ -3310,7 +3321,6 @@ class GettersImpl internal constructor(
             }
         )
     
-    
     override fun getNothing(v: kotlin.String) {
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallVoid { _, _status ->
@@ -3318,7 +3328,6 @@ class GettersImpl internal constructor(
             }
         }
     }
-    
     
     @Throws(ComplexException::class)
     override fun getOption(v: kotlin.String, arg2: kotlin.Boolean): kotlin.String? =
@@ -3330,7 +3339,6 @@ class GettersImpl internal constructor(
             }
         )
     
-    
     @Throws(CoverallException::class)
     override fun getString(v: kotlin.String, arg2: kotlin.Boolean): kotlin.String =
         FfiConverterString.lift(
@@ -3340,7 +3348,6 @@ class GettersImpl internal constructor(
                 }
             }
         )
-    
     
     override fun roundTripObject(coveralls: Coveralls): Coveralls =
         FfiConverterTypeCoveralls.lift(
@@ -3383,14 +3390,15 @@ package uniffi.coverall
 //
 // Structure mirrors `src/templates/ObjectTemplate.java` verbatim at
 // the protocol level — same handshake, same Cleaner integration.
-// `[Trait, WithForeign]` objects (when has_callback_interface is true)
-// implement an additional Kotlin interface so foreign-side
-// implementations can substitute for the Rust wrapper transparently;
-// in that case methods are emitted with `override`.
+// Every Object implements its sibling `<Name>Interface` (method
+// signatures only, no `AutoCloseable`); for `[Trait, WithForeign]`
+// objects this same interface is the user-facing trait declaration
+// that foreign Kotlin classes can implement directly. Methods are
+// emitted with `override` in both cases.
 class IFirst internal constructor(
     @Suppress("UNUSED_PARAMETER") phantom: UniffiWithHandle,
     internal val handle: Long,
-) : AutoCloseable {
+) : AutoCloseable, IFirstInterface {
     private val wasDestroyed = java.util.concurrent.atomic.AtomicBoolean(false)
     private val callCounter = java.util.concurrent.atomic.AtomicLong(1L)
     // NoHandle wrappers (handle == 0) don't register a cleaner: there's
@@ -3490,8 +3498,7 @@ class IFirst internal constructor(
     }
 
     
-    
-    fun compare(other: ISecond?): kotlin.Boolean =
+    override fun compare(other: ISecond?): kotlin.Boolean =
         FfiConverterBoolean.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -3500,6 +3507,14 @@ class IFirst internal constructor(
             }
         )
     
+}
+
+
+// === FILE: uniffi/coverall/IFirstInterface.kt ===
+package uniffi.coverall
+
+interface IFirstInterface {
+    fun compare(other: ISecond?): kotlin.Boolean
 }
 
 
@@ -3514,14 +3529,15 @@ package uniffi.coverall
 //
 // Structure mirrors `src/templates/ObjectTemplate.java` verbatim at
 // the protocol level — same handshake, same Cleaner integration.
-// `[Trait, WithForeign]` objects (when has_callback_interface is true)
-// implement an additional Kotlin interface so foreign-side
-// implementations can substitute for the Rust wrapper transparently;
-// in that case methods are emitted with `override`.
+// Every Object implements its sibling `<Name>Interface` (method
+// signatures only, no `AutoCloseable`); for `[Trait, WithForeign]`
+// objects this same interface is the user-facing trait declaration
+// that foreign Kotlin classes can implement directly. Methods are
+// emitted with `override` in both cases.
 class ISecond internal constructor(
     @Suppress("UNUSED_PARAMETER") phantom: UniffiWithHandle,
     internal val handle: Long,
-) : AutoCloseable {
+) : AutoCloseable, ISecondInterface {
     private val wasDestroyed = java.util.concurrent.atomic.AtomicBoolean(false)
     private val callCounter = java.util.concurrent.atomic.AtomicLong(1L)
     // NoHandle wrappers (handle == 0) don't register a cleaner: there's
@@ -3621,8 +3637,7 @@ class ISecond internal constructor(
     }
 
     
-    
-    fun compare(other: IFirst?): kotlin.Boolean =
+    override fun compare(other: IFirst?): kotlin.Boolean =
         FfiConverterBoolean.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -3631,6 +3646,14 @@ class ISecond internal constructor(
             }
         )
     
+}
+
+
+// === FILE: uniffi/coverall/ISecondInterface.kt ===
+package uniffi.coverall
+
+interface ISecondInterface {
+    fun compare(other: IFirst?): kotlin.Boolean
 }
 
 
@@ -3963,14 +3986,15 @@ package uniffi.coverall
 //
 // Structure mirrors `src/templates/ObjectTemplate.java` verbatim at
 // the protocol level — same handshake, same Cleaner integration.
-// `[Trait, WithForeign]` objects (when has_callback_interface is true)
-// implement an additional Kotlin interface so foreign-side
-// implementations can substitute for the Rust wrapper transparently;
-// in that case methods are emitted with `override`.
+// Every Object implements its sibling `<Name>Interface` (method
+// signatures only, no `AutoCloseable`); for `[Trait, WithForeign]`
+// objects this same interface is the user-facing trait declaration
+// that foreign Kotlin classes can implement directly. Methods are
+// emitted with `override` in both cases.
 class Node internal constructor(
     @Suppress("UNUSED_PARAMETER") phantom: UniffiWithHandle,
     internal val handle: Long,
-) : AutoCloseable {
+) : AutoCloseable, NodeInterface {
     private val wasDestroyed = java.util.concurrent.atomic.AtomicBoolean(false)
     private val callCounter = java.util.concurrent.atomic.AtomicLong(1L)
     // NoHandle wrappers (handle == 0) don't register a cleaner: there's
@@ -4070,8 +4094,7 @@ class Node internal constructor(
     }
 
     
-    
-    fun describeParent(): kotlin.String =
+    override fun describeParent(): kotlin.String =
         FfiConverterString.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -4080,8 +4103,7 @@ class Node internal constructor(
             }
         )
     
-    
-    fun getParent(): NodeTrait? =
+    override fun getParent(): NodeTrait? =
         FfiConverterOptionalTypeNodeTrait.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -4090,8 +4112,7 @@ class Node internal constructor(
             }
         )
     
-    
-    fun name(): kotlin.String =
+    override fun name(): kotlin.String =
         FfiConverterString.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -4100,8 +4121,7 @@ class Node internal constructor(
             }
         )
     
-    
-    fun setParent(parent: NodeTrait?) {
+    override fun setParent(parent: NodeTrait?) {
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallVoid { _, _status ->
                 UniffiLib.uniffi_uniffi_coverall_fn_method_node_set_parent(uniffiHandle, FfiConverterOptionalTypeNodeTrait.lower(parent), _status)
@@ -4109,8 +4129,7 @@ class Node internal constructor(
         }
     }
     
-    
-    fun strongCount(): kotlin.Long =
+    override fun strongCount(): kotlin.Long =
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallLong { _, _status ->
                 UniffiLib.uniffi_uniffi_coverall_fn_method_node_strong_count(uniffiHandle, _status)
@@ -4124,6 +4143,18 @@ class Node internal constructor(
                 UniffiLib.uniffi_uniffi_coverall_fn_method_node_uniffi_trait_debug(_allocator, uniffiHandle, _status)
             }
         })
+}
+
+
+// === FILE: uniffi/coverall/NodeInterface.kt ===
+package uniffi.coverall
+
+interface NodeInterface {
+    fun describeParent(): kotlin.String
+    fun getParent(): NodeTrait?
+    fun name(): kotlin.String
+    fun setParent(parent: NodeTrait?)
+    fun strongCount(): kotlin.Long
 }
 
 
@@ -4149,10 +4180,11 @@ package uniffi.coverall
 //
 // Structure mirrors `src/templates/ObjectTemplate.java` verbatim at
 // the protocol level — same handshake, same Cleaner integration.
-// `[Trait, WithForeign]` objects (when has_callback_interface is true)
-// implement an additional Kotlin interface so foreign-side
-// implementations can substitute for the Rust wrapper transparently;
-// in that case methods are emitted with `override`.
+// Every Object implements its sibling `<Name>Interface` (method
+// signatures only, no `AutoCloseable`); for `[Trait, WithForeign]`
+// objects this same interface is the user-facing trait declaration
+// that foreign Kotlin classes can implement directly. Methods are
+// emitted with `override` in both cases.
 class NodeTraitImpl internal constructor(
     @Suppress("UNUSED_PARAMETER") phantom: UniffiWithHandle,
     internal val handle: Long,
@@ -4250,7 +4282,6 @@ class NodeTraitImpl internal constructor(
     }
 
     
-    
     override fun getParent(): NodeTrait? =
         FfiConverterOptionalTypeNodeTrait.lift(
             callWithHandle { uniffiHandle ->
@@ -4259,7 +4290,6 @@ class NodeTraitImpl internal constructor(
                 }
             }
         )
-    
     
     override fun name(): kotlin.String =
         FfiConverterString.lift(
@@ -4270,7 +4300,6 @@ class NodeTraitImpl internal constructor(
             }
         )
     
-    
     override fun setParent(parent: NodeTrait?) {
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallVoid { _, _status ->
@@ -4278,7 +4307,6 @@ class NodeTraitImpl internal constructor(
             }
         }
     }
-    
     
     override fun strongCount(): kotlin.Long =
         callWithHandle { uniffiHandle ->
@@ -4309,14 +4337,15 @@ package uniffi.coverall
 //
 // Structure mirrors `src/templates/ObjectTemplate.java` verbatim at
 // the protocol level — same handshake, same Cleaner integration.
-// `[Trait, WithForeign]` objects (when has_callback_interface is true)
-// implement an additional Kotlin interface so foreign-side
-// implementations can substitute for the Rust wrapper transparently;
-// in that case methods are emitted with `override`.
+// Every Object implements its sibling `<Name>Interface` (method
+// signatures only, no `AutoCloseable`); for `[Trait, WithForeign]`
+// objects this same interface is the user-facing trait declaration
+// that foreign Kotlin classes can implement directly. Methods are
+// emitted with `override` in both cases.
 class Patch internal constructor(
     @Suppress("UNUSED_PARAMETER") phantom: UniffiWithHandle,
     internal val handle: Long,
-) : AutoCloseable {
+) : AutoCloseable, PatchInterface {
     private val wasDestroyed = java.util.concurrent.atomic.AtomicBoolean(false)
     private val callCounter = java.util.concurrent.atomic.AtomicLong(1L)
     // NoHandle wrappers (handle == 0) don't register a cleaner: there's
@@ -4416,8 +4445,7 @@ class Patch internal constructor(
     }
 
     
-    
-    fun getColor(): Color =
+    override fun getColor(): Color =
         FfiConverterTypeColor.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -4426,6 +4454,14 @@ class Patch internal constructor(
             }
         )
     
+}
+
+
+// === FILE: uniffi/coverall/PatchInterface.kt ===
+package uniffi.coverall
+
+interface PatchInterface {
+    fun getColor(): Color
 }
 
 
@@ -4621,14 +4657,15 @@ package uniffi.coverall
 //
 // Structure mirrors `src/templates/ObjectTemplate.java` verbatim at
 // the protocol level — same handshake, same Cleaner integration.
-// `[Trait, WithForeign]` objects (when has_callback_interface is true)
-// implement an additional Kotlin interface so foreign-side
-// implementations can substitute for the Rust wrapper transparently;
-// in that case methods are emitted with `override`.
+// Every Object implements its sibling `<Name>Interface` (method
+// signatures only, no `AutoCloseable`); for `[Trait, WithForeign]`
+// objects this same interface is the user-facing trait declaration
+// that foreign Kotlin classes can implement directly. Methods are
+// emitted with `override` in both cases.
 class StringUtil internal constructor(
     @Suppress("UNUSED_PARAMETER") phantom: UniffiWithHandle,
     internal val handle: Long,
-) : AutoCloseable {
+) : AutoCloseable, StringUtilInterface {
     private val wasDestroyed = java.util.concurrent.atomic.AtomicBoolean(false)
     private val callCounter = java.util.concurrent.atomic.AtomicLong(1L)
     // NoHandle wrappers (handle == 0) don't register a cleaner: there's
@@ -4722,8 +4759,7 @@ class StringUtil internal constructor(
     }
 
     
-    
-    fun concat(a: kotlin.String, b: kotlin.String): kotlin.String =
+    override fun concat(a: kotlin.String, b: kotlin.String): kotlin.String =
         FfiConverterString.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -4732,6 +4768,14 @@ class StringUtil internal constructor(
             }
         )
     
+}
+
+
+// === FILE: uniffi/coverall/StringUtilInterface.kt ===
+package uniffi.coverall
+
+interface StringUtilInterface {
+    fun concat(a: kotlin.String, b: kotlin.String): kotlin.String
 }
 
 
@@ -4746,14 +4790,15 @@ package uniffi.coverall
 //
 // Structure mirrors `src/templates/ObjectTemplate.java` verbatim at
 // the protocol level — same handshake, same Cleaner integration.
-// `[Trait, WithForeign]` objects (when has_callback_interface is true)
-// implement an additional Kotlin interface so foreign-side
-// implementations can substitute for the Rust wrapper transparently;
-// in that case methods are emitted with `override`.
+// Every Object implements its sibling `<Name>Interface` (method
+// signatures only, no `AutoCloseable`); for `[Trait, WithForeign]`
+// objects this same interface is the user-facing trait declaration
+// that foreign Kotlin classes can implement directly. Methods are
+// emitted with `override` in both cases.
 class StringUtilObject internal constructor(
     @Suppress("UNUSED_PARAMETER") phantom: UniffiWithHandle,
     internal val handle: Long,
-) : AutoCloseable {
+) : AutoCloseable, StringUtilObjectInterface {
     private val wasDestroyed = java.util.concurrent.atomic.AtomicBoolean(false)
     private val callCounter = java.util.concurrent.atomic.AtomicLong(1L)
     // NoHandle wrappers (handle == 0) don't register a cleaner: there's
@@ -4853,8 +4898,7 @@ class StringUtilObject internal constructor(
     }
 
     
-    
-    fun concat(a: kotlin.String, b: kotlin.String): kotlin.String =
+    override fun concat(a: kotlin.String, b: kotlin.String): kotlin.String =
         FfiConverterString.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -4863,6 +4907,14 @@ class StringUtilObject internal constructor(
             }
         )
     
+}
+
+
+// === FILE: uniffi/coverall/StringUtilObjectInterface.kt ===
+package uniffi.coverall
+
+interface StringUtilObjectInterface {
+    fun concat(a: kotlin.String, b: kotlin.String): kotlin.String
 }
 
 
@@ -4877,14 +4929,15 @@ package uniffi.coverall
 //
 // Structure mirrors `src/templates/ObjectTemplate.java` verbatim at
 // the protocol level — same handshake, same Cleaner integration.
-// `[Trait, WithForeign]` objects (when has_callback_interface is true)
-// implement an additional Kotlin interface so foreign-side
-// implementations can substitute for the Rust wrapper transparently;
-// in that case methods are emitted with `override`.
+// Every Object implements its sibling `<Name>Interface` (method
+// signatures only, no `AutoCloseable`); for `[Trait, WithForeign]`
+// objects this same interface is the user-facing trait declaration
+// that foreign Kotlin classes can implement directly. Methods are
+// emitted with `override` in both cases.
 class ThreadsafeCounter internal constructor(
     @Suppress("UNUSED_PARAMETER") phantom: UniffiWithHandle,
     internal val handle: Long,
-) : AutoCloseable {
+) : AutoCloseable, ThreadsafeCounterInterface {
     private val wasDestroyed = java.util.concurrent.atomic.AtomicBoolean(false)
     private val callCounter = java.util.concurrent.atomic.AtomicLong(1L)
     // NoHandle wrappers (handle == 0) don't register a cleaner: there's
@@ -4984,8 +5037,7 @@ class ThreadsafeCounter internal constructor(
     }
 
     
-    
-    fun busyWait(ms: kotlin.Int) {
+    override fun busyWait(ms: kotlin.Int) {
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallVoid { _, _status ->
                 UniffiLib.uniffi_uniffi_coverall_fn_method_threadsafecounter_busy_wait(uniffiHandle, ms, _status)
@@ -4993,14 +5045,22 @@ class ThreadsafeCounter internal constructor(
         }
     }
     
-    
-    fun incrementIfBusy(): kotlin.Int =
+    override fun incrementIfBusy(): kotlin.Int =
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallInt { _, _status ->
                 UniffiLib.uniffi_uniffi_coverall_fn_method_threadsafecounter_increment_if_busy(uniffiHandle, _status)
             }
         }
     
+}
+
+
+// === FILE: uniffi/coverall/ThreadsafeCounterInterface.kt ===
+package uniffi.coverall
+
+interface ThreadsafeCounterInterface {
+    fun busyWait(ms: kotlin.Int)
+    fun incrementIfBusy(): kotlin.Int
 }
 
 

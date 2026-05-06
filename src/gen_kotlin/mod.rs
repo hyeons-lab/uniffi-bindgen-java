@@ -204,19 +204,22 @@ impl KotlinCodeOracle {
         fixup_keyword(self.convert_error_suffix(&nm.to_string().to_upper_camel_case()))
     }
 
-    /// `(interface_name, impl_class_name)` for a UniFFI object. They
-    /// only differ for `[Trait, WithForeign]` objects, where the trait
-    /// keeps the user's chosen name (so it appears in function
-    /// signatures) and the Rust-side wrapper class is suffixed with
-    /// `Impl`. Foreign Kotlin implementors of the trait satisfy the
-    /// interface directly; the FfiConverter's LSB-dispatch routes
-    /// between `<Name>Impl` (Rust handles, LSB=0) and
-    /// `handleMap.remove` (foreign handles, LSB=1).
+    /// `(interface_name, impl_class_name)` for a UniFFI object.
     ///
-    /// Pure objects (no callback interface) get `(<Name>, <Name>)`.
-    /// Diverges from Java's `<Name>Interface` suffix — Kotlin's
-    /// `open class` + test-double idioms make a separate interface
-    /// less load-bearing, so we keep snapshots tighter by skipping it.
+    /// `[Trait, WithForeign]` objects: the trait keeps the user's
+    /// chosen name (so it appears in function signatures) and the
+    /// Rust-side wrapper class is suffixed with `Impl`. Foreign
+    /// Kotlin implementors of the trait satisfy the interface
+    /// directly; the FfiConverter's LSB-dispatch routes between
+    /// `<Name>Impl` (Rust handles, LSB=0) and `handleMap.remove`
+    /// (foreign handles, LSB=1).
+    ///
+    /// Plain objects: `(<Name>Interface, <Name>)`. The concrete class
+    /// implements a method-signature interface so consumers can
+    /// substitute test doubles or alternative impls. Lifecycle stays
+    /// on the concrete class (only `<Name>` is `AutoCloseable`); the
+    /// FfiConverter is typed on `<Name>` since handles only round-trip
+    /// the Rust-owned wrapper. Mirrors `gen_java::object_names`.
     pub fn object_names(
         &self,
         ci: &ComponentInterface,
@@ -227,7 +230,8 @@ impl KotlinCodeOracle {
             let impl_name = format!("{class_name}Impl");
             (class_name, impl_name)
         } else {
-            (class_name.clone(), class_name)
+            let interface_name = format!("{class_name}Interface");
+            (interface_name, class_name)
         }
     }
 

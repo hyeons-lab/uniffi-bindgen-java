@@ -68,14 +68,15 @@ package uniffi.enum_types
 //
 // Structure mirrors `src/templates/ObjectTemplate.java` verbatim at
 // the protocol level — same handshake, same Cleaner integration.
-// `[Trait, WithForeign]` objects (when has_callback_interface is true)
-// implement an additional Kotlin interface so foreign-side
-// implementations can substitute for the Rust wrapper transparently;
-// in that case methods are emitted with `override`.
+// Every Object implements its sibling `<Name>Interface` (method
+// signatures only, no `AutoCloseable`); for `[Trait, WithForeign]`
+// objects this same interface is the user-facing trait declaration
+// that foreign Kotlin classes can implement directly. Methods are
+// emitted with `override` in both cases.
 class AnimalObject internal constructor(
     @Suppress("UNUSED_PARAMETER") phantom: UniffiWithHandle,
     internal val handle: Long,
-) : AutoCloseable {
+) : AutoCloseable, AnimalObjectInterface {
     private val wasDestroyed = java.util.concurrent.atomic.AtomicBoolean(false)
     private val callCounter = java.util.concurrent.atomic.AtomicLong(1L)
     // NoHandle wrappers (handle == 0) don't register a cleaner: there's
@@ -169,8 +170,7 @@ class AnimalObject internal constructor(
     }
 
     
-    
-    fun getRecord(): AnimalRecord =
+    override fun getRecord(): AnimalRecord =
         FfiConverterTypeAnimalRecord.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -189,6 +189,14 @@ class AnimalObject internal constructor(
             }
         })
     }
+}
+
+
+// === FILE: uniffi/enum_types/AnimalObjectInterface.kt ===
+package uniffi.enum_types
+
+interface AnimalObjectInterface {
+    fun getRecord(): AnimalRecord
 }
 
 
@@ -343,7 +351,6 @@ object FfiConverterBooleanArray : FfiConverterRustBuffer<BooleanArray> {
         }
     }
 }
-
 
 
 

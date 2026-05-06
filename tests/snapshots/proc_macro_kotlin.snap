@@ -146,7 +146,6 @@ object FfiConverterBooleanArray : FfiConverterRustBuffer<BooleanArray> {
 
 
 
-
 // === FILE: uniffi/fixture/proc_macro/FfiConverterByte.kt ===
 package uniffi.fixture.proc_macro
 
@@ -1160,7 +1159,6 @@ object FfiConverterTypeObject : FfiConverter<Object, Long> {
     }
 }
 
-
 // === FILE: uniffi/fixture/proc_macro/FfiConverterTypeObjectWithDefaults.kt ===
 package uniffi.fixture.proc_macro
 // FfiConverter routes `ObjectWithDefaults` across the FFI as an 8-byte
@@ -1179,7 +1177,6 @@ object FfiConverterTypeObjectWithDefaults : FfiConverter<ObjectWithDefaults, Lon
         buf.putLong(lower(value))
     }
 }
-
 
 // === FILE: uniffi/fixture/proc_macro/FfiConverterTypeOne.kt ===
 package uniffi.fixture.proc_macro
@@ -1374,7 +1371,6 @@ object FfiConverterTypeRenamed : FfiConverter<Renamed, Long> {
     }
 }
 
-
 // === FILE: uniffi/fixture/proc_macro/FfiConverterTypeReprU8.kt ===
 package uniffi.fixture.proc_macro
 
@@ -1451,7 +1447,6 @@ object FfiConverterTypeStructWithTrait : FfiConverter<StructWithTrait, Long> {
         buf.putLong(lower(value))
     }
 }
-
 
 // === FILE: uniffi/fixture/proc_macro/FfiConverterTypeTestCallbackInterface.kt ===
 package uniffi.fixture.proc_macro
@@ -1533,7 +1528,6 @@ internal object FfiConverterTypeTraitWithForeign : FfiConverter<TraitWithForeign
         buf.putLong(lower(value))
     }
 }
-
 
 // === FILE: uniffi/fixture/proc_macro/FfiConverterTypeTwo.kt ===
 package uniffi.fixture.proc_macro
@@ -1910,14 +1904,15 @@ package uniffi.fixture.proc_macro
 //
 // Structure mirrors `src/templates/ObjectTemplate.java` verbatim at
 // the protocol level — same handshake, same Cleaner integration.
-// `[Trait, WithForeign]` objects (when has_callback_interface is true)
-// implement an additional Kotlin interface so foreign-side
-// implementations can substitute for the Rust wrapper transparently;
-// in that case methods are emitted with `override`.
+// Every Object implements its sibling `<Name>Interface` (method
+// signatures only, no `AutoCloseable`); for `[Trait, WithForeign]`
+// objects this same interface is the user-facing trait declaration
+// that foreign Kotlin classes can implement directly. Methods are
+// emitted with `override` in both cases.
 class Object internal constructor(
     @Suppress("UNUSED_PARAMETER") phantom: UniffiWithHandle,
     internal val handle: Long,
-) : AutoCloseable {
+) : AutoCloseable, ObjectInterface {
     private val wasDestroyed = java.util.concurrent.atomic.AtomicBoolean(false)
     private val callCounter = java.util.concurrent.atomic.AtomicLong(1L)
     // NoHandle wrappers (handle == 0) don't register a cleaner: there's
@@ -2017,9 +2012,8 @@ class Object internal constructor(
     }
 
     
-    
     @Throws(FlatException::class)
-    fun doStuff(times: kotlin.Int) {
+    override fun doStuff(times: kotlin.Int) {
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallVoidWithError(FlatExceptionErrorHandler()) { _, _status ->
                 UniffiLib.uniffi_uniffi_proc_macro_fn_method_object_do_stuff(uniffiHandle, times, _status)
@@ -2027,8 +2021,7 @@ class Object internal constructor(
         }
     }
     
-    
-    fun getTrait(inc: Trait?): Trait =
+    override fun getTrait(inc: Trait?): Trait =
         FfiConverterTypeTrait.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -2037,8 +2030,7 @@ class Object internal constructor(
             }
         )
     
-    
-    fun getTraitWithForeign(inc: TraitWithForeign?): TraitWithForeign =
+    override fun getTraitWithForeign(inc: TraitWithForeign?): TraitWithForeign =
         FfiConverterTypeTraitWithForeign.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -2047,8 +2039,7 @@ class Object internal constructor(
             }
         )
     
-    
-    fun isHeavy(): MaybeBool =
+    override fun isHeavy(): MaybeBool =
         FfiConverterTypeMaybeBool.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -2057,8 +2048,7 @@ class Object internal constructor(
             }
         )
     
-    
-    fun isOtherHeavy(other: Object): MaybeBool =
+    override fun isOtherHeavy(other: Object): MaybeBool =
         FfiConverterTypeMaybeBool.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -2067,8 +2057,7 @@ class Object internal constructor(
             }
         )
     
-    
-    fun takeError(e: BasicException): kotlin.Int =
+    override fun takeError(e: BasicException): kotlin.Int =
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallInt { _, _status ->
                 UniffiLib.uniffi_uniffi_proc_macro_fn_method_object_take_error(uniffiHandle, FfiConverterTypeBasicError.lower(e), _status)
@@ -2100,6 +2089,20 @@ class Object internal constructor(
 }
 
 
+// === FILE: uniffi/fixture/proc_macro/ObjectInterface.kt ===
+package uniffi.fixture.proc_macro
+
+interface ObjectInterface {
+    @Throws(FlatException::class)
+    fun doStuff(times: kotlin.Int)
+    fun getTrait(inc: Trait?): Trait
+    fun getTraitWithForeign(inc: TraitWithForeign?): TraitWithForeign
+    fun isHeavy(): MaybeBool
+    fun isOtherHeavy(other: Object): MaybeBool
+    fun takeError(e: BasicException): kotlin.Int
+}
+
+
 // === FILE: uniffi/fixture/proc_macro/ObjectWithDefaults.kt ===
 package uniffi.fixture.proc_macro
 
@@ -2111,14 +2114,15 @@ package uniffi.fixture.proc_macro
 //
 // Structure mirrors `src/templates/ObjectTemplate.java` verbatim at
 // the protocol level — same handshake, same Cleaner integration.
-// `[Trait, WithForeign]` objects (when has_callback_interface is true)
-// implement an additional Kotlin interface so foreign-side
-// implementations can substitute for the Rust wrapper transparently;
-// in that case methods are emitted with `override`.
+// Every Object implements its sibling `<Name>Interface` (method
+// signatures only, no `AutoCloseable`); for `[Trait, WithForeign]`
+// objects this same interface is the user-facing trait declaration
+// that foreign Kotlin classes can implement directly. Methods are
+// emitted with `override` in both cases.
 class ObjectWithDefaults internal constructor(
     @Suppress("UNUSED_PARAMETER") phantom: UniffiWithHandle,
     internal val handle: Long,
-) : AutoCloseable {
+) : AutoCloseable, ObjectWithDefaultsInterface {
     private val wasDestroyed = java.util.concurrent.atomic.AtomicBoolean(false)
     private val callCounter = java.util.concurrent.atomic.AtomicLong(1L)
     // NoHandle wrappers (handle == 0) don't register a cleaner: there's
@@ -2218,22 +2222,29 @@ class ObjectWithDefaults internal constructor(
     }
 
     
-    
-    fun addToImplicitNum(other: kotlin.Int): kotlin.Int =
+    override fun addToImplicitNum(other: kotlin.Int): kotlin.Int =
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallInt { _, _status ->
                 UniffiLib.uniffi_uniffi_proc_macro_fn_method_objectwithdefaults_add_to_implicit_num(uniffiHandle, other, _status)
             }
         }
     
-    
-    fun addToNum(other: kotlin.Int): kotlin.Int =
+    override fun addToNum(other: kotlin.Int): kotlin.Int =
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallInt { _, _status ->
                 UniffiLib.uniffi_uniffi_proc_macro_fn_method_objectwithdefaults_add_to_num(uniffiHandle, other, _status)
             }
         }
     
+}
+
+
+// === FILE: uniffi/fixture/proc_macro/ObjectWithDefaultsInterface.kt ===
+package uniffi.fixture.proc_macro
+
+interface ObjectWithDefaultsInterface {
+    fun addToImplicitNum(other: kotlin.Int): kotlin.Int
+    fun addToNum(other: kotlin.Int): kotlin.Int
 }
 
 
@@ -2509,14 +2520,15 @@ package uniffi.fixture.proc_macro
 //
 // Structure mirrors `src/templates/ObjectTemplate.java` verbatim at
 // the protocol level — same handshake, same Cleaner integration.
-// `[Trait, WithForeign]` objects (when has_callback_interface is true)
-// implement an additional Kotlin interface so foreign-side
-// implementations can substitute for the Rust wrapper transparently;
-// in that case methods are emitted with `override`.
+// Every Object implements its sibling `<Name>Interface` (method
+// signatures only, no `AutoCloseable`); for `[Trait, WithForeign]`
+// objects this same interface is the user-facing trait declaration
+// that foreign Kotlin classes can implement directly. Methods are
+// emitted with `override` in both cases.
 class Renamed internal constructor(
     @Suppress("UNUSED_PARAMETER") phantom: UniffiWithHandle,
     internal val handle: Long,
-) : AutoCloseable {
+) : AutoCloseable, RenamedInterface {
     private val wasDestroyed = java.util.concurrent.atomic.AtomicBoolean(false)
     private val callCounter = java.util.concurrent.atomic.AtomicLong(1L)
     // NoHandle wrappers (handle == 0) don't register a cleaner: there's
@@ -2616,8 +2628,7 @@ class Renamed internal constructor(
     }
 
     
-    
-    fun func(): kotlin.Boolean =
+    override fun func(): kotlin.Boolean =
         FfiConverterBoolean.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -2626,6 +2637,14 @@ class Renamed internal constructor(
             }
         )
     
+}
+
+
+// === FILE: uniffi/fixture/proc_macro/RenamedInterface.kt ===
+package uniffi.fixture.proc_macro
+
+interface RenamedInterface {
+    fun func(): kotlin.Boolean
 }
 
 
@@ -2748,14 +2767,15 @@ package uniffi.fixture.proc_macro
 //
 // Structure mirrors `src/templates/ObjectTemplate.java` verbatim at
 // the protocol level — same handshake, same Cleaner integration.
-// `[Trait, WithForeign]` objects (when has_callback_interface is true)
-// implement an additional Kotlin interface so foreign-side
-// implementations can substitute for the Rust wrapper transparently;
-// in that case methods are emitted with `override`.
+// Every Object implements its sibling `<Name>Interface` (method
+// signatures only, no `AutoCloseable`); for `[Trait, WithForeign]`
+// objects this same interface is the user-facing trait declaration
+// that foreign Kotlin classes can implement directly. Methods are
+// emitted with `override` in both cases.
 class StructWithTrait internal constructor(
     @Suppress("UNUSED_PARAMETER") phantom: UniffiWithHandle,
     internal val handle: Long,
-) : AutoCloseable {
+) : AutoCloseable, StructWithTraitInterface {
     private val wasDestroyed = java.util.concurrent.atomic.AtomicBoolean(false)
     private val callCounter = java.util.concurrent.atomic.AtomicLong(1L)
     // NoHandle wrappers (handle == 0) don't register a cleaner: there's
@@ -2855,8 +2875,7 @@ class StructWithTrait internal constructor(
     }
 
     
-    
-    fun concatStrings(a: kotlin.String, b: kotlin.String): kotlin.String =
+    override fun concatStrings(a: kotlin.String, b: kotlin.String): kotlin.String =
         FfiConverterString.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -2865,6 +2884,14 @@ class StructWithTrait internal constructor(
             }
         )
     
+}
+
+
+// === FILE: uniffi/fixture/proc_macro/StructWithTraitInterface.kt ===
+package uniffi.fixture.proc_macro
+
+interface StructWithTraitInterface {
+    fun concatStrings(a: kotlin.String, b: kotlin.String): kotlin.String
 }
 
 
@@ -2902,14 +2929,15 @@ package uniffi.fixture.proc_macro
 //
 // Structure mirrors `src/templates/ObjectTemplate.java` verbatim at
 // the protocol level — same handshake, same Cleaner integration.
-// `[Trait, WithForeign]` objects (when has_callback_interface is true)
-// implement an additional Kotlin interface so foreign-side
-// implementations can substitute for the Rust wrapper transparently;
-// in that case methods are emitted with `override`.
+// Every Object implements its sibling `<Name>Interface` (method
+// signatures only, no `AutoCloseable`); for `[Trait, WithForeign]`
+// objects this same interface is the user-facing trait declaration
+// that foreign Kotlin classes can implement directly. Methods are
+// emitted with `override` in both cases.
 class Trait internal constructor(
     @Suppress("UNUSED_PARAMETER") phantom: UniffiWithHandle,
     internal val handle: Long,
-) : AutoCloseable {
+) : AutoCloseable, TraitInterface {
     private val wasDestroyed = java.util.concurrent.atomic.AtomicBoolean(false)
     private val callCounter = java.util.concurrent.atomic.AtomicLong(1L)
     // NoHandle wrappers (handle == 0) don't register a cleaner: there's
@@ -3003,8 +3031,7 @@ class Trait internal constructor(
     }
 
     
-    
-    fun concatStrings(a: kotlin.String, b: kotlin.String): kotlin.String =
+    override fun concatStrings(a: kotlin.String, b: kotlin.String): kotlin.String =
         FfiConverterString.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -3013,6 +3040,14 @@ class Trait internal constructor(
             }
         )
     
+}
+
+
+// === FILE: uniffi/fixture/proc_macro/TraitInterface.kt ===
+package uniffi.fixture.proc_macro
+
+interface TraitInterface {
+    fun concatStrings(a: kotlin.String, b: kotlin.String): kotlin.String
 }
 
 
@@ -3035,10 +3070,11 @@ package uniffi.fixture.proc_macro
 //
 // Structure mirrors `src/templates/ObjectTemplate.java` verbatim at
 // the protocol level — same handshake, same Cleaner integration.
-// `[Trait, WithForeign]` objects (when has_callback_interface is true)
-// implement an additional Kotlin interface so foreign-side
-// implementations can substitute for the Rust wrapper transparently;
-// in that case methods are emitted with `override`.
+// Every Object implements its sibling `<Name>Interface` (method
+// signatures only, no `AutoCloseable`); for `[Trait, WithForeign]`
+// objects this same interface is the user-facing trait declaration
+// that foreign Kotlin classes can implement directly. Methods are
+// emitted with `override` in both cases.
 class TraitWithForeignImpl internal constructor(
     @Suppress("UNUSED_PARAMETER") phantom: UniffiWithHandle,
     internal val handle: Long,
@@ -3135,7 +3171,6 @@ class TraitWithForeignImpl internal constructor(
         }
     }
 
-    
     
     override fun name(): kotlin.String =
         FfiConverterString.lift(
@@ -9402,14 +9437,15 @@ package uniffi.fixture.proc_macro
 //
 // Structure mirrors `src/templates/ObjectTemplate.java` verbatim at
 // the protocol level — same handshake, same Cleaner integration.
-// `[Trait, WithForeign]` objects (when has_callback_interface is true)
-// implement an additional Kotlin interface so foreign-side
-// implementations can substitute for the Rust wrapper transparently;
-// in that case methods are emitted with `override`.
+// Every Object implements its sibling `<Name>Interface` (method
+// signatures only, no `AutoCloseable`); for `[Trait, WithForeign]`
+// objects this same interface is the user-facing trait declaration
+// that foreign Kotlin classes can implement directly. Methods are
+// emitted with `override` in both cases.
 class Unused internal constructor(
     @Suppress("UNUSED_PARAMETER") phantom: UniffiWithHandle,
     internal val handle: Long,
-) : AutoCloseable {
+) : AutoCloseable, UnusedInterface {
     private val wasDestroyed = java.util.concurrent.atomic.AtomicBoolean(false)
     private val callCounter = java.util.concurrent.atomic.AtomicLong(1L)
     // NoHandle wrappers (handle == 0) don't register a cleaner: there's
@@ -9509,6 +9545,13 @@ class Unused internal constructor(
     }
 
     
+}
+
+
+// === FILE: uniffi/fixture/proc_macro/UnusedInterface.kt ===
+package uniffi.fixture.proc_macro
+
+interface UnusedInterface {
 }
 
 
