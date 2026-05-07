@@ -14,7 +14,8 @@
 //       `delayUsingTrait`, `tryDelayUsingTrait`,
 //       `cancelDelayUsingTrait` — including coroutine cancellation
 //       semantics, typed errors raised from Kotlin into Rust, and
-//       handle leak check via `UniffiAsyncHelpers.uniffiForeignFutureHandleCount()`.
+//       handle leak check via the public top-level
+//       `uniffiForeignFutureHandleCount()` accessor.
 //   • Tokio-runtime path (`sayAfterWithTokio`).
 //   • Fallible async fn / method (`fallibleMe`, `fallibleStruct`).
 //   • Async record return (`newMyRecord`).
