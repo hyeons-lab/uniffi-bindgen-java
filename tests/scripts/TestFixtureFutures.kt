@@ -44,9 +44,11 @@ import uniffi.fixture.futures.uniffiForeignFutureHandleCount
 // runtime, so use looser bounds. Tight-loop tests would be flaky on
 // the slower macos-26 runners; these tolerances let real bugs through
 // (e.g. async path going synchronous or a 10× slowdown) without
-// flaking on JVM warmup.
-private const val IMMEDIATE_MAX_MS = 100L
-private const val APPROXIMATE_TOLERANCE_MS = 500L
+// flaking on JVM warmup. Bumped after a `brokenSleep` flake at
+// 1072ms vs the previous 1000ms upper bound — macos-26 GitHub
+// runners can stack 2× expected time under load.
+private const val IMMEDIATE_MAX_MS = 200L
+private const val APPROXIMATE_TOLERANCE_MS = 1000L
 
 private fun assertImmediate(actualMs: Long, label: String) {
     check(actualMs <= IMMEDIATE_MAX_MS) {
