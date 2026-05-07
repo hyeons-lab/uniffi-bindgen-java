@@ -33,17 +33,34 @@
 // / boxed returns.
 #}
 {%- macro rust_call_prefix(callable) -%}
+{#- For cross-crate error types, qualify both `UniffiHelpers` and
+    the `<E>ErrorHandler()` reference with the error type's
+    package. Each crate emits its own `UniffiRustCallStatusErrorHandler`
+    interface, so calling the local `UniffiHelpers` with a foreign
+    handler triggers a type-identity mismatch ("argument type mismatch:
+    actual type is 'XErrorHandler', but
+    'UniffiRustCallStatusErrorHandler<E>' was expected"). Anchoring
+    helpers and handler to the same package keeps interfaces aligned.
+    For local errors (or no error), `helpers_prefix` returns "" so the
+    prefix collapses to plain `UniffiHelpers.`. -#}
+{%- match callable.throws_type() -%}
+{%- when Some(error_type) -%}
+{{ error_type|helpers_prefix(ci, config) }}UniffiHelpers.
+{%- match callable.return_type() -%}
+{%- when Some(return_type) -%}
+uniffiRustCallWithError{{ return_type|primitive_call_suffix }}
+{%- when None -%}
+uniffiRustCallVoidWithError
+{%- endmatch -%}
+({{ error_type|helpers_prefix(ci, config) }}{{ error_type|type_name(ci, config) }}ErrorHandler())
+{%- when None -%}
 UniffiHelpers.
 {%- match callable.return_type() -%}
 {%- when Some(return_type) -%}
-uniffiRustCall{% if callable.throws_type().is_some() %}WithError{% endif %}{{ return_type|primitive_call_suffix }}
+uniffiRustCall{{ return_type|primitive_call_suffix }}
 {%- when None -%}
-uniffiRustCallVoid{% if callable.throws_type().is_some() %}WithError{% endif %}
+uniffiRustCallVoid
 {%- endmatch -%}
-{%- match callable.throws_type() -%}
-{%- when Some(error_type) -%}
-({{ error_type|type_name(ci, config) }}ErrorHandler())
-{%- when None -%}
 {%- endmatch -%}
 {%- endmacro -%}
 
@@ -174,7 +191,11 @@ uniffiRustCallVoid{% if callable.throws_type().is_some() %}WithError{% endif %}
 // emission stays aligned with the enclosing `suspend fun` body.
 #}
 {%- macro call_async(callable, indent) -%}
-UniffiAsyncHelpers.uniffiRustCallAsync(
+{#- Same package-anchoring rationale as `rust_call_prefix`: cross-crate
+    error types require qualifying both `UniffiAsyncHelpers` and the
+    `<E>ErrorHandler()` reference with the error type's package, since
+    each crate emits its own copies of the runtime helper interfaces. -#}
+{% match callable.throws_type() %}{% when Some(error_type) %}{{ error_type|helpers_prefix(ci, config) }}{% when None %}{% endmatch %}UniffiAsyncHelpers.uniffiRustCallAsync(
 {%- match callable.self_type() %}
 {%- when Some with (Type::Object { .. }) %}
 {{ indent }}        callWithHandle { uniffiHandle ->
@@ -201,7 +222,7 @@ UniffiAsyncHelpers.uniffiRustCallAsync(
 {{ indent }}        // errorHandler
 {%- match callable.throws_type() %}
 {%- when Some(error_type) %}
-{{ indent }}        {{ error_type|type_name(ci, config) }}ErrorHandler(),
+{{ indent }}        {{ error_type|helpers_prefix(ci, config) }}{{ error_type|type_name(ci, config) }}ErrorHandler(),
 {%- when None %}
 {{ indent }}        UniffiNullRustCallStatusErrorHandler(),
 {%- endmatch %}

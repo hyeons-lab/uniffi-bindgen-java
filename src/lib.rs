@@ -194,6 +194,7 @@ fn generate_kotlin(loader: &BindgenLoader, options: &GenerateOptions) -> Result<
         }
 
         let bindings_str = gen_kotlin::generate_bindings(&config, &ci)?;
+        let bindings_str = inject_external_imports_kotlin(&bindings_str, &config);
         let package_out_dir = options.out_dir.join(
             config
                 .package_name()
@@ -205,6 +206,46 @@ fn generate_kotlin(loader: &BindgenLoader, options: &GenerateOptions) -> Result<
         split_and_write(&bindings_str, &package_out_dir)?;
     }
     Ok(())
+}
+
+/// Inject `import <other-package>.*` lines after every `package <pkg>` line
+/// in the rendered Kotlin output, so each generated file pulls in every
+/// other crate's package in this multi-crate fixture. Without this, types
+/// defined in (e.g.) `uniffi.uniffi_one_ns` are unresolved when referenced
+/// from `uniffi.imported_types_sublib`.
+///
+/// `config.external_packages` is populated by
+/// `apply_renames_and_external_packages_kotlin` to contain `crate -> package`
+/// mappings for every OTHER component in the build (the current crate is
+/// always absent), so we just emit `import {value}.*` for each entry.
+///
+/// Mirrors the parallel behaviour of upstream Kotlin bindings, which use
+/// fully-qualified type names to achieve the same end. Wildcard imports
+/// stay terser at the cost of some scope pollution that's harmless inside
+/// generated code.
+fn inject_external_imports_kotlin(bindings_str: &str, config: &gen_kotlin::Config) -> String {
+    if config.external_packages.is_empty() {
+        return bindings_str.to_string();
+    }
+    let mut imports: Vec<String> = config
+        .external_packages
+        .values()
+        .map(|pkg| format!("import {pkg}.*"))
+        .collect();
+    imports.sort();
+    imports.dedup();
+    let import_block = imports.join("\n");
+
+    let mut out = String::with_capacity(bindings_str.len() + import_block.len() * 16);
+    for line in bindings_str.split_inclusive('\n') {
+        out.push_str(line);
+        let trimmed = line.trim_end_matches(['\r', '\n']);
+        if trimmed.starts_with("package ") {
+            out.push_str(&import_block);
+            out.push('\n');
+        }
+    }
+    out
 }
 
 /// Parse Java configuration from TOML

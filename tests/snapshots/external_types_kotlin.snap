@@ -4,6 +4,10 @@ expression: combined
 ---
 // === FILE: customtypes/CustomTypes.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object CustomTypes {
 
@@ -25,6 +29,10 @@ object CustomTypes {
 }
 // === FILE: customtypes/CustomTypesDemo.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 data class CustomTypesDemo(
     val url: Url,
@@ -37,6 +45,10 @@ data class CustomTypesDemo(
 
 // === FILE: customtypes/ExampleCustomType.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 data class ExampleCustomType(
     val value: kotlin.String,
@@ -45,6 +57,10 @@ data class ExampleCustomType(
 
 // === FILE: customtypes/FfiConverter.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // The FfiConverter interface handles converter types to and from the FFI.
 //
@@ -110,6 +126,10 @@ interface FfiConverter<T, FfiType> {
 
 // === FILE: customtypes/FfiConverterBoolean.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterBoolean : FfiConverter<Boolean, Byte> {
     override fun lift(value: Byte): Boolean = value.toInt() != 0
@@ -124,6 +144,10 @@ object FfiConverterBoolean : FfiConverter<Boolean, Byte> {
 
 // === FILE: customtypes/FfiConverterBooleanArray.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterBooleanArray : FfiConverterRustBuffer<BooleanArray> {
     override fun read(buf: java.nio.ByteBuffer): BooleanArray {
@@ -149,6 +173,10 @@ object FfiConverterBooleanArray : FfiConverterRustBuffer<BooleanArray> {
 
 // === FILE: customtypes/FfiConverterByte.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterByte : FfiConverter<Byte, Byte> {
     override fun lift(value: Byte): Byte = value
@@ -163,6 +191,10 @@ object FfiConverterByte : FfiConverter<Byte, Byte> {
 
 // === FILE: customtypes/FfiConverterByteArray.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterByteArray : FfiConverterRustBuffer<ByteArray> {
     override fun read(buf: java.nio.ByteBuffer): ByteArray {
@@ -183,6 +215,10 @@ object FfiConverterByteArray : FfiConverterRustBuffer<ByteArray> {
 
 // === FILE: customtypes/FfiConverterDouble.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterDouble : FfiConverter<Double, Double> {
     override fun lift(value: Double): Double = value
@@ -197,6 +233,10 @@ object FfiConverterDouble : FfiConverter<Double, Double> {
 
 // === FILE: customtypes/FfiConverterFloat.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterFloat : FfiConverter<Float, Float> {
     override fun lift(value: Float): Float = value
@@ -211,6 +251,10 @@ object FfiConverterFloat : FfiConverter<Float, Float> {
 
 // === FILE: customtypes/FfiConverterFloat32Array.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterFloat32Array : FfiConverterRustBuffer<FloatArray> {
     override fun read(buf: java.nio.ByteBuffer): FloatArray {
@@ -233,6 +277,10 @@ object FfiConverterFloat32Array : FfiConverterRustBuffer<FloatArray> {
 
 // === FILE: customtypes/FfiConverterFloat64Array.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterFloat64Array : FfiConverterRustBuffer<DoubleArray> {
     override fun read(buf: java.nio.ByteBuffer): DoubleArray {
@@ -255,6 +303,10 @@ object FfiConverterFloat64Array : FfiConverterRustBuffer<DoubleArray> {
 
 // === FILE: customtypes/FfiConverterInt.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterInt : FfiConverter<Int, Int> {
     override fun lift(value: Int): Int = value
@@ -269,6 +321,10 @@ object FfiConverterInt : FfiConverter<Int, Int> {
 
 // === FILE: customtypes/FfiConverterInt16Array.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterInt16Array : FfiConverterRustBuffer<ShortArray> {
     override fun read(buf: java.nio.ByteBuffer): ShortArray {
@@ -291,6 +347,10 @@ object FfiConverterInt16Array : FfiConverterRustBuffer<ShortArray> {
 
 // === FILE: customtypes/FfiConverterInt32Array.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterInt32Array : FfiConverterRustBuffer<IntArray> {
     override fun read(buf: java.nio.ByteBuffer): IntArray {
@@ -313,6 +373,10 @@ object FfiConverterInt32Array : FfiConverterRustBuffer<IntArray> {
 
 // === FILE: customtypes/FfiConverterInt64Array.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterInt64Array : FfiConverterRustBuffer<LongArray> {
     override fun read(buf: java.nio.ByteBuffer): LongArray {
@@ -335,6 +399,10 @@ object FfiConverterInt64Array : FfiConverterRustBuffer<LongArray> {
 
 // === FILE: customtypes/FfiConverterLong.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterLong : FfiConverter<Long, Long> {
     override fun lift(value: Long): Long = value
@@ -349,6 +417,10 @@ object FfiConverterLong : FfiConverter<Long, Long> {
 
 // === FILE: customtypes/FfiConverterOptionalTypeCustomTypesDemo.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // Kotlin uses its type system to express nullability directly via `T?`,
 // so the `lift` / `lower` boundary handles a null sentinel byte without
@@ -381,6 +453,10 @@ object FfiConverterOptionalTypeCustomTypesDemo : FfiConverterRustBuffer<CustomTy
 
 // === FILE: customtypes/FfiConverterRustBuffer.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // FfiConverter that uses `RustBuffer` as the FfiType.
 interface FfiConverterRustBuffer<T> : FfiConverter<T, java.lang.foreign.MemorySegment> {
@@ -391,6 +467,10 @@ interface FfiConverterRustBuffer<T> : FfiConverter<T, java.lang.foreign.MemorySe
 
 // === FILE: customtypes/FfiConverterShort.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterShort : FfiConverter<Short, Short> {
     override fun lift(value: Short): Short = value
@@ -405,6 +485,10 @@ object FfiConverterShort : FfiConverter<Short, Short> {
 
 // === FILE: customtypes/FfiConverterString.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterString : FfiConverter<String, java.lang.foreign.MemorySegment> {
     // Note: we don't inherit from FfiConverterRustBuffer because we use a
@@ -465,6 +549,10 @@ object FfiConverterString : FfiConverter<String, java.lang.foreign.MemorySegment
 
 // === FILE: customtypes/FfiConverterTypeCustomTypesDemo.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterTypeCustomTypesDemo : FfiConverterRustBuffer<CustomTypesDemo> {
     override fun read(buf: java.nio.ByteBuffer): CustomTypesDemo {
@@ -498,6 +586,10 @@ object FfiConverterTypeCustomTypesDemo : FfiConverterRustBuffer<CustomTypesDemo>
 
 // === FILE: customtypes/FfiConverterTypeExampleCustomType.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // FfiConverter delegating to the builtin's serialization. The wrapper
 // just ferries `value` through.
@@ -522,6 +614,10 @@ object FfiConverterTypeExampleCustomType : FfiConverter<ExampleCustomType, java.
 
 // === FILE: customtypes/FfiConverterTypeHandle.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // FfiConverter delegating to the builtin's serialization. The wrapper
 // just ferries `value` through.
@@ -546,6 +642,10 @@ object FfiConverterTypeHandle : FfiConverter<Handle, Long> {
 
 // === FILE: customtypes/FfiConverterTypeTimeIntervalMs.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // FfiConverter delegating to the builtin's serialization. The wrapper
 // just ferries `value` through.
@@ -570,6 +670,10 @@ object FfiConverterTypeTimeIntervalMs : FfiConverter<TimeIntervalMs, Long> {
 
 // === FILE: customtypes/FfiConverterTypeTimeIntervalSecDbl.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // FfiConverter delegating to the builtin's serialization. The wrapper
 // just ferries `value` through.
@@ -594,6 +698,10 @@ object FfiConverterTypeTimeIntervalSecDbl : FfiConverter<TimeIntervalSecDbl, Dou
 
 // === FILE: customtypes/FfiConverterTypeTimeIntervalSecFlt.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // FfiConverter delegating to the builtin's serialization. The wrapper
 // just ferries `value` through.
@@ -618,6 +726,10 @@ object FfiConverterTypeTimeIntervalSecFlt : FfiConverter<TimeIntervalSecFlt, Flo
 
 // === FILE: customtypes/FfiConverterTypeUrl.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 import java.net.URI
 import java.net.URL
 
@@ -668,6 +780,10 @@ object FfiConverterTypeUrl : FfiConverter<Url, java.lang.foreign.MemorySegment> 
 
 // === FILE: customtypes/ForeignBytes.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // Helper for safely passing byte references into the rust code.
 //
@@ -704,6 +820,10 @@ object ForeignBytes {
 
 // === FILE: customtypes/Handle.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 data class Handle(
     val value: kotlin.Long,
@@ -712,12 +832,20 @@ data class Handle(
 
 // === FILE: customtypes/InternalException.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 open class InternalException(message: String) : RuntimeException(message)
 
 
 // === FILE: customtypes/NamespaceLibrary.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object NamespaceLibrary {
     @Synchronized
@@ -762,6 +890,10 @@ internal object NamespaceLibrary {
 
 // === FILE: customtypes/RustBuffer.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 /**
  * Helper for safely working with byte buffers returned from the Rust code.
@@ -841,6 +973,10 @@ object RustBuffer {
 
 // === FILE: customtypes/TimeIntervalMs.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 data class TimeIntervalMs(
     val value: kotlin.Long,
@@ -849,6 +985,10 @@ data class TimeIntervalMs(
 
 // === FILE: customtypes/TimeIntervalSecDbl.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 data class TimeIntervalSecDbl(
     val value: kotlin.Double,
@@ -857,6 +997,10 @@ data class TimeIntervalSecDbl(
 
 // === FILE: customtypes/TimeIntervalSecFlt.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 data class TimeIntervalSecFlt(
     val value: kotlin.Float,
@@ -865,6 +1009,10 @@ data class TimeIntervalSecFlt(
 
 // === FILE: customtypes/UniffiCallbackInterfaceClone.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiCallbackInterfaceClone {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -898,6 +1046,10 @@ internal object UniffiCallbackInterfaceClone {
 
 // === FILE: customtypes/UniffiCallbackInterfaceFree.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiCallbackInterfaceFree {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -931,6 +1083,10 @@ internal object UniffiCallbackInterfaceFree {
 
 // === FILE: customtypes/UniffiForeignFutureCompleteF32.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteF32 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -966,6 +1122,10 @@ internal object UniffiForeignFutureCompleteF32 {
 
 // === FILE: customtypes/UniffiForeignFutureCompleteF64.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteF64 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -1001,6 +1161,10 @@ internal object UniffiForeignFutureCompleteF64 {
 
 // === FILE: customtypes/UniffiForeignFutureCompleteI16.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteI16 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -1036,6 +1200,10 @@ internal object UniffiForeignFutureCompleteI16 {
 
 // === FILE: customtypes/UniffiForeignFutureCompleteI32.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteI32 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -1071,6 +1239,10 @@ internal object UniffiForeignFutureCompleteI32 {
 
 // === FILE: customtypes/UniffiForeignFutureCompleteI64.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteI64 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -1106,6 +1278,10 @@ internal object UniffiForeignFutureCompleteI64 {
 
 // === FILE: customtypes/UniffiForeignFutureCompleteI8.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteI8 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -1141,6 +1317,10 @@ internal object UniffiForeignFutureCompleteI8 {
 
 // === FILE: customtypes/UniffiForeignFutureCompleteRustBuffer.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteRustBuffer {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -1176,6 +1356,10 @@ internal object UniffiForeignFutureCompleteRustBuffer {
 
 // === FILE: customtypes/UniffiForeignFutureCompleteU16.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteU16 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -1211,6 +1395,10 @@ internal object UniffiForeignFutureCompleteU16 {
 
 // === FILE: customtypes/UniffiForeignFutureCompleteU32.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteU32 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -1246,6 +1434,10 @@ internal object UniffiForeignFutureCompleteU32 {
 
 // === FILE: customtypes/UniffiForeignFutureCompleteU64.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteU64 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -1281,6 +1473,10 @@ internal object UniffiForeignFutureCompleteU64 {
 
 // === FILE: customtypes/UniffiForeignFutureCompleteU8.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteU8 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -1316,6 +1512,10 @@ internal object UniffiForeignFutureCompleteU8 {
 
 // === FILE: customtypes/UniffiForeignFutureCompleteVoid.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteVoid {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -1351,6 +1551,10 @@ internal object UniffiForeignFutureCompleteVoid {
 
 // === FILE: customtypes/UniffiForeignFutureDroppedCallback.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureDroppedCallback {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -1384,6 +1588,10 @@ internal object UniffiForeignFutureDroppedCallback {
 
 // === FILE: customtypes/UniffiForeignFutureDroppedCallbackStruct.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureDroppedCallbackStruct {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -1417,6 +1625,10 @@ internal object UniffiForeignFutureDroppedCallbackStruct {
 
 // === FILE: customtypes/UniffiForeignFutureResultF32.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultF32 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -1451,6 +1663,10 @@ internal object UniffiForeignFutureResultF32 {
 
 // === FILE: customtypes/UniffiForeignFutureResultF64.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultF64 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -1484,6 +1700,10 @@ internal object UniffiForeignFutureResultF64 {
 
 // === FILE: customtypes/UniffiForeignFutureResultI16.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultI16 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -1518,6 +1738,10 @@ internal object UniffiForeignFutureResultI16 {
 
 // === FILE: customtypes/UniffiForeignFutureResultI32.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultI32 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -1552,6 +1776,10 @@ internal object UniffiForeignFutureResultI32 {
 
 // === FILE: customtypes/UniffiForeignFutureResultI64.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultI64 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -1585,6 +1813,10 @@ internal object UniffiForeignFutureResultI64 {
 
 // === FILE: customtypes/UniffiForeignFutureResultI8.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultI8 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -1619,6 +1851,10 @@ internal object UniffiForeignFutureResultI8 {
 
 // === FILE: customtypes/UniffiForeignFutureResultRustBuffer.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultRustBuffer {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -1652,6 +1888,10 @@ internal object UniffiForeignFutureResultRustBuffer {
 
 // === FILE: customtypes/UniffiForeignFutureResultU16.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultU16 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -1686,6 +1926,10 @@ internal object UniffiForeignFutureResultU16 {
 
 // === FILE: customtypes/UniffiForeignFutureResultU32.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultU32 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -1720,6 +1964,10 @@ internal object UniffiForeignFutureResultU32 {
 
 // === FILE: customtypes/UniffiForeignFutureResultU64.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultU64 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -1753,6 +2001,10 @@ internal object UniffiForeignFutureResultU64 {
 
 // === FILE: customtypes/UniffiForeignFutureResultU8.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultU8 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -1787,6 +2039,10 @@ internal object UniffiForeignFutureResultU8 {
 
 // === FILE: customtypes/UniffiForeignFutureResultVoid.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultVoid {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -1811,6 +2067,10 @@ internal object UniffiForeignFutureResultVoid {
 
 // === FILE: customtypes/UniffiHelpers.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // Helpers for calling Rust.
 //
@@ -2090,6 +2350,10 @@ object UniffiHelpers {
 
 // === FILE: customtypes/UniffiInitializer.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 /**
  * Ensures the native library is initialized.
@@ -2113,6 +2377,10 @@ object UniffiInitializer {
 
 // === FILE: customtypes/UniffiLib.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // FFM-based library binding. Each FFI function gets a `MethodHandle` field
 // + a wrapper function that performs the `invokeExact` call. The loop
@@ -3417,6 +3685,10 @@ internal object UniffiLib {
 
 // === FILE: customtypes/UniffiNullRustCallStatusErrorHandler.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // UniffiRustCallStatusErrorHandler implementation for times when we don't
 // expect a CALL_ERROR.
@@ -3430,6 +3702,10 @@ internal class UniffiNullRustCallStatusErrorHandler : UniffiRustCallStatusErrorH
 
 // === FILE: customtypes/UniffiRustCallStatus.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object UniffiRustCallStatus {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -3492,6 +3768,10 @@ object UniffiRustCallStatus {
 
 // === FILE: customtypes/UniffiRustCallStatusErrorHandler.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 interface UniffiRustCallStatusErrorHandler<E : Exception> {
     fun lift(errorBuf: java.lang.foreign.MemorySegment): E
@@ -3500,6 +3780,10 @@ interface UniffiRustCallStatusErrorHandler<E : Exception> {
 
 // === FILE: customtypes/UniffiRustFutureContinuationCallback.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiRustFutureContinuationCallback {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -3535,6 +3819,10 @@ internal object UniffiRustFutureContinuationCallback {
 
 // === FILE: customtypes/UniffiSlabAllocator.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // Thread-local slab allocator for short-lived native memory segments.
 //
@@ -3584,6 +3872,10 @@ internal class UniffiSlabAllocator(layout: java.lang.foreign.MemoryLayout, slots
 
 // === FILE: customtypes/Url.kt ===
 package customtypes
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 import java.net.URI
 import java.net.URL
 
@@ -3594,6 +3886,10 @@ data class Url(
 
 // === FILE: uniffi/ext_types_custom/ANestedGuid.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 data class ANestedGuid(
     val value: Guid,
@@ -3602,6 +3898,10 @@ data class ANestedGuid(
 
 // === FILE: uniffi/ext_types_custom/ANestedOuid.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 data class ANestedOuid(
     val value: Ouid,
@@ -3610,6 +3910,10 @@ data class ANestedOuid(
 
 // === FILE: uniffi/ext_types_custom/ExtTypesCustom.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object ExtTypesCustom {
 
@@ -3704,6 +4008,10 @@ object ExtTypesCustom {
 }
 // === FILE: uniffi/ext_types_custom/FfiConverter.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // The FfiConverter interface handles converter types to and from the FFI.
 //
@@ -3769,6 +4077,10 @@ interface FfiConverter<T, FfiType> {
 
 // === FILE: uniffi/ext_types_custom/FfiConverterBoolean.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterBoolean : FfiConverter<Boolean, Byte> {
     override fun lift(value: Byte): Boolean = value.toInt() != 0
@@ -3783,6 +4095,10 @@ object FfiConverterBoolean : FfiConverter<Boolean, Byte> {
 
 // === FILE: uniffi/ext_types_custom/FfiConverterBooleanArray.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterBooleanArray : FfiConverterRustBuffer<BooleanArray> {
     override fun read(buf: java.nio.ByteBuffer): BooleanArray {
@@ -3808,6 +4124,10 @@ object FfiConverterBooleanArray : FfiConverterRustBuffer<BooleanArray> {
 
 // === FILE: uniffi/ext_types_custom/FfiConverterByte.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterByte : FfiConverter<Byte, Byte> {
     override fun lift(value: Byte): Byte = value
@@ -3822,6 +4142,10 @@ object FfiConverterByte : FfiConverter<Byte, Byte> {
 
 // === FILE: uniffi/ext_types_custom/FfiConverterByteArray.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterByteArray : FfiConverterRustBuffer<ByteArray> {
     override fun read(buf: java.nio.ByteBuffer): ByteArray {
@@ -3842,6 +4166,10 @@ object FfiConverterByteArray : FfiConverterRustBuffer<ByteArray> {
 
 // === FILE: uniffi/ext_types_custom/FfiConverterCallbackInterface.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // Base FfiConverter for callback interfaces (foreign-implemented
 // traits that Rust invokes via the vtable). Handles route through
@@ -3875,6 +4203,10 @@ internal abstract class FfiConverterCallbackInterface<CallbackInterface : Any>
 
 // === FILE: uniffi/ext_types_custom/FfiConverterDouble.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterDouble : FfiConverter<Double, Double> {
     override fun lift(value: Double): Double = value
@@ -3889,6 +4221,10 @@ object FfiConverterDouble : FfiConverter<Double, Double> {
 
 // === FILE: uniffi/ext_types_custom/FfiConverterFloat.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterFloat : FfiConverter<Float, Float> {
     override fun lift(value: Float): Float = value
@@ -3903,6 +4239,10 @@ object FfiConverterFloat : FfiConverter<Float, Float> {
 
 // === FILE: uniffi/ext_types_custom/FfiConverterFloat32Array.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterFloat32Array : FfiConverterRustBuffer<FloatArray> {
     override fun read(buf: java.nio.ByteBuffer): FloatArray {
@@ -3925,6 +4265,10 @@ object FfiConverterFloat32Array : FfiConverterRustBuffer<FloatArray> {
 
 // === FILE: uniffi/ext_types_custom/FfiConverterFloat64Array.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterFloat64Array : FfiConverterRustBuffer<DoubleArray> {
     override fun read(buf: java.nio.ByteBuffer): DoubleArray {
@@ -3947,6 +4291,10 @@ object FfiConverterFloat64Array : FfiConverterRustBuffer<DoubleArray> {
 
 // === FILE: uniffi/ext_types_custom/FfiConverterInt.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterInt : FfiConverter<Int, Int> {
     override fun lift(value: Int): Int = value
@@ -3961,6 +4309,10 @@ object FfiConverterInt : FfiConverter<Int, Int> {
 
 // === FILE: uniffi/ext_types_custom/FfiConverterInt16Array.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterInt16Array : FfiConverterRustBuffer<ShortArray> {
     override fun read(buf: java.nio.ByteBuffer): ShortArray {
@@ -3983,6 +4335,10 @@ object FfiConverterInt16Array : FfiConverterRustBuffer<ShortArray> {
 
 // === FILE: uniffi/ext_types_custom/FfiConverterInt32Array.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterInt32Array : FfiConverterRustBuffer<IntArray> {
     override fun read(buf: java.nio.ByteBuffer): IntArray {
@@ -4005,6 +4361,10 @@ object FfiConverterInt32Array : FfiConverterRustBuffer<IntArray> {
 
 // === FILE: uniffi/ext_types_custom/FfiConverterInt64Array.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterInt64Array : FfiConverterRustBuffer<LongArray> {
     override fun read(buf: java.nio.ByteBuffer): LongArray {
@@ -4027,6 +4387,10 @@ object FfiConverterInt64Array : FfiConverterRustBuffer<LongArray> {
 
 // === FILE: uniffi/ext_types_custom/FfiConverterLong.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterLong : FfiConverter<Long, Long> {
     override fun lift(value: Long): Long = value
@@ -4041,6 +4405,10 @@ object FfiConverterLong : FfiConverter<Long, Long> {
 
 // === FILE: uniffi/ext_types_custom/FfiConverterMapTypeStringWrapperTypeIntWrapper.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterMapTypeStringWrapperTypeIntWrapper : FfiConverterRustBuffer<Map<StringWrapper, IntWrapper>> {
     override fun read(buf: java.nio.ByteBuffer): Map<StringWrapper, IntWrapper> {
@@ -4072,6 +4440,10 @@ object FfiConverterMapTypeStringWrapperTypeIntWrapper : FfiConverterRustBuffer<M
 
 // === FILE: uniffi/ext_types_custom/FfiConverterOptionalTypeANestedGuid.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // Kotlin uses its type system to express nullability directly via `T?`,
 // so the `lift` / `lower` boundary handles a null sentinel byte without
@@ -4103,6 +4475,10 @@ object FfiConverterOptionalTypeANestedGuid : FfiConverterRustBuffer<ANestedGuid?
 
 // === FILE: uniffi/ext_types_custom/FfiConverterOptionalTypeANestedOuid.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // Kotlin uses its type system to express nullability directly via `T?`,
 // so the `lift` / `lower` boundary handles a null sentinel byte without
@@ -4134,6 +4510,10 @@ object FfiConverterOptionalTypeANestedOuid : FfiConverterRustBuffer<ANestedOuid?
 
 // === FILE: uniffi/ext_types_custom/FfiConverterOptionalTypeGuid.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // Kotlin uses its type system to express nullability directly via `T?`,
 // so the `lift` / `lower` boundary handles a null sentinel byte without
@@ -4165,6 +4545,10 @@ object FfiConverterOptionalTypeGuid : FfiConverterRustBuffer<Guid?> {
 
 // === FILE: uniffi/ext_types_custom/FfiConverterOptionalTypeGuidHelper.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // Kotlin uses its type system to express nullability directly via `T?`,
 // so the `lift` / `lower` boundary handles a null sentinel byte without
@@ -4196,6 +4580,10 @@ object FfiConverterOptionalTypeGuidHelper : FfiConverterRustBuffer<GuidHelper?> 
 
 // === FILE: uniffi/ext_types_custom/FfiConverterOptionalTypeHandleU8.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // Kotlin uses its type system to express nullability directly via `T?`,
 // so the `lift` / `lower` boundary handles a null sentinel byte without
@@ -4227,6 +4615,10 @@ object FfiConverterOptionalTypeHandleU8 : FfiConverterRustBuffer<HandleU8?> {
 
 // === FILE: uniffi/ext_types_custom/FfiConverterOptionalTypeMapUsingStringWrapper.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // Kotlin uses its type system to express nullability directly via `T?`,
 // so the `lift` / `lower` boundary handles a null sentinel byte without
@@ -4258,6 +4650,10 @@ object FfiConverterOptionalTypeMapUsingStringWrapper : FfiConverterRustBuffer<Ma
 
 // === FILE: uniffi/ext_types_custom/FfiConverterOptionalTypeOuid.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // Kotlin uses its type system to express nullability directly via `T?`,
 // so the `lift` / `lower` boundary handles a null sentinel byte without
@@ -4289,6 +4685,10 @@ object FfiConverterOptionalTypeOuid : FfiConverterRustBuffer<Ouid?> {
 
 // === FILE: uniffi/ext_types_custom/FfiConverterRustBuffer.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // FfiConverter that uses `RustBuffer` as the FfiType.
 interface FfiConverterRustBuffer<T> : FfiConverter<T, java.lang.foreign.MemorySegment> {
@@ -4299,6 +4699,10 @@ interface FfiConverterRustBuffer<T> : FfiConverter<T, java.lang.foreign.MemorySe
 
 // === FILE: uniffi/ext_types_custom/FfiConverterSequenceTypeGuid.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterSequenceTypeGuid : FfiConverterRustBuffer<List<Guid>> {
     override fun read(buf: java.nio.ByteBuffer): List<Guid> {
@@ -4320,6 +4724,10 @@ object FfiConverterSequenceTypeGuid : FfiConverterRustBuffer<List<Guid>> {
 
 // === FILE: uniffi/ext_types_custom/FfiConverterShort.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterShort : FfiConverter<Short, Short> {
     override fun lift(value: Short): Short = value
@@ -4334,6 +4742,10 @@ object FfiConverterShort : FfiConverter<Short, Short> {
 
 // === FILE: uniffi/ext_types_custom/FfiConverterString.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterString : FfiConverter<String, java.lang.foreign.MemorySegment> {
     // Note: we don't inherit from FfiConverterRustBuffer because we use a
@@ -4394,6 +4806,10 @@ object FfiConverterString : FfiConverter<String, java.lang.foreign.MemorySegment
 
 // === FILE: uniffi/ext_types_custom/FfiConverterTypeANestedGuid.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // FfiConverter delegating to the builtin's serialization. The wrapper
 // just ferries `value` through.
@@ -4418,6 +4834,10 @@ object FfiConverterTypeANestedGuid : FfiConverter<ANestedGuid, java.lang.foreign
 
 // === FILE: uniffi/ext_types_custom/FfiConverterTypeANestedOuid.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // FfiConverter delegating to the builtin's serialization. The wrapper
 // just ferries `value` through.
@@ -4442,6 +4862,10 @@ object FfiConverterTypeANestedOuid : FfiConverter<ANestedOuid, java.lang.foreign
 
 // === FILE: uniffi/ext_types_custom/FfiConverterTypeGuid.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // FfiConverter delegating to the builtin's serialization. The wrapper
 // just ferries `value` through.
@@ -4466,6 +4890,10 @@ object FfiConverterTypeGuid : FfiConverter<Guid, java.lang.foreign.MemorySegment
 
 // === FILE: uniffi/ext_types_custom/FfiConverterTypeGuidCallback.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // FfiConverter that lowers GuidCallback instances into
 // odd-LSB handles (foreign-side) via the shared UniffiHandleMap.
@@ -4473,6 +4901,10 @@ internal object FfiConverterTypeGuidCallback : FfiConverterCallbackInterface<Gui
 
 // === FILE: uniffi/ext_types_custom/FfiConverterTypeGuidError.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterTypeGuidError : FfiConverterRustBuffer<GuidException> {
     override fun read(buf: java.nio.ByteBuffer): GuidException {
@@ -4498,6 +4930,10 @@ object FfiConverterTypeGuidError : FfiConverterRustBuffer<GuidException> {
 
 // === FILE: uniffi/ext_types_custom/FfiConverterTypeGuidHelper.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterTypeGuidHelper : FfiConverterRustBuffer<GuidHelper> {
     override fun read(buf: java.nio.ByteBuffer): GuidHelper {
@@ -4525,6 +4961,10 @@ object FfiConverterTypeGuidHelper : FfiConverterRustBuffer<GuidHelper> {
 
 // === FILE: uniffi/ext_types_custom/FfiConverterTypeHandleU8.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // FfiConverter delegating to the builtin's serialization. The wrapper
 // just ferries `value` through.
@@ -4549,6 +4989,10 @@ object FfiConverterTypeHandleU8 : FfiConverter<HandleU8, Byte> {
 
 // === FILE: uniffi/ext_types_custom/FfiConverterTypeInnerObject.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 // FfiConverter routes `InnerObject` across the FFI as an 8-byte
 // handle. No callback-interface support — pure Rust-owned object.
 object FfiConverterTypeInnerObject : FfiConverter<InnerObject, Long> {
@@ -4568,6 +5012,10 @@ object FfiConverterTypeInnerObject : FfiConverter<InnerObject, Long> {
 
 // === FILE: uniffi/ext_types_custom/FfiConverterTypeInnerRecord.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterTypeInnerRecord : FfiConverterRustBuffer<InnerRecord> {
     override fun read(buf: java.nio.ByteBuffer): InnerRecord {
@@ -4590,6 +5038,10 @@ object FfiConverterTypeInnerRecord : FfiConverterRustBuffer<InnerRecord> {
 
 // === FILE: uniffi/ext_types_custom/FfiConverterTypeIntWrapper.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // FfiConverter delegating to the builtin's serialization. The wrapper
 // just ferries `value` through.
@@ -4614,6 +5066,10 @@ object FfiConverterTypeIntWrapper : FfiConverter<IntWrapper, Int> {
 
 // === FILE: uniffi/ext_types_custom/FfiConverterTypeMapUsingStringWrapper.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // FfiConverter delegating to the builtin's serialization. The wrapper
 // just ferries `value` through.
@@ -4638,6 +5094,10 @@ object FfiConverterTypeMapUsingStringWrapper : FfiConverter<MapUsingStringWrappe
 
 // === FILE: uniffi/ext_types_custom/FfiConverterTypeNestedObject.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // FfiConverter delegating to the builtin's serialization. The wrapper
 // just ferries `value` through.
@@ -4662,6 +5122,10 @@ object FfiConverterTypeNestedObject : FfiConverter<NestedObject, Long> {
 
 // === FILE: uniffi/ext_types_custom/FfiConverterTypeNestedRecord.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // FfiConverter delegating to the builtin's serialization. The wrapper
 // just ferries `value` through.
@@ -4686,6 +5150,10 @@ object FfiConverterTypeNestedRecord : FfiConverter<NestedRecord, java.lang.forei
 
 // === FILE: uniffi/ext_types_custom/FfiConverterTypeOuid.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // FfiConverter delegating to the builtin's serialization. The wrapper
 // just ferries `value` through.
@@ -4710,6 +5178,10 @@ object FfiConverterTypeOuid : FfiConverter<Ouid, java.lang.foreign.MemorySegment
 
 // === FILE: uniffi/ext_types_custom/FfiConverterTypeOuid2.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // FfiConverter delegating to the builtin's serialization. The wrapper
 // just ferries `value` through.
@@ -4734,6 +5206,10 @@ object FfiConverterTypeOuid2 : FfiConverter<Ouid2, java.lang.foreign.MemorySegme
 
 // === FILE: uniffi/ext_types_custom/FfiConverterTypeStringWrapper.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // FfiConverter delegating to the builtin's serialization. The wrapper
 // just ferries `value` through.
@@ -4757,6 +5233,10 @@ object FfiConverterTypeStringWrapper : FfiConverter<StringWrapper, java.lang.for
 
 // === FILE: uniffi/ext_types_custom/ForeignBytes.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // Helper for safely passing byte references into the rust code.
 //
@@ -4793,6 +5273,10 @@ object ForeignBytes {
 
 // === FILE: uniffi/ext_types_custom/Guid.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 data class Guid(
     val value: kotlin.String,
@@ -4801,6 +5285,10 @@ data class Guid(
 
 // === FILE: uniffi/ext_types_custom/GuidCallback.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 interface GuidCallback {
     fun run(arg: Guid): Guid
@@ -4809,6 +5297,10 @@ interface GuidCallback {
 
 // === FILE: uniffi/ext_types_custom/GuidException.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 
 sealed class GuidException(message: String) : kotlin.Exception(message) {
@@ -4818,6 +5310,10 @@ sealed class GuidException(message: String) : kotlin.Exception(message) {
 
 // === FILE: uniffi/ext_types_custom/GuidExceptionErrorHandler.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 class GuidExceptionErrorHandler : UniffiRustCallStatusErrorHandler<GuidException> {
     override fun lift(errorBuf: java.lang.foreign.MemorySegment): GuidException =
@@ -4827,6 +5323,10 @@ class GuidExceptionErrorHandler : UniffiRustCallStatusErrorHandler<GuidException
 
 // === FILE: uniffi/ext_types_custom/GuidHelper.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 data class GuidHelper(
     val guid: Guid,
@@ -4837,6 +5337,10 @@ data class GuidHelper(
 
 // === FILE: uniffi/ext_types_custom/HandleU8.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 data class HandleU8(
     val value: kotlin.Byte,
@@ -4845,6 +5349,10 @@ data class HandleU8(
 
 // === FILE: uniffi/ext_types_custom/InnerObject.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // Object wrapper over a Rust `Arc<T>`. Uses a handle-based protocol
 // for cross-FFI lifecycle: the `AtomicLong` call counter + `AtomicBoolean`
@@ -4967,6 +5475,10 @@ class InnerObject internal constructor(
 
 // === FILE: uniffi/ext_types_custom/InnerObjectInterface.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 interface InnerObjectInterface {
 }
@@ -4974,6 +5486,10 @@ interface InnerObjectInterface {
 
 // === FILE: uniffi/ext_types_custom/InnerRecord.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 data class InnerRecord(
     val i: kotlin.Int
@@ -4982,6 +5498,10 @@ data class InnerRecord(
 
 // === FILE: uniffi/ext_types_custom/IntWrapper.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 data class IntWrapper(
     val value: kotlin.Int,
@@ -4990,12 +5510,20 @@ data class IntWrapper(
 
 // === FILE: uniffi/ext_types_custom/InternalException.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 open class InternalException(message: String) : RuntimeException(message)
 
 
 // === FILE: uniffi/ext_types_custom/MapUsingStringWrapper.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 data class MapUsingStringWrapper(
     val value: Map<StringWrapper, IntWrapper>,
@@ -5004,6 +5532,10 @@ data class MapUsingStringWrapper(
 
 // === FILE: uniffi/ext_types_custom/NamespaceLibrary.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object NamespaceLibrary {
     @Synchronized
@@ -5081,6 +5613,10 @@ internal object NamespaceLibrary {
 
 // === FILE: uniffi/ext_types_custom/NestedObject.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 data class NestedObject(
     val value: InnerObject,
@@ -5089,6 +5625,10 @@ data class NestedObject(
 
 // === FILE: uniffi/ext_types_custom/NestedRecord.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 data class NestedRecord(
     val value: InnerRecord,
@@ -5097,6 +5637,10 @@ data class NestedRecord(
 
 // === FILE: uniffi/ext_types_custom/Ouid.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 data class Ouid(
     val value: kotlin.String,
@@ -5105,6 +5649,10 @@ data class Ouid(
 
 // === FILE: uniffi/ext_types_custom/Ouid2.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 data class Ouid2(
     val value: kotlin.String,
@@ -5113,6 +5661,10 @@ data class Ouid2(
 
 // === FILE: uniffi/ext_types_custom/RustBuffer.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 /**
  * Helper for safely working with byte buffers returned from the Rust code.
@@ -5192,6 +5744,10 @@ object RustBuffer {
 
 // === FILE: uniffi/ext_types_custom/StringWrapper.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 data class StringWrapper(
     val value: kotlin.String,
@@ -5200,6 +5756,10 @@ data class StringWrapper(
 
 // === FILE: uniffi/ext_types_custom/UniffiBackpressureCleaner.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // PhantomReference + ReferenceQueue with opportunistic inline draining.
 // Behavior matches the Java `UniffiBackpressureCleaner`:
@@ -5319,6 +5879,10 @@ internal class UniffiBackpressureCleaner : UniffiCleaner {
 
 // === FILE: uniffi/ext_types_custom/UniffiCallbackInterfaceClone.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiCallbackInterfaceClone {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -5352,6 +5916,10 @@ internal object UniffiCallbackInterfaceClone {
 
 // === FILE: uniffi/ext_types_custom/UniffiCallbackInterfaceFree.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiCallbackInterfaceFree {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -5385,6 +5953,10 @@ internal object UniffiCallbackInterfaceFree {
 
 // === FILE: uniffi/ext_types_custom/UniffiCallbackInterfaceGuidCallback.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // Vtable assembly + per-method upcall stubs for callback interfaces.
 // Each stub pulls the foreign-side object out of the handle map,
@@ -5461,6 +6033,10 @@ internal object UniffiCallbackInterfaceGuidCallback {
 
 // === FILE: uniffi/ext_types_custom/UniffiCallbackInterfaceGuidCallbackMethod0.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiCallbackInterfaceGuidCallbackMethod0 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -5500,6 +6076,10 @@ internal object UniffiCallbackInterfaceGuidCallbackMethod0 {
 
 // === FILE: uniffi/ext_types_custom/UniffiCleaner.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // Cleaner for Object finalization. Uses a PhantomReference-backed
 // implementation with opportunistic inline draining to provide
@@ -5523,6 +6103,10 @@ internal interface UniffiCleaner {
 
 // === FILE: uniffi/ext_types_custom/UniffiForeignFutureCompleteF32.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteF32 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -5558,6 +6142,10 @@ internal object UniffiForeignFutureCompleteF32 {
 
 // === FILE: uniffi/ext_types_custom/UniffiForeignFutureCompleteF64.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteF64 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -5593,6 +6181,10 @@ internal object UniffiForeignFutureCompleteF64 {
 
 // === FILE: uniffi/ext_types_custom/UniffiForeignFutureCompleteI16.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteI16 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -5628,6 +6220,10 @@ internal object UniffiForeignFutureCompleteI16 {
 
 // === FILE: uniffi/ext_types_custom/UniffiForeignFutureCompleteI32.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteI32 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -5663,6 +6259,10 @@ internal object UniffiForeignFutureCompleteI32 {
 
 // === FILE: uniffi/ext_types_custom/UniffiForeignFutureCompleteI64.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteI64 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -5698,6 +6298,10 @@ internal object UniffiForeignFutureCompleteI64 {
 
 // === FILE: uniffi/ext_types_custom/UniffiForeignFutureCompleteI8.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteI8 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -5733,6 +6337,10 @@ internal object UniffiForeignFutureCompleteI8 {
 
 // === FILE: uniffi/ext_types_custom/UniffiForeignFutureCompleteRustBuffer.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteRustBuffer {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -5768,6 +6376,10 @@ internal object UniffiForeignFutureCompleteRustBuffer {
 
 // === FILE: uniffi/ext_types_custom/UniffiForeignFutureCompleteU16.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteU16 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -5803,6 +6415,10 @@ internal object UniffiForeignFutureCompleteU16 {
 
 // === FILE: uniffi/ext_types_custom/UniffiForeignFutureCompleteU32.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteU32 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -5838,6 +6454,10 @@ internal object UniffiForeignFutureCompleteU32 {
 
 // === FILE: uniffi/ext_types_custom/UniffiForeignFutureCompleteU64.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteU64 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -5873,6 +6493,10 @@ internal object UniffiForeignFutureCompleteU64 {
 
 // === FILE: uniffi/ext_types_custom/UniffiForeignFutureCompleteU8.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteU8 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -5908,6 +6532,10 @@ internal object UniffiForeignFutureCompleteU8 {
 
 // === FILE: uniffi/ext_types_custom/UniffiForeignFutureCompleteVoid.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteVoid {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -5943,6 +6571,10 @@ internal object UniffiForeignFutureCompleteVoid {
 
 // === FILE: uniffi/ext_types_custom/UniffiForeignFutureDroppedCallback.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureDroppedCallback {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -5976,6 +6608,10 @@ internal object UniffiForeignFutureDroppedCallback {
 
 // === FILE: uniffi/ext_types_custom/UniffiForeignFutureDroppedCallbackStruct.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureDroppedCallbackStruct {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -6009,6 +6645,10 @@ internal object UniffiForeignFutureDroppedCallbackStruct {
 
 // === FILE: uniffi/ext_types_custom/UniffiForeignFutureResultF32.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultF32 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -6043,6 +6683,10 @@ internal object UniffiForeignFutureResultF32 {
 
 // === FILE: uniffi/ext_types_custom/UniffiForeignFutureResultF64.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultF64 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -6076,6 +6720,10 @@ internal object UniffiForeignFutureResultF64 {
 
 // === FILE: uniffi/ext_types_custom/UniffiForeignFutureResultI16.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultI16 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -6110,6 +6758,10 @@ internal object UniffiForeignFutureResultI16 {
 
 // === FILE: uniffi/ext_types_custom/UniffiForeignFutureResultI32.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultI32 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -6144,6 +6796,10 @@ internal object UniffiForeignFutureResultI32 {
 
 // === FILE: uniffi/ext_types_custom/UniffiForeignFutureResultI64.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultI64 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -6177,6 +6833,10 @@ internal object UniffiForeignFutureResultI64 {
 
 // === FILE: uniffi/ext_types_custom/UniffiForeignFutureResultI8.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultI8 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -6211,6 +6871,10 @@ internal object UniffiForeignFutureResultI8 {
 
 // === FILE: uniffi/ext_types_custom/UniffiForeignFutureResultRustBuffer.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultRustBuffer {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -6244,6 +6908,10 @@ internal object UniffiForeignFutureResultRustBuffer {
 
 // === FILE: uniffi/ext_types_custom/UniffiForeignFutureResultU16.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultU16 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -6278,6 +6946,10 @@ internal object UniffiForeignFutureResultU16 {
 
 // === FILE: uniffi/ext_types_custom/UniffiForeignFutureResultU32.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultU32 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -6312,6 +6984,10 @@ internal object UniffiForeignFutureResultU32 {
 
 // === FILE: uniffi/ext_types_custom/UniffiForeignFutureResultU64.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultU64 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -6345,6 +7021,10 @@ internal object UniffiForeignFutureResultU64 {
 
 // === FILE: uniffi/ext_types_custom/UniffiForeignFutureResultU8.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultU8 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -6379,6 +7059,10 @@ internal object UniffiForeignFutureResultU8 {
 
 // === FILE: uniffi/ext_types_custom/UniffiForeignFutureResultVoid.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultVoid {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -6403,6 +7087,10 @@ internal object UniffiForeignFutureResultVoid {
 
 // === FILE: uniffi/ext_types_custom/UniffiHandleMap.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // Maps 64-bit handles to foreign-side objects that Rust references
 // via callback interfaces. Handles allocated here are always odd
@@ -6448,6 +7136,10 @@ internal class UniffiHandleMap<T : Any> {
 
 // === FILE: uniffi/ext_types_custom/UniffiHelpers.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // Helpers for calling Rust.
 //
@@ -6723,6 +7415,10 @@ object UniffiHelpers {
 
 // === FILE: uniffi/ext_types_custom/UniffiInitializer.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 /**
  * Ensures the native library is initialized.
@@ -6746,6 +7442,10 @@ object UniffiInitializer {
 
 // === FILE: uniffi/ext_types_custom/UniffiLib.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // FFM-based library binding. Each FFI function gets a `MethodHandle` field
 // + a wrapper function that performs the `invokeExact` call. The loop
@@ -8552,6 +9252,10 @@ internal object UniffiLib {
 
 // === FILE: uniffi/ext_types_custom/UniffiMarkers.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // Marker singleton used to disambiguate the FFI-handle-wrapping
 // constructor from user-facing constructors. The Java backend's
@@ -8565,6 +9269,10 @@ object NoHandle
 
 // === FILE: uniffi/ext_types_custom/UniffiNullRustCallStatusErrorHandler.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // UniffiRustCallStatusErrorHandler implementation for times when we don't
 // expect a CALL_ERROR.
@@ -8578,6 +9286,10 @@ internal class UniffiNullRustCallStatusErrorHandler : UniffiRustCallStatusErrorH
 
 // === FILE: uniffi/ext_types_custom/UniffiRustCallStatus.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object UniffiRustCallStatus {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -8640,6 +9352,10 @@ object UniffiRustCallStatus {
 
 // === FILE: uniffi/ext_types_custom/UniffiRustCallStatusErrorHandler.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 interface UniffiRustCallStatusErrorHandler<E : Exception> {
     fun lift(errorBuf: java.lang.foreign.MemorySegment): E
@@ -8648,6 +9364,10 @@ interface UniffiRustCallStatusErrorHandler<E : Exception> {
 
 // === FILE: uniffi/ext_types_custom/UniffiRustFutureContinuationCallback.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiRustFutureContinuationCallback {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -8683,6 +9403,10 @@ internal object UniffiRustFutureContinuationCallback {
 
 // === FILE: uniffi/ext_types_custom/UniffiSlabAllocator.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // Thread-local slab allocator for short-lived native memory segments.
 //
@@ -8732,6 +9456,10 @@ internal class UniffiSlabAllocator(layout: java.lang.foreign.MemoryLayout, slots
 
 // === FILE: uniffi/ext_types_custom/UniffiVTableCallbackInterfaceGuidCallback.kt ===
 package uniffi.ext_types_custom
+import customtypes.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiVTableCallbackInterfaceGuidCallback {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -8774,6 +9502,10 @@ internal object UniffiVTableCallbackInterfaceGuidCallback {
 
 // === FILE: uniffi/imported_types_lib/CombinedType.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 data class CombinedType(
     val uoe: UniffiOneEnum,
@@ -8796,6 +9528,10 @@ data class CombinedType(
 
 // === FILE: uniffi/imported_types_lib/ContainsExternalError2.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 data class ContainsExternalError2(
     val error: NotToThrowException
@@ -8804,6 +9540,10 @@ data class ContainsExternalError2(
 
 // === FILE: uniffi/imported_types_lib/ContainsExternalException.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 sealed class ContainsExternalException(message: String) : kotlin.Exception(message) {
     class ExternalException(
@@ -8814,6 +9554,10 @@ sealed class ContainsExternalException(message: String) : kotlin.Exception(messa
 
 // === FILE: uniffi/imported_types_lib/ContainsExternalExceptionErrorHandler.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 class ContainsExternalExceptionErrorHandler : UniffiRustCallStatusErrorHandler<ContainsExternalException> {
     override fun lift(errorBuf: java.lang.foreign.MemorySegment): ContainsExternalException =
@@ -8823,6 +9567,10 @@ class ContainsExternalExceptionErrorHandler : UniffiRustCallStatusErrorHandler<C
 
 // === FILE: uniffi/imported_types_lib/ExternalCrateDictionary.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 data class ExternalCrateDictionary(
     val sval: kotlin.String
@@ -8831,6 +9579,10 @@ data class ExternalCrateDictionary(
 
 // === FILE: uniffi/imported_types_lib/ExternalCrateInterface.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // Object wrapper over a Rust `Arc<T>`. Uses a handle-based protocol
 // for cross-FFI lifecycle: the `AtomicLong` call counter + `AtomicBoolean`
@@ -8956,6 +9708,10 @@ class ExternalCrateInterface internal constructor(
 
 // === FILE: uniffi/imported_types_lib/ExternalCrateInterfaceInterface.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 interface ExternalCrateInterfaceInterface {
     fun `value`(): kotlin.String
@@ -8964,6 +9720,10 @@ interface ExternalCrateInterfaceInterface {
 
 // === FILE: uniffi/imported_types_lib/ExternalCrateNonExhaustiveEnum.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 enum class ExternalCrateNonExhaustiveEnum {
     ONE,
@@ -8973,6 +9733,10 @@ enum class ExternalCrateNonExhaustiveEnum {
 
 // === FILE: uniffi/imported_types_lib/FfiConverter.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // The FfiConverter interface handles converter types to and from the FFI.
 //
@@ -9038,6 +9802,10 @@ interface FfiConverter<T, FfiType> {
 
 // === FILE: uniffi/imported_types_lib/FfiConverterBoolean.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterBoolean : FfiConverter<Boolean, Byte> {
     override fun lift(value: Byte): Boolean = value.toInt() != 0
@@ -9052,6 +9820,10 @@ object FfiConverterBoolean : FfiConverter<Boolean, Byte> {
 
 // === FILE: uniffi/imported_types_lib/FfiConverterBooleanArray.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterBooleanArray : FfiConverterRustBuffer<BooleanArray> {
     override fun read(buf: java.nio.ByteBuffer): BooleanArray {
@@ -9077,6 +9849,10 @@ object FfiConverterBooleanArray : FfiConverterRustBuffer<BooleanArray> {
 
 // === FILE: uniffi/imported_types_lib/FfiConverterByte.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterByte : FfiConverter<Byte, Byte> {
     override fun lift(value: Byte): Byte = value
@@ -9091,6 +9867,10 @@ object FfiConverterByte : FfiConverter<Byte, Byte> {
 
 // === FILE: uniffi/imported_types_lib/FfiConverterByteArray.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterByteArray : FfiConverterRustBuffer<ByteArray> {
     override fun read(buf: java.nio.ByteBuffer): ByteArray {
@@ -9111,6 +9891,10 @@ object FfiConverterByteArray : FfiConverterRustBuffer<ByteArray> {
 
 // === FILE: uniffi/imported_types_lib/FfiConverterDouble.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterDouble : FfiConverter<Double, Double> {
     override fun lift(value: Double): Double = value
@@ -9125,6 +9909,10 @@ object FfiConverterDouble : FfiConverter<Double, Double> {
 
 // === FILE: uniffi/imported_types_lib/FfiConverterFloat.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterFloat : FfiConverter<Float, Float> {
     override fun lift(value: Float): Float = value
@@ -9139,6 +9927,10 @@ object FfiConverterFloat : FfiConverter<Float, Float> {
 
 // === FILE: uniffi/imported_types_lib/FfiConverterFloat32Array.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterFloat32Array : FfiConverterRustBuffer<FloatArray> {
     override fun read(buf: java.nio.ByteBuffer): FloatArray {
@@ -9161,6 +9953,10 @@ object FfiConverterFloat32Array : FfiConverterRustBuffer<FloatArray> {
 
 // === FILE: uniffi/imported_types_lib/FfiConverterFloat64Array.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterFloat64Array : FfiConverterRustBuffer<DoubleArray> {
     override fun read(buf: java.nio.ByteBuffer): DoubleArray {
@@ -9183,6 +9979,10 @@ object FfiConverterFloat64Array : FfiConverterRustBuffer<DoubleArray> {
 
 // === FILE: uniffi/imported_types_lib/FfiConverterInt.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterInt : FfiConverter<Int, Int> {
     override fun lift(value: Int): Int = value
@@ -9197,6 +9997,10 @@ object FfiConverterInt : FfiConverter<Int, Int> {
 
 // === FILE: uniffi/imported_types_lib/FfiConverterInt16Array.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterInt16Array : FfiConverterRustBuffer<ShortArray> {
     override fun read(buf: java.nio.ByteBuffer): ShortArray {
@@ -9219,6 +10023,10 @@ object FfiConverterInt16Array : FfiConverterRustBuffer<ShortArray> {
 
 // === FILE: uniffi/imported_types_lib/FfiConverterInt32Array.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterInt32Array : FfiConverterRustBuffer<IntArray> {
     override fun read(buf: java.nio.ByteBuffer): IntArray {
@@ -9241,6 +10049,10 @@ object FfiConverterInt32Array : FfiConverterRustBuffer<IntArray> {
 
 // === FILE: uniffi/imported_types_lib/FfiConverterInt64Array.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterInt64Array : FfiConverterRustBuffer<LongArray> {
     override fun read(buf: java.nio.ByteBuffer): LongArray {
@@ -9263,6 +10075,10 @@ object FfiConverterInt64Array : FfiConverterRustBuffer<LongArray> {
 
 // === FILE: uniffi/imported_types_lib/FfiConverterLong.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterLong : FfiConverter<Long, Long> {
     override fun lift(value: Long): Long = value
@@ -9277,6 +10093,10 @@ object FfiConverterLong : FfiConverter<Long, Long> {
 
 // === FILE: uniffi/imported_types_lib/FfiConverterOptionalString.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // Kotlin uses its type system to express nullability directly via `T?`,
 // so the `lift` / `lower` boundary handles a null sentinel byte without
@@ -9308,6 +10128,10 @@ object FfiConverterOptionalString : FfiConverterRustBuffer<kotlin.String?> {
 
 // === FILE: uniffi/imported_types_lib/FfiConverterOptionalTypeANestedGuid.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // Kotlin uses its type system to express nullability directly via `T?`,
 // so the `lift` / `lower` boundary handles a null sentinel byte without
@@ -9339,6 +10163,10 @@ object FfiConverterOptionalTypeANestedGuid : FfiConverterRustBuffer<ANestedGuid?
 
 // === FILE: uniffi/imported_types_lib/FfiConverterOptionalTypeCombinedType.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // Kotlin uses its type system to express nullability directly via `T?`,
 // so the `lift` / `lower` boundary handles a null sentinel byte without
@@ -9370,6 +10198,10 @@ object FfiConverterOptionalTypeCombinedType : FfiConverterRustBuffer<CombinedTyp
 
 // === FILE: uniffi/imported_types_lib/FfiConverterOptionalTypeGuid.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // Kotlin uses its type system to express nullability directly via `T?`,
 // so the `lift` / `lower` boundary handles a null sentinel byte without
@@ -9401,6 +10233,10 @@ object FfiConverterOptionalTypeGuid : FfiConverterRustBuffer<Guid?> {
 
 // === FILE: uniffi/imported_types_lib/FfiConverterOptionalTypeHandle.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // Kotlin uses its type system to express nullability directly via `T?`,
 // so the `lift` / `lower` boundary handles a null sentinel byte without
@@ -9432,6 +10268,10 @@ object FfiConverterOptionalTypeHandle : FfiConverterRustBuffer<Handle?> {
 
 // === FILE: uniffi/imported_types_lib/FfiConverterOptionalTypeHandleU8.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // Kotlin uses its type system to express nullability directly via `T?`,
 // so the `lift` / `lower` boundary handles a null sentinel byte without
@@ -9463,6 +10303,10 @@ object FfiConverterOptionalTypeHandleU8 : FfiConverterRustBuffer<HandleU8?> {
 
 // === FILE: uniffi/imported_types_lib/FfiConverterOptionalTypeNestedExternalGuid.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // Kotlin uses its type system to express nullability directly via `T?`,
 // so the `lift` / `lower` boundary handles a null sentinel byte without
@@ -9494,6 +10338,10 @@ object FfiConverterOptionalTypeNestedExternalGuid : FfiConverterRustBuffer<Neste
 
 // === FILE: uniffi/imported_types_lib/FfiConverterOptionalTypeNestedExternalOuid.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // Kotlin uses its type system to express nullability directly via `T?`,
 // so the `lift` / `lower` boundary handles a null sentinel byte without
@@ -9525,6 +10373,10 @@ object FfiConverterOptionalTypeNestedExternalOuid : FfiConverterRustBuffer<Neste
 
 // === FILE: uniffi/imported_types_lib/FfiConverterOptionalTypeObjectsType.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // Kotlin uses its type system to express nullability directly via `T?`,
 // so the `lift` / `lower` boundary handles a null sentinel byte without
@@ -9556,6 +10408,10 @@ object FfiConverterOptionalTypeObjectsType : FfiConverterRustBuffer<ObjectsType?
 
 // === FILE: uniffi/imported_types_lib/FfiConverterOptionalTypeUniffiOneEnum.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // Kotlin uses its type system to express nullability directly via `T?`,
 // so the `lift` / `lower` boundary handles a null sentinel byte without
@@ -9587,6 +10443,10 @@ object FfiConverterOptionalTypeUniffiOneEnum : FfiConverterRustBuffer<UniffiOneE
 
 // === FILE: uniffi/imported_types_lib/FfiConverterOptionalTypeUniffiOneInterface.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // Kotlin uses its type system to express nullability directly via `T?`,
 // so the `lift` / `lower` boundary handles a null sentinel byte without
@@ -9618,6 +10478,10 @@ object FfiConverterOptionalTypeUniffiOneInterface : FfiConverterRustBuffer<Uniff
 
 // === FILE: uniffi/imported_types_lib/FfiConverterOptionalTypeUniffiOneTrait.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // Kotlin uses its type system to express nullability directly via `T?`,
 // so the `lift` / `lower` boundary handles a null sentinel byte without
@@ -9649,6 +10513,10 @@ object FfiConverterOptionalTypeUniffiOneTrait : FfiConverterRustBuffer<UniffiOne
 
 // === FILE: uniffi/imported_types_lib/FfiConverterOptionalTypeUniffiOneType.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // Kotlin uses its type system to express nullability directly via `T?`,
 // so the `lift` / `lower` boundary handles a null sentinel byte without
@@ -9680,6 +10548,10 @@ object FfiConverterOptionalTypeUniffiOneType : FfiConverterRustBuffer<UniffiOneT
 
 // === FILE: uniffi/imported_types_lib/FfiConverterOptionalTypeUniffiOneUDLTrait.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // Kotlin uses its type system to express nullability directly via `T?`,
 // so the `lift` / `lower` boundary handles a null sentinel byte without
@@ -9711,6 +10583,10 @@ object FfiConverterOptionalTypeUniffiOneUDLTrait : FfiConverterRustBuffer<Uniffi
 
 // === FILE: uniffi/imported_types_lib/FfiConverterOptionalTypeUrl.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // Kotlin uses its type system to express nullability directly via `T?`,
 // so the `lift` / `lower` boundary handles a null sentinel byte without
@@ -9742,6 +10618,10 @@ object FfiConverterOptionalTypeUrl : FfiConverterRustBuffer<Url?> {
 
 // === FILE: uniffi/imported_types_lib/FfiConverterRustBuffer.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // FfiConverter that uses `RustBuffer` as the FfiType.
 interface FfiConverterRustBuffer<T> : FfiConverter<T, java.lang.foreign.MemorySegment> {
@@ -9752,6 +10632,10 @@ interface FfiConverterRustBuffer<T> : FfiConverter<T, java.lang.foreign.MemorySe
 
 // === FILE: uniffi/imported_types_lib/FfiConverterSequenceOptionalTypeUniffiOneEnum.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterSequenceOptionalTypeUniffiOneEnum : FfiConverterRustBuffer<List<UniffiOneEnum?>> {
     override fun read(buf: java.nio.ByteBuffer): List<UniffiOneEnum?> {
@@ -9773,6 +10657,10 @@ object FfiConverterSequenceOptionalTypeUniffiOneEnum : FfiConverterRustBuffer<Li
 
 // === FILE: uniffi/imported_types_lib/FfiConverterSequenceOptionalTypeUniffiOneType.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterSequenceOptionalTypeUniffiOneType : FfiConverterRustBuffer<List<UniffiOneType?>> {
     override fun read(buf: java.nio.ByteBuffer): List<UniffiOneType?> {
@@ -9794,6 +10682,10 @@ object FfiConverterSequenceOptionalTypeUniffiOneType : FfiConverterRustBuffer<Li
 
 // === FILE: uniffi/imported_types_lib/FfiConverterSequenceOptionalTypeUrl.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterSequenceOptionalTypeUrl : FfiConverterRustBuffer<List<Url?>> {
     override fun read(buf: java.nio.ByteBuffer): List<Url?> {
@@ -9815,6 +10707,10 @@ object FfiConverterSequenceOptionalTypeUrl : FfiConverterRustBuffer<List<Url?>> 
 
 // === FILE: uniffi/imported_types_lib/FfiConverterSequenceTypeGuid.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterSequenceTypeGuid : FfiConverterRustBuffer<List<Guid>> {
     override fun read(buf: java.nio.ByteBuffer): List<Guid> {
@@ -9837,6 +10733,10 @@ object FfiConverterSequenceTypeGuid : FfiConverterRustBuffer<List<Guid>> {
 
 // === FILE: uniffi/imported_types_lib/FfiConverterSequenceTypeHandle.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterSequenceTypeHandle : FfiConverterRustBuffer<List<Handle>> {
     override fun read(buf: java.nio.ByteBuffer): List<Handle> {
@@ -9858,6 +10758,10 @@ object FfiConverterSequenceTypeHandle : FfiConverterRustBuffer<List<Handle>> {
 
 // === FILE: uniffi/imported_types_lib/FfiConverterSequenceTypeUniffiOneEnum.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterSequenceTypeUniffiOneEnum : FfiConverterRustBuffer<List<UniffiOneEnum>> {
     override fun read(buf: java.nio.ByteBuffer): List<UniffiOneEnum> {
@@ -9879,6 +10783,10 @@ object FfiConverterSequenceTypeUniffiOneEnum : FfiConverterRustBuffer<List<Uniff
 
 // === FILE: uniffi/imported_types_lib/FfiConverterSequenceTypeUniffiOneType.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterSequenceTypeUniffiOneType : FfiConverterRustBuffer<List<UniffiOneType>> {
     override fun read(buf: java.nio.ByteBuffer): List<UniffiOneType> {
@@ -9900,6 +10808,10 @@ object FfiConverterSequenceTypeUniffiOneType : FfiConverterRustBuffer<List<Uniff
 
 // === FILE: uniffi/imported_types_lib/FfiConverterSequenceTypeUrl.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterSequenceTypeUrl : FfiConverterRustBuffer<List<Url>> {
     override fun read(buf: java.nio.ByteBuffer): List<Url> {
@@ -9921,6 +10833,10 @@ object FfiConverterSequenceTypeUrl : FfiConverterRustBuffer<List<Url>> {
 
 // === FILE: uniffi/imported_types_lib/FfiConverterShort.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterShort : FfiConverter<Short, Short> {
     override fun lift(value: Short): Short = value
@@ -9935,6 +10851,10 @@ object FfiConverterShort : FfiConverter<Short, Short> {
 
 // === FILE: uniffi/imported_types_lib/FfiConverterString.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterString : FfiConverter<String, java.lang.foreign.MemorySegment> {
     // Note: we don't inherit from FfiConverterRustBuffer because we use a
@@ -9995,6 +10915,10 @@ object FfiConverterString : FfiConverter<String, java.lang.foreign.MemorySegment
 
 // === FILE: uniffi/imported_types_lib/FfiConverterTypeCombinedType.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterTypeCombinedType : FfiConverterRustBuffer<CombinedType> {
     override fun read(buf: java.nio.ByteBuffer): CombinedType {
@@ -10058,6 +10982,10 @@ object FfiConverterTypeCombinedType : FfiConverterRustBuffer<CombinedType> {
 
 // === FILE: uniffi/imported_types_lib/FfiConverterTypeContainsExternalError.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterTypeContainsExternalError : FfiConverterRustBuffer<ContainsExternalException> {
     override fun read(buf: java.nio.ByteBuffer): ContainsExternalException =
@@ -10090,6 +11018,10 @@ object FfiConverterTypeContainsExternalError : FfiConverterRustBuffer<ContainsEx
 
 // === FILE: uniffi/imported_types_lib/FfiConverterTypeContainsExternalError2.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterTypeContainsExternalError2 : FfiConverterRustBuffer<ContainsExternalError2> {
     override fun read(buf: java.nio.ByteBuffer): ContainsExternalError2 {
@@ -10111,6 +11043,10 @@ object FfiConverterTypeContainsExternalError2 : FfiConverterRustBuffer<ContainsE
 
 // === FILE: uniffi/imported_types_lib/FfiConverterTypeExternalCrateDictionary.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterTypeExternalCrateDictionary : FfiConverterRustBuffer<ExternalCrateDictionary> {
     override fun read(buf: java.nio.ByteBuffer): ExternalCrateDictionary {
@@ -10132,6 +11068,10 @@ object FfiConverterTypeExternalCrateDictionary : FfiConverterRustBuffer<External
 
 // === FILE: uniffi/imported_types_lib/FfiConverterTypeExternalCrateInterface.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 // FfiConverter routes `ExternalCrateInterface` across the FFI as an 8-byte
 // handle. No callback-interface support — pure Rust-owned object.
 object FfiConverterTypeExternalCrateInterface : FfiConverter<ExternalCrateInterface, Long> {
@@ -10151,6 +11091,10 @@ object FfiConverterTypeExternalCrateInterface : FfiConverter<ExternalCrateInterf
 
 // === FILE: uniffi/imported_types_lib/FfiConverterTypeExternalCrateNonExhaustiveEnum.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterTypeExternalCrateNonExhaustiveEnum : FfiConverterRustBuffer<ExternalCrateNonExhaustiveEnum> {
     override fun read(buf: java.nio.ByteBuffer): ExternalCrateNonExhaustiveEnum {
@@ -10171,6 +11115,10 @@ object FfiConverterTypeExternalCrateNonExhaustiveEnum : FfiConverterRustBuffer<E
 
 // === FILE: uniffi/imported_types_lib/FfiConverterTypeNestedExternalGuid.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // FfiConverter delegating to the builtin's serialization. The wrapper
 // just ferries `value` through.
@@ -10195,6 +11143,10 @@ object FfiConverterTypeNestedExternalGuid : FfiConverter<NestedExternalGuid, jav
 
 // === FILE: uniffi/imported_types_lib/FfiConverterTypeNestedExternalOuid.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // FfiConverter delegating to the builtin's serialization. The wrapper
 // just ferries `value` through.
@@ -10218,6 +11170,10 @@ object FfiConverterTypeNestedExternalOuid : FfiConverter<NestedExternalOuid, jav
 
 // === FILE: uniffi/imported_types_lib/FfiConverterTypeObjectsType.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterTypeObjectsType : FfiConverterRustBuffer<ObjectsType> {
     override fun read(buf: java.nio.ByteBuffer): ObjectsType {
@@ -10245,6 +11201,10 @@ object FfiConverterTypeObjectsType : FfiConverterRustBuffer<ObjectsType> {
 
 // === FILE: uniffi/imported_types_lib/ForeignBytes.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // Helper for safely passing byte references into the rust code.
 //
@@ -10281,6 +11241,10 @@ object ForeignBytes {
 
 // === FILE: uniffi/imported_types_lib/ImportedTypesLib.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object ImportedTypesLib {
 
@@ -10526,7 +11490,7 @@ object ImportedTypesLib {
 
     @Throws(UniffiOneException::class)
     fun throwUniffiOneError() {
-        UniffiHelpers.uniffiRustCallVoidWithError(UniffiOneExceptionErrorHandler()) { _, _status ->
+        uniffi.uniffi_one_ns.UniffiHelpers.uniffiRustCallVoidWithError(uniffi.uniffi_one_ns.UniffiOneExceptionErrorHandler()) { _, _status ->
             UniffiLib.uniffi_uniffi_ext_types_lib_fn_func_throw_uniffi_one_error(_status)
         }
     }
@@ -10534,7 +11498,7 @@ object ImportedTypesLib {
 
     @Throws(UniffiOneException::class)
     suspend fun throwUniffiOneErrorAsync() =
-        UniffiAsyncHelpers.uniffiRustCallAsync(
+        uniffi.uniffi_one_ns.UniffiAsyncHelpers.uniffiRustCallAsync(
             UniffiLib.uniffi_uniffi_ext_types_lib_fn_func_throw_uniffi_one_error_async(),
             // pollFunc
             UniffiLib::ffi_uniffi_ext_types_lib_rust_future_poll_void,
@@ -10545,25 +11509,33 @@ object ImportedTypesLib {
             // liftFunc
             { Unit },
             // errorHandler
-            UniffiOneExceptionErrorHandler(),
+            uniffi.uniffi_one_ns.UniffiOneExceptionErrorHandler(),
         )
 
 
     @Throws(UniffiOneErrorInterface::class)
     fun throwUniffiOneErrorInterface() {
-        UniffiHelpers.uniffiRustCallVoidWithError(UniffiOneErrorInterfaceErrorHandler()) { _, _status ->
+        uniffi.uniffi_one_ns.UniffiHelpers.uniffiRustCallVoidWithError(uniffi.uniffi_one_ns.UniffiOneErrorInterfaceErrorHandler()) { _, _status ->
             UniffiLib.uniffi_uniffi_ext_types_lib_fn_func_throw_uniffi_one_error_interface(_status)
         }
     }
 }
 // === FILE: uniffi/imported_types_lib/InternalException.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 open class InternalException(message: String) : RuntimeException(message)
 
 
 // === FILE: uniffi/imported_types_lib/NamespaceLibrary.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object NamespaceLibrary {
     @Synchronized
@@ -10704,6 +11676,10 @@ internal object NamespaceLibrary {
 
 // === FILE: uniffi/imported_types_lib/NestedExternalGuid.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 data class NestedExternalGuid(
     val value: Guid,
@@ -10712,6 +11688,10 @@ data class NestedExternalGuid(
 
 // === FILE: uniffi/imported_types_lib/NestedExternalOuid.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 data class NestedExternalOuid(
     val value: Ouid,
@@ -10720,6 +11700,10 @@ data class NestedExternalOuid(
 
 // === FILE: uniffi/imported_types_lib/ObjectsType.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 data class ObjectsType(
     val maybeTrait: UniffiOneTrait?,
@@ -10730,6 +11714,10 @@ data class ObjectsType(
 
 // === FILE: uniffi/imported_types_lib/RustBuffer.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 /**
  * Helper for safely working with byte buffers returned from the Rust code.
@@ -10809,6 +11797,10 @@ object RustBuffer {
 
 // === FILE: uniffi/imported_types_lib/UniffiAsyncHelpers.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // `launch` is an extension function on `CoroutineScope` (defined in
 // `kotlinx.coroutines.Builders`); fully qualifying the receiver as
@@ -10933,6 +11925,10 @@ internal object UniffiAsyncHelpers {
 
 // === FILE: uniffi/imported_types_lib/UniffiBackpressureCleaner.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // PhantomReference + ReferenceQueue with opportunistic inline draining.
 // Behavior matches the Java `UniffiBackpressureCleaner`:
@@ -11052,6 +12048,10 @@ internal class UniffiBackpressureCleaner : UniffiCleaner {
 
 // === FILE: uniffi/imported_types_lib/UniffiCallbackInterfaceClone.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiCallbackInterfaceClone {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -11085,6 +12085,10 @@ internal object UniffiCallbackInterfaceClone {
 
 // === FILE: uniffi/imported_types_lib/UniffiCallbackInterfaceFree.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiCallbackInterfaceFree {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -11118,6 +12122,10 @@ internal object UniffiCallbackInterfaceFree {
 
 // === FILE: uniffi/imported_types_lib/UniffiCleaner.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // Cleaner for Object finalization. Uses a PhantomReference-backed
 // implementation with opportunistic inline draining to provide
@@ -11141,6 +12149,10 @@ internal interface UniffiCleaner {
 
 // === FILE: uniffi/imported_types_lib/UniffiForeignFutureCompleteF32.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteF32 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -11176,6 +12188,10 @@ internal object UniffiForeignFutureCompleteF32 {
 
 // === FILE: uniffi/imported_types_lib/UniffiForeignFutureCompleteF64.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteF64 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -11211,6 +12227,10 @@ internal object UniffiForeignFutureCompleteF64 {
 
 // === FILE: uniffi/imported_types_lib/UniffiForeignFutureCompleteI16.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteI16 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -11246,6 +12266,10 @@ internal object UniffiForeignFutureCompleteI16 {
 
 // === FILE: uniffi/imported_types_lib/UniffiForeignFutureCompleteI32.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteI32 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -11281,6 +12305,10 @@ internal object UniffiForeignFutureCompleteI32 {
 
 // === FILE: uniffi/imported_types_lib/UniffiForeignFutureCompleteI64.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteI64 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -11316,6 +12344,10 @@ internal object UniffiForeignFutureCompleteI64 {
 
 // === FILE: uniffi/imported_types_lib/UniffiForeignFutureCompleteI8.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteI8 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -11351,6 +12383,10 @@ internal object UniffiForeignFutureCompleteI8 {
 
 // === FILE: uniffi/imported_types_lib/UniffiForeignFutureCompleteRustBuffer.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteRustBuffer {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -11386,6 +12422,10 @@ internal object UniffiForeignFutureCompleteRustBuffer {
 
 // === FILE: uniffi/imported_types_lib/UniffiForeignFutureCompleteU16.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteU16 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -11421,6 +12461,10 @@ internal object UniffiForeignFutureCompleteU16 {
 
 // === FILE: uniffi/imported_types_lib/UniffiForeignFutureCompleteU32.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteU32 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -11456,6 +12500,10 @@ internal object UniffiForeignFutureCompleteU32 {
 
 // === FILE: uniffi/imported_types_lib/UniffiForeignFutureCompleteU64.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteU64 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -11491,6 +12539,10 @@ internal object UniffiForeignFutureCompleteU64 {
 
 // === FILE: uniffi/imported_types_lib/UniffiForeignFutureCompleteU8.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteU8 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -11526,6 +12578,10 @@ internal object UniffiForeignFutureCompleteU8 {
 
 // === FILE: uniffi/imported_types_lib/UniffiForeignFutureCompleteVoid.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteVoid {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -11561,6 +12617,10 @@ internal object UniffiForeignFutureCompleteVoid {
 
 // === FILE: uniffi/imported_types_lib/UniffiForeignFutureDroppedCallback.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureDroppedCallback {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -11594,6 +12654,10 @@ internal object UniffiForeignFutureDroppedCallback {
 
 // === FILE: uniffi/imported_types_lib/UniffiForeignFutureDroppedCallbackStruct.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureDroppedCallbackStruct {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -11627,6 +12691,10 @@ internal object UniffiForeignFutureDroppedCallbackStruct {
 
 // === FILE: uniffi/imported_types_lib/UniffiForeignFutureResultF32.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultF32 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -11661,6 +12729,10 @@ internal object UniffiForeignFutureResultF32 {
 
 // === FILE: uniffi/imported_types_lib/UniffiForeignFutureResultF64.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultF64 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -11694,6 +12766,10 @@ internal object UniffiForeignFutureResultF64 {
 
 // === FILE: uniffi/imported_types_lib/UniffiForeignFutureResultI16.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultI16 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -11728,6 +12804,10 @@ internal object UniffiForeignFutureResultI16 {
 
 // === FILE: uniffi/imported_types_lib/UniffiForeignFutureResultI32.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultI32 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -11762,6 +12842,10 @@ internal object UniffiForeignFutureResultI32 {
 
 // === FILE: uniffi/imported_types_lib/UniffiForeignFutureResultI64.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultI64 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -11795,6 +12879,10 @@ internal object UniffiForeignFutureResultI64 {
 
 // === FILE: uniffi/imported_types_lib/UniffiForeignFutureResultI8.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultI8 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -11829,6 +12917,10 @@ internal object UniffiForeignFutureResultI8 {
 
 // === FILE: uniffi/imported_types_lib/UniffiForeignFutureResultRustBuffer.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultRustBuffer {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -11862,6 +12954,10 @@ internal object UniffiForeignFutureResultRustBuffer {
 
 // === FILE: uniffi/imported_types_lib/UniffiForeignFutureResultU16.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultU16 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -11896,6 +12992,10 @@ internal object UniffiForeignFutureResultU16 {
 
 // === FILE: uniffi/imported_types_lib/UniffiForeignFutureResultU32.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultU32 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -11930,6 +13030,10 @@ internal object UniffiForeignFutureResultU32 {
 
 // === FILE: uniffi/imported_types_lib/UniffiForeignFutureResultU64.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultU64 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -11963,6 +13067,10 @@ internal object UniffiForeignFutureResultU64 {
 
 // === FILE: uniffi/imported_types_lib/UniffiForeignFutureResultU8.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultU8 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -11997,6 +13105,10 @@ internal object UniffiForeignFutureResultU8 {
 
 // === FILE: uniffi/imported_types_lib/UniffiForeignFutureResultVoid.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultVoid {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -12021,6 +13133,10 @@ internal object UniffiForeignFutureResultVoid {
 
 // === FILE: uniffi/imported_types_lib/UniffiHandleMap.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // Maps 64-bit handles to foreign-side objects that Rust references
 // via callback interfaces. Handles allocated here are always odd
@@ -12070,6 +13186,10 @@ internal class UniffiHandleMap<T : Any> {
 
 // === FILE: uniffi/imported_types_lib/UniffiHelpers.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // Helpers for calling Rust.
 //
@@ -12345,6 +13465,10 @@ object UniffiHelpers {
 
 // === FILE: uniffi/imported_types_lib/UniffiInitializer.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 /**
  * Ensures the native library is initialized.
@@ -12362,6 +13486,10 @@ object UniffiInitializer {
 
 // === FILE: uniffi/imported_types_lib/UniffiLib.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // FFM-based library binding. Each FFI function gets a `MethodHandle` field
 // + a wrapper function that performs the `invokeExact` call. The loop
@@ -15031,6 +16159,10 @@ internal object UniffiLib {
 
 // === FILE: uniffi/imported_types_lib/UniffiMarkers.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // Marker singleton used to disambiguate the FFI-handle-wrapping
 // constructor from user-facing constructors. The Java backend's
@@ -15044,6 +16176,10 @@ object NoHandle
 
 // === FILE: uniffi/imported_types_lib/UniffiNullRustCallStatusErrorHandler.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // UniffiRustCallStatusErrorHandler implementation for times when we don't
 // expect a CALL_ERROR.
@@ -15057,6 +16193,10 @@ internal class UniffiNullRustCallStatusErrorHandler : UniffiRustCallStatusErrorH
 
 // === FILE: uniffi/imported_types_lib/UniffiRustCallStatus.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 object UniffiRustCallStatus {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -15119,6 +16259,10 @@ object UniffiRustCallStatus {
 
 // === FILE: uniffi/imported_types_lib/UniffiRustCallStatusErrorHandler.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 interface UniffiRustCallStatusErrorHandler<E : Exception> {
     fun lift(errorBuf: java.lang.foreign.MemorySegment): E
@@ -15127,6 +16271,10 @@ interface UniffiRustCallStatusErrorHandler<E : Exception> {
 
 // === FILE: uniffi/imported_types_lib/UniffiRustFutureContinuationCallback.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiRustFutureContinuationCallback {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -15162,6 +16310,10 @@ internal object UniffiRustFutureContinuationCallback {
 
 // === FILE: uniffi/imported_types_lib/UniffiSlabAllocator.kt ===
 package uniffi.imported_types_lib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_sublib.*
+import uniffi.uniffi_one_ns.*
 
 // Thread-local slab allocator for short-lived native memory segments.
 //
@@ -15211,6 +16363,10 @@ internal class UniffiSlabAllocator(layout: java.lang.foreign.MemoryLayout, slots
 
 // === FILE: uniffi/imported_types_sublib/FfiConverter.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 // The FfiConverter interface handles converter types to and from the FFI.
 //
@@ -15276,6 +16432,10 @@ interface FfiConverter<T, FfiType> {
 
 // === FILE: uniffi/imported_types_sublib/FfiConverterBoolean.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterBoolean : FfiConverter<Boolean, Byte> {
     override fun lift(value: Byte): Boolean = value.toInt() != 0
@@ -15290,6 +16450,10 @@ object FfiConverterBoolean : FfiConverter<Boolean, Byte> {
 
 // === FILE: uniffi/imported_types_sublib/FfiConverterBooleanArray.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterBooleanArray : FfiConverterRustBuffer<BooleanArray> {
     override fun read(buf: java.nio.ByteBuffer): BooleanArray {
@@ -15315,6 +16479,10 @@ object FfiConverterBooleanArray : FfiConverterRustBuffer<BooleanArray> {
 
 // === FILE: uniffi/imported_types_sublib/FfiConverterByte.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterByte : FfiConverter<Byte, Byte> {
     override fun lift(value: Byte): Byte = value
@@ -15329,6 +16497,10 @@ object FfiConverterByte : FfiConverter<Byte, Byte> {
 
 // === FILE: uniffi/imported_types_sublib/FfiConverterByteArray.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterByteArray : FfiConverterRustBuffer<ByteArray> {
     override fun read(buf: java.nio.ByteBuffer): ByteArray {
@@ -15349,6 +16521,10 @@ object FfiConverterByteArray : FfiConverterRustBuffer<ByteArray> {
 
 // === FILE: uniffi/imported_types_sublib/FfiConverterDouble.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterDouble : FfiConverter<Double, Double> {
     override fun lift(value: Double): Double = value
@@ -15363,6 +16539,10 @@ object FfiConverterDouble : FfiConverter<Double, Double> {
 
 // === FILE: uniffi/imported_types_sublib/FfiConverterFloat.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterFloat : FfiConverter<Float, Float> {
     override fun lift(value: Float): Float = value
@@ -15377,6 +16557,10 @@ object FfiConverterFloat : FfiConverter<Float, Float> {
 
 // === FILE: uniffi/imported_types_sublib/FfiConverterFloat32Array.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterFloat32Array : FfiConverterRustBuffer<FloatArray> {
     override fun read(buf: java.nio.ByteBuffer): FloatArray {
@@ -15399,6 +16583,10 @@ object FfiConverterFloat32Array : FfiConverterRustBuffer<FloatArray> {
 
 // === FILE: uniffi/imported_types_sublib/FfiConverterFloat64Array.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterFloat64Array : FfiConverterRustBuffer<DoubleArray> {
     override fun read(buf: java.nio.ByteBuffer): DoubleArray {
@@ -15421,6 +16609,10 @@ object FfiConverterFloat64Array : FfiConverterRustBuffer<DoubleArray> {
 
 // === FILE: uniffi/imported_types_sublib/FfiConverterInt.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterInt : FfiConverter<Int, Int> {
     override fun lift(value: Int): Int = value
@@ -15435,6 +16627,10 @@ object FfiConverterInt : FfiConverter<Int, Int> {
 
 // === FILE: uniffi/imported_types_sublib/FfiConverterInt16Array.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterInt16Array : FfiConverterRustBuffer<ShortArray> {
     override fun read(buf: java.nio.ByteBuffer): ShortArray {
@@ -15457,6 +16653,10 @@ object FfiConverterInt16Array : FfiConverterRustBuffer<ShortArray> {
 
 // === FILE: uniffi/imported_types_sublib/FfiConverterInt32Array.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterInt32Array : FfiConverterRustBuffer<IntArray> {
     override fun read(buf: java.nio.ByteBuffer): IntArray {
@@ -15479,6 +16679,10 @@ object FfiConverterInt32Array : FfiConverterRustBuffer<IntArray> {
 
 // === FILE: uniffi/imported_types_sublib/FfiConverterInt64Array.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterInt64Array : FfiConverterRustBuffer<LongArray> {
     override fun read(buf: java.nio.ByteBuffer): LongArray {
@@ -15501,6 +16705,10 @@ object FfiConverterInt64Array : FfiConverterRustBuffer<LongArray> {
 
 // === FILE: uniffi/imported_types_sublib/FfiConverterLong.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterLong : FfiConverter<Long, Long> {
     override fun lift(value: Long): Long = value
@@ -15515,6 +16723,10 @@ object FfiConverterLong : FfiConverter<Long, Long> {
 
 // === FILE: uniffi/imported_types_sublib/FfiConverterOptionalTypeSubLibType.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 // Kotlin uses its type system to express nullability directly via `T?`,
 // so the `lift` / `lower` boundary handles a null sentinel byte without
@@ -15546,6 +16758,10 @@ object FfiConverterOptionalTypeSubLibType : FfiConverterRustBuffer<SubLibType?> 
 
 // === FILE: uniffi/imported_types_sublib/FfiConverterOptionalTypeUniffiOneEnum.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 // Kotlin uses its type system to express nullability directly via `T?`,
 // so the `lift` / `lower` boundary handles a null sentinel byte without
@@ -15577,6 +16793,10 @@ object FfiConverterOptionalTypeUniffiOneEnum : FfiConverterRustBuffer<UniffiOneE
 
 // === FILE: uniffi/imported_types_sublib/FfiConverterOptionalTypeUniffiOneInterface.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 // Kotlin uses its type system to express nullability directly via `T?`,
 // so the `lift` / `lower` boundary handles a null sentinel byte without
@@ -15608,6 +16828,10 @@ object FfiConverterOptionalTypeUniffiOneInterface : FfiConverterRustBuffer<Uniff
 
 // === FILE: uniffi/imported_types_sublib/FfiConverterOptionalTypeUniffiOneTrait.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 // Kotlin uses its type system to express nullability directly via `T?`,
 // so the `lift` / `lower` boundary handles a null sentinel byte without
@@ -15639,6 +16863,10 @@ object FfiConverterOptionalTypeUniffiOneTrait : FfiConverterRustBuffer<UniffiOne
 
 // === FILE: uniffi/imported_types_sublib/FfiConverterRustBuffer.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 // FfiConverter that uses `RustBuffer` as the FfiType.
 interface FfiConverterRustBuffer<T> : FfiConverter<T, java.lang.foreign.MemorySegment> {
@@ -15649,6 +16877,10 @@ interface FfiConverterRustBuffer<T> : FfiConverter<T, java.lang.foreign.MemorySe
 
 // === FILE: uniffi/imported_types_sublib/FfiConverterShort.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterShort : FfiConverter<Short, Short> {
     override fun lift(value: Short): Short = value
@@ -15663,6 +16895,10 @@ object FfiConverterShort : FfiConverter<Short, Short> {
 
 // === FILE: uniffi/imported_types_sublib/FfiConverterString.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterString : FfiConverter<String, java.lang.foreign.MemorySegment> {
     // Note: we don't inherit from FfiConverterRustBuffer because we use a
@@ -15723,6 +16959,10 @@ object FfiConverterString : FfiConverter<String, java.lang.foreign.MemorySegment
 
 // === FILE: uniffi/imported_types_sublib/FfiConverterTypeNotToThrowError.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterTypeNotToThrowError : FfiConverterRustBuffer<NotToThrowException> {
     override fun read(buf: java.nio.ByteBuffer): NotToThrowException =
@@ -15754,6 +16994,10 @@ object FfiConverterTypeNotToThrowError : FfiConverterRustBuffer<NotToThrowExcept
 
 // === FILE: uniffi/imported_types_sublib/FfiConverterTypeSubLibType.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 object FfiConverterTypeSubLibType : FfiConverterRustBuffer<SubLibType> {
     override fun read(buf: java.nio.ByteBuffer): SubLibType {
@@ -15781,6 +17025,10 @@ object FfiConverterTypeSubLibType : FfiConverterRustBuffer<SubLibType> {
 
 // === FILE: uniffi/imported_types_sublib/ForeignBytes.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 // Helper for safely passing byte references into the rust code.
 //
@@ -15817,6 +17065,10 @@ object ForeignBytes {
 
 // === FILE: uniffi/imported_types_sublib/ImportedTypesSublib.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 object ImportedTypesSublib {
 
@@ -15838,12 +17090,20 @@ object ImportedTypesSublib {
 }
 // === FILE: uniffi/imported_types_sublib/InternalException.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 open class InternalException(message: String) : RuntimeException(message)
 
 
 // === FILE: uniffi/imported_types_sublib/NamespaceLibrary.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 internal object NamespaceLibrary {
     @Synchronized
@@ -15888,6 +17148,10 @@ internal object NamespaceLibrary {
 
 // === FILE: uniffi/imported_types_sublib/NotToThrowException.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 sealed class NotToThrowException(message: String) : kotlin.Exception(message) {
     class Variant(
@@ -15898,6 +17162,10 @@ sealed class NotToThrowException(message: String) : kotlin.Exception(message) {
 
 // === FILE: uniffi/imported_types_sublib/NotToThrowExceptionErrorHandler.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 class NotToThrowExceptionErrorHandler : UniffiRustCallStatusErrorHandler<NotToThrowException> {
     override fun lift(errorBuf: java.lang.foreign.MemorySegment): NotToThrowException =
@@ -15907,6 +17175,10 @@ class NotToThrowExceptionErrorHandler : UniffiRustCallStatusErrorHandler<NotToTh
 
 // === FILE: uniffi/imported_types_sublib/RustBuffer.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 /**
  * Helper for safely working with byte buffers returned from the Rust code.
@@ -15986,6 +17258,10 @@ object RustBuffer {
 
 // === FILE: uniffi/imported_types_sublib/SubLibType.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 data class SubLibType(
     val maybeEnum: UniffiOneEnum?,
@@ -15996,6 +17272,10 @@ data class SubLibType(
 
 // === FILE: uniffi/imported_types_sublib/UniffiCallbackInterfaceClone.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiCallbackInterfaceClone {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -16029,6 +17309,10 @@ internal object UniffiCallbackInterfaceClone {
 
 // === FILE: uniffi/imported_types_sublib/UniffiCallbackInterfaceFree.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiCallbackInterfaceFree {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -16062,6 +17346,10 @@ internal object UniffiCallbackInterfaceFree {
 
 // === FILE: uniffi/imported_types_sublib/UniffiForeignFutureCompleteF32.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteF32 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -16097,6 +17385,10 @@ internal object UniffiForeignFutureCompleteF32 {
 
 // === FILE: uniffi/imported_types_sublib/UniffiForeignFutureCompleteF64.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteF64 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -16132,6 +17424,10 @@ internal object UniffiForeignFutureCompleteF64 {
 
 // === FILE: uniffi/imported_types_sublib/UniffiForeignFutureCompleteI16.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteI16 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -16167,6 +17463,10 @@ internal object UniffiForeignFutureCompleteI16 {
 
 // === FILE: uniffi/imported_types_sublib/UniffiForeignFutureCompleteI32.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteI32 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -16202,6 +17502,10 @@ internal object UniffiForeignFutureCompleteI32 {
 
 // === FILE: uniffi/imported_types_sublib/UniffiForeignFutureCompleteI64.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteI64 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -16237,6 +17541,10 @@ internal object UniffiForeignFutureCompleteI64 {
 
 // === FILE: uniffi/imported_types_sublib/UniffiForeignFutureCompleteI8.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteI8 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -16272,6 +17580,10 @@ internal object UniffiForeignFutureCompleteI8 {
 
 // === FILE: uniffi/imported_types_sublib/UniffiForeignFutureCompleteRustBuffer.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteRustBuffer {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -16307,6 +17619,10 @@ internal object UniffiForeignFutureCompleteRustBuffer {
 
 // === FILE: uniffi/imported_types_sublib/UniffiForeignFutureCompleteU16.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteU16 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -16342,6 +17658,10 @@ internal object UniffiForeignFutureCompleteU16 {
 
 // === FILE: uniffi/imported_types_sublib/UniffiForeignFutureCompleteU32.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteU32 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -16377,6 +17697,10 @@ internal object UniffiForeignFutureCompleteU32 {
 
 // === FILE: uniffi/imported_types_sublib/UniffiForeignFutureCompleteU64.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteU64 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -16412,6 +17736,10 @@ internal object UniffiForeignFutureCompleteU64 {
 
 // === FILE: uniffi/imported_types_sublib/UniffiForeignFutureCompleteU8.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteU8 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -16447,6 +17775,10 @@ internal object UniffiForeignFutureCompleteU8 {
 
 // === FILE: uniffi/imported_types_sublib/UniffiForeignFutureCompleteVoid.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureCompleteVoid {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -16482,6 +17814,10 @@ internal object UniffiForeignFutureCompleteVoid {
 
 // === FILE: uniffi/imported_types_sublib/UniffiForeignFutureDroppedCallback.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureDroppedCallback {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -16515,6 +17851,10 @@ internal object UniffiForeignFutureDroppedCallback {
 
 // === FILE: uniffi/imported_types_sublib/UniffiForeignFutureDroppedCallbackStruct.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureDroppedCallbackStruct {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -16548,6 +17888,10 @@ internal object UniffiForeignFutureDroppedCallbackStruct {
 
 // === FILE: uniffi/imported_types_sublib/UniffiForeignFutureResultF32.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultF32 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -16582,6 +17926,10 @@ internal object UniffiForeignFutureResultF32 {
 
 // === FILE: uniffi/imported_types_sublib/UniffiForeignFutureResultF64.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultF64 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -16615,6 +17963,10 @@ internal object UniffiForeignFutureResultF64 {
 
 // === FILE: uniffi/imported_types_sublib/UniffiForeignFutureResultI16.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultI16 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -16649,6 +18001,10 @@ internal object UniffiForeignFutureResultI16 {
 
 // === FILE: uniffi/imported_types_sublib/UniffiForeignFutureResultI32.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultI32 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -16683,6 +18039,10 @@ internal object UniffiForeignFutureResultI32 {
 
 // === FILE: uniffi/imported_types_sublib/UniffiForeignFutureResultI64.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultI64 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -16716,6 +18076,10 @@ internal object UniffiForeignFutureResultI64 {
 
 // === FILE: uniffi/imported_types_sublib/UniffiForeignFutureResultI8.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultI8 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -16750,6 +18114,10 @@ internal object UniffiForeignFutureResultI8 {
 
 // === FILE: uniffi/imported_types_sublib/UniffiForeignFutureResultRustBuffer.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultRustBuffer {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -16783,6 +18151,10 @@ internal object UniffiForeignFutureResultRustBuffer {
 
 // === FILE: uniffi/imported_types_sublib/UniffiForeignFutureResultU16.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultU16 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -16817,6 +18189,10 @@ internal object UniffiForeignFutureResultU16 {
 
 // === FILE: uniffi/imported_types_sublib/UniffiForeignFutureResultU32.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultU32 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -16851,6 +18227,10 @@ internal object UniffiForeignFutureResultU32 {
 
 // === FILE: uniffi/imported_types_sublib/UniffiForeignFutureResultU64.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultU64 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -16884,6 +18264,10 @@ internal object UniffiForeignFutureResultU64 {
 
 // === FILE: uniffi/imported_types_sublib/UniffiForeignFutureResultU8.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultU8 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -16918,6 +18302,10 @@ internal object UniffiForeignFutureResultU8 {
 
 // === FILE: uniffi/imported_types_sublib/UniffiForeignFutureResultVoid.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiForeignFutureResultVoid {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -16942,6 +18330,10 @@ internal object UniffiForeignFutureResultVoid {
 
 // === FILE: uniffi/imported_types_sublib/UniffiHelpers.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 // Helpers for calling Rust.
 //
@@ -17221,6 +18613,10 @@ object UniffiHelpers {
 
 // === FILE: uniffi/imported_types_sublib/UniffiInitializer.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 /**
  * Ensures the native library is initialized.
@@ -17244,6 +18640,10 @@ object UniffiInitializer {
 
 // === FILE: uniffi/imported_types_sublib/UniffiLib.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 // FFM-based library binding. Each FFI function gets a `MethodHandle` field
 // + a wrapper function that performs the `invokeExact` call. The loop
@@ -18546,6 +19946,10 @@ internal object UniffiLib {
 
 // === FILE: uniffi/imported_types_sublib/UniffiNullRustCallStatusErrorHandler.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 // UniffiRustCallStatusErrorHandler implementation for times when we don't
 // expect a CALL_ERROR.
@@ -18559,6 +19963,10 @@ internal class UniffiNullRustCallStatusErrorHandler : UniffiRustCallStatusErrorH
 
 // === FILE: uniffi/imported_types_sublib/UniffiRustCallStatus.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 object UniffiRustCallStatus {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -18621,6 +20029,10 @@ object UniffiRustCallStatus {
 
 // === FILE: uniffi/imported_types_sublib/UniffiRustCallStatusErrorHandler.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 interface UniffiRustCallStatusErrorHandler<E : Exception> {
     fun lift(errorBuf: java.lang.foreign.MemorySegment): E
@@ -18629,6 +20041,10 @@ interface UniffiRustCallStatusErrorHandler<E : Exception> {
 
 // === FILE: uniffi/imported_types_sublib/UniffiRustFutureContinuationCallback.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 internal object UniffiRustFutureContinuationCallback {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -18664,6 +20080,10 @@ internal object UniffiRustFutureContinuationCallback {
 
 // === FILE: uniffi/imported_types_sublib/UniffiSlabAllocator.kt ===
 package uniffi.imported_types_sublib
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.uniffi_one_ns.*
 
 // Thread-local slab allocator for short-lived native memory segments.
 //
@@ -18713,6 +20133,10 @@ internal class UniffiSlabAllocator(layout: java.lang.foreign.MemoryLayout, slots
 
 // === FILE: uniffi/uniffi_one_ns/FfiConverter.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 // The FfiConverter interface handles converter types to and from the FFI.
 //
@@ -18778,6 +20202,10 @@ interface FfiConverter<T, FfiType> {
 
 // === FILE: uniffi/uniffi_one_ns/FfiConverterBoolean.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 object FfiConverterBoolean : FfiConverter<Boolean, Byte> {
     override fun lift(value: Byte): Boolean = value.toInt() != 0
@@ -18792,6 +20220,10 @@ object FfiConverterBoolean : FfiConverter<Boolean, Byte> {
 
 // === FILE: uniffi/uniffi_one_ns/FfiConverterBooleanArray.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 object FfiConverterBooleanArray : FfiConverterRustBuffer<BooleanArray> {
     override fun read(buf: java.nio.ByteBuffer): BooleanArray {
@@ -18817,6 +20249,10 @@ object FfiConverterBooleanArray : FfiConverterRustBuffer<BooleanArray> {
 
 // === FILE: uniffi/uniffi_one_ns/FfiConverterByte.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 object FfiConverterByte : FfiConverter<Byte, Byte> {
     override fun lift(value: Byte): Byte = value
@@ -18831,6 +20267,10 @@ object FfiConverterByte : FfiConverter<Byte, Byte> {
 
 // === FILE: uniffi/uniffi_one_ns/FfiConverterByteArray.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 object FfiConverterByteArray : FfiConverterRustBuffer<ByteArray> {
     override fun read(buf: java.nio.ByteBuffer): ByteArray {
@@ -18851,6 +20291,10 @@ object FfiConverterByteArray : FfiConverterRustBuffer<ByteArray> {
 
 // === FILE: uniffi/uniffi_one_ns/FfiConverterCallbackInterface.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 // Base FfiConverter for callback interfaces (foreign-implemented
 // traits that Rust invokes via the vtable). Handles route through
@@ -18884,6 +20328,10 @@ internal abstract class FfiConverterCallbackInterface<CallbackInterface : Any>
 
 // === FILE: uniffi/uniffi_one_ns/FfiConverterDouble.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 object FfiConverterDouble : FfiConverter<Double, Double> {
     override fun lift(value: Double): Double = value
@@ -18898,6 +20346,10 @@ object FfiConverterDouble : FfiConverter<Double, Double> {
 
 // === FILE: uniffi/uniffi_one_ns/FfiConverterFloat.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 object FfiConverterFloat : FfiConverter<Float, Float> {
     override fun lift(value: Float): Float = value
@@ -18912,6 +20364,10 @@ object FfiConverterFloat : FfiConverter<Float, Float> {
 
 // === FILE: uniffi/uniffi_one_ns/FfiConverterFloat32Array.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 object FfiConverterFloat32Array : FfiConverterRustBuffer<FloatArray> {
     override fun read(buf: java.nio.ByteBuffer): FloatArray {
@@ -18934,6 +20390,10 @@ object FfiConverterFloat32Array : FfiConverterRustBuffer<FloatArray> {
 
 // === FILE: uniffi/uniffi_one_ns/FfiConverterFloat64Array.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 object FfiConverterFloat64Array : FfiConverterRustBuffer<DoubleArray> {
     override fun read(buf: java.nio.ByteBuffer): DoubleArray {
@@ -18956,6 +20416,10 @@ object FfiConverterFloat64Array : FfiConverterRustBuffer<DoubleArray> {
 
 // === FILE: uniffi/uniffi_one_ns/FfiConverterInt.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 object FfiConverterInt : FfiConverter<Int, Int> {
     override fun lift(value: Int): Int = value
@@ -18970,6 +20434,10 @@ object FfiConverterInt : FfiConverter<Int, Int> {
 
 // === FILE: uniffi/uniffi_one_ns/FfiConverterInt16Array.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 object FfiConverterInt16Array : FfiConverterRustBuffer<ShortArray> {
     override fun read(buf: java.nio.ByteBuffer): ShortArray {
@@ -18992,6 +20460,10 @@ object FfiConverterInt16Array : FfiConverterRustBuffer<ShortArray> {
 
 // === FILE: uniffi/uniffi_one_ns/FfiConverterInt32Array.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 object FfiConverterInt32Array : FfiConverterRustBuffer<IntArray> {
     override fun read(buf: java.nio.ByteBuffer): IntArray {
@@ -19014,6 +20486,10 @@ object FfiConverterInt32Array : FfiConverterRustBuffer<IntArray> {
 
 // === FILE: uniffi/uniffi_one_ns/FfiConverterInt64Array.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 object FfiConverterInt64Array : FfiConverterRustBuffer<LongArray> {
     override fun read(buf: java.nio.ByteBuffer): LongArray {
@@ -19036,6 +20512,10 @@ object FfiConverterInt64Array : FfiConverterRustBuffer<LongArray> {
 
 // === FILE: uniffi/uniffi_one_ns/FfiConverterLong.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 object FfiConverterLong : FfiConverter<Long, Long> {
     override fun lift(value: Long): Long = value
@@ -19050,6 +20530,10 @@ object FfiConverterLong : FfiConverter<Long, Long> {
 
 // === FILE: uniffi/uniffi_one_ns/FfiConverterRustBuffer.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 // FfiConverter that uses `RustBuffer` as the FfiType.
 interface FfiConverterRustBuffer<T> : FfiConverter<T, java.lang.foreign.MemorySegment> {
@@ -19060,6 +20544,10 @@ interface FfiConverterRustBuffer<T> : FfiConverter<T, java.lang.foreign.MemorySe
 
 // === FILE: uniffi/uniffi_one_ns/FfiConverterShort.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 object FfiConverterShort : FfiConverter<Short, Short> {
     override fun lift(value: Short): Short = value
@@ -19074,6 +20562,10 @@ object FfiConverterShort : FfiConverter<Short, Short> {
 
 // === FILE: uniffi/uniffi_one_ns/FfiConverterString.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 object FfiConverterString : FfiConverter<String, java.lang.foreign.MemorySegment> {
     // Note: we don't inherit from FfiConverterRustBuffer because we use a
@@ -19134,6 +20626,10 @@ object FfiConverterString : FfiConverter<String, java.lang.foreign.MemorySegment
 
 // === FILE: uniffi/uniffi_one_ns/FfiConverterTypeKotlinRenamedType.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 object FfiConverterTypeKotlinRenamedType : FfiConverterRustBuffer<KotlinRenamedType> {
     override fun read(buf: java.nio.ByteBuffer): KotlinRenamedType {
@@ -19155,6 +20651,10 @@ object FfiConverterTypeKotlinRenamedType : FfiConverterRustBuffer<KotlinRenamedT
 
 // === FILE: uniffi/uniffi_one_ns/FfiConverterTypeUniffiOneEnum.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 object FfiConverterTypeUniffiOneEnum : FfiConverterRustBuffer<UniffiOneEnum> {
     override fun read(buf: java.nio.ByteBuffer): UniffiOneEnum {
@@ -19175,6 +20675,10 @@ object FfiConverterTypeUniffiOneEnum : FfiConverterRustBuffer<UniffiOneEnum> {
 
 // === FILE: uniffi/uniffi_one_ns/FfiConverterTypeUniffiOneError.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 object FfiConverterTypeUniffiOneError : FfiConverterRustBuffer<UniffiOneException> {
     override fun read(buf: java.nio.ByteBuffer): UniffiOneException =
@@ -19206,6 +20710,10 @@ object FfiConverterTypeUniffiOneError : FfiConverterRustBuffer<UniffiOneExceptio
 
 // === FILE: uniffi/uniffi_one_ns/FfiConverterTypeUniffiOneErrorInterface.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 // FfiConverter routes `UniffiOneErrorInterface` across the FFI as an 8-byte
 // handle. No callback-interface support — pure Rust-owned object.
 object FfiConverterTypeUniffiOneErrorInterface : FfiConverter<UniffiOneErrorInterface, Long> {
@@ -19225,6 +20733,10 @@ object FfiConverterTypeUniffiOneErrorInterface : FfiConverter<UniffiOneErrorInte
 
 // === FILE: uniffi/uniffi_one_ns/FfiConverterTypeUniffiOneInterface.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 // FfiConverter routes `UniffiOneInterface` across the FFI as an 8-byte
 // handle. No callback-interface support — pure Rust-owned object.
 object FfiConverterTypeUniffiOneInterface : FfiConverter<UniffiOneInterface, Long> {
@@ -19244,6 +20756,10 @@ object FfiConverterTypeUniffiOneInterface : FfiConverter<UniffiOneInterface, Lon
 
 // === FILE: uniffi/uniffi_one_ns/FfiConverterTypeUniffiOneProcMacroType.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 object FfiConverterTypeUniffiOneProcMacroType : FfiConverterRustBuffer<UniffiOneProcMacroType> {
     override fun read(buf: java.nio.ByteBuffer): UniffiOneProcMacroType {
@@ -19265,6 +20781,10 @@ object FfiConverterTypeUniffiOneProcMacroType : FfiConverterRustBuffer<UniffiOne
 
 // === FILE: uniffi/uniffi_one_ns/FfiConverterTypeUniffiOneRecordContainingInterface.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 object FfiConverterTypeUniffiOneRecordContainingInterface : FfiConverterRustBuffer<UniffiOneRecordContainingInterface> {
     override fun read(buf: java.nio.ByteBuffer): UniffiOneRecordContainingInterface {
@@ -19286,6 +20806,10 @@ object FfiConverterTypeUniffiOneRecordContainingInterface : FfiConverterRustBuff
 
 // === FILE: uniffi/uniffi_one_ns/FfiConverterTypeUniffiOneTLA.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 object FfiConverterTypeUniffiOneTLA : FfiConverterRustBuffer<UniffiOneTla> {
     override fun read(buf: java.nio.ByteBuffer): UniffiOneTla {
@@ -19302,6 +20826,10 @@ object FfiConverterTypeUniffiOneTLA : FfiConverterRustBuffer<UniffiOneTla> {
 
 // === FILE: uniffi/uniffi_one_ns/FfiConverterTypeUniffiOneTrait.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 // LSB-tagged FfiConverter for `[Trait, WithForeign]` objects. Rust-side
 // instances are wrapped by `UniffiOneTraitImpl` and carry even
 // handles (LSB = 0); Kotlin-side implementations of the UniffiOneTrait
@@ -19336,6 +20864,10 @@ internal object FfiConverterTypeUniffiOneTrait : FfiConverter<UniffiOneTrait, Lo
 
 // === FILE: uniffi/uniffi_one_ns/FfiConverterTypeUniffiOneType.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 object FfiConverterTypeUniffiOneType : FfiConverterRustBuffer<UniffiOneType> {
     override fun read(buf: java.nio.ByteBuffer): UniffiOneType {
@@ -19358,6 +20890,10 @@ object FfiConverterTypeUniffiOneType : FfiConverterRustBuffer<UniffiOneType> {
 
 // === FILE: uniffi/uniffi_one_ns/FfiConverterTypeUniffiOneUDLTrait.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 // LSB-tagged FfiConverter for `[Trait, WithForeign]` objects. Rust-side
 // instances are wrapped by `UniffiOneUdlTraitImpl` and carry even
 // handles (LSB = 0); Kotlin-side implementations of the UniffiOneUdlTrait
@@ -19392,6 +20928,10 @@ internal object FfiConverterTypeUniffiOneUDLTrait : FfiConverter<UniffiOneUdlTra
 
 // === FILE: uniffi/uniffi_one_ns/ForeignBytes.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 // Helper for safely passing byte references into the rust code.
 //
@@ -19428,12 +20968,20 @@ object ForeignBytes {
 
 // === FILE: uniffi/uniffi_one_ns/InternalException.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 open class InternalException(message: String) : RuntimeException(message)
 
 
 // === FILE: uniffi/uniffi_one_ns/KotlinRenamedType.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 data class KotlinRenamedType(
     val kotlinValue: kotlin.String
@@ -19442,6 +20990,10 @@ data class KotlinRenamedType(
 
 // === FILE: uniffi/uniffi_one_ns/NamespaceLibrary.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 internal object NamespaceLibrary {
     @Synchronized
@@ -19504,6 +21056,10 @@ internal object NamespaceLibrary {
 
 // === FILE: uniffi/uniffi_one_ns/RustBuffer.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 /**
  * Helper for safely working with byte buffers returned from the Rust code.
@@ -19583,6 +21139,10 @@ object RustBuffer {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiAsyncHelpers.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 // `launch` is an extension function on `CoroutineScope` (defined in
 // `kotlinx.coroutines.Builders`); fully qualifying the receiver as
@@ -19707,6 +21267,10 @@ internal object UniffiAsyncHelpers {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiBackpressureCleaner.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 // PhantomReference + ReferenceQueue with opportunistic inline draining.
 // Behavior matches the Java `UniffiBackpressureCleaner`:
@@ -19826,6 +21390,10 @@ internal class UniffiBackpressureCleaner : UniffiCleaner {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiCallbackInterfaceClone.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 internal object UniffiCallbackInterfaceClone {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -19859,6 +21427,10 @@ internal object UniffiCallbackInterfaceClone {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiCallbackInterfaceFree.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 internal object UniffiCallbackInterfaceFree {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -19892,6 +21464,10 @@ internal object UniffiCallbackInterfaceFree {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiCallbackInterfaceUniffiOneTrait.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 // Vtable assembly + per-method upcall stubs for callback interfaces.
 // Each stub pulls the foreign-side object out of the handle map,
@@ -19966,6 +21542,10 @@ internal object UniffiCallbackInterfaceUniffiOneTrait {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiCallbackInterfaceUniffiOneTraitMethod0.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 internal object UniffiCallbackInterfaceUniffiOneTraitMethod0 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -20003,6 +21583,10 @@ internal object UniffiCallbackInterfaceUniffiOneTraitMethod0 {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiCallbackInterfaceUniffiOneUDLTrait.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 // Vtable assembly + per-method upcall stubs for callback interfaces.
 // Each stub pulls the foreign-side object out of the handle map,
@@ -20077,6 +21661,10 @@ internal object UniffiCallbackInterfaceUniffiOneUDLTrait {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiCallbackInterfaceUniffiOneUdlTraitMethod0.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 internal object UniffiCallbackInterfaceUniffiOneUdlTraitMethod0 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -20114,6 +21702,10 @@ internal object UniffiCallbackInterfaceUniffiOneUdlTraitMethod0 {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiCleaner.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 // Cleaner for Object finalization. Uses a PhantomReference-backed
 // implementation with opportunistic inline draining to provide
@@ -20137,6 +21729,10 @@ internal interface UniffiCleaner {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiForeignFutureCompleteF32.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 internal object UniffiForeignFutureCompleteF32 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -20172,6 +21768,10 @@ internal object UniffiForeignFutureCompleteF32 {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiForeignFutureCompleteF64.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 internal object UniffiForeignFutureCompleteF64 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -20207,6 +21807,10 @@ internal object UniffiForeignFutureCompleteF64 {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiForeignFutureCompleteI16.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 internal object UniffiForeignFutureCompleteI16 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -20242,6 +21846,10 @@ internal object UniffiForeignFutureCompleteI16 {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiForeignFutureCompleteI32.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 internal object UniffiForeignFutureCompleteI32 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -20277,6 +21885,10 @@ internal object UniffiForeignFutureCompleteI32 {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiForeignFutureCompleteI64.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 internal object UniffiForeignFutureCompleteI64 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -20312,6 +21924,10 @@ internal object UniffiForeignFutureCompleteI64 {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiForeignFutureCompleteI8.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 internal object UniffiForeignFutureCompleteI8 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -20347,6 +21963,10 @@ internal object UniffiForeignFutureCompleteI8 {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiForeignFutureCompleteRustBuffer.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 internal object UniffiForeignFutureCompleteRustBuffer {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -20382,6 +22002,10 @@ internal object UniffiForeignFutureCompleteRustBuffer {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiForeignFutureCompleteU16.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 internal object UniffiForeignFutureCompleteU16 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -20417,6 +22041,10 @@ internal object UniffiForeignFutureCompleteU16 {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiForeignFutureCompleteU32.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 internal object UniffiForeignFutureCompleteU32 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -20452,6 +22080,10 @@ internal object UniffiForeignFutureCompleteU32 {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiForeignFutureCompleteU64.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 internal object UniffiForeignFutureCompleteU64 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -20487,6 +22119,10 @@ internal object UniffiForeignFutureCompleteU64 {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiForeignFutureCompleteU8.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 internal object UniffiForeignFutureCompleteU8 {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -20522,6 +22158,10 @@ internal object UniffiForeignFutureCompleteU8 {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiForeignFutureCompleteVoid.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 internal object UniffiForeignFutureCompleteVoid {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -20557,6 +22197,10 @@ internal object UniffiForeignFutureCompleteVoid {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiForeignFutureDroppedCallback.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 internal object UniffiForeignFutureDroppedCallback {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -20590,6 +22234,10 @@ internal object UniffiForeignFutureDroppedCallback {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiForeignFutureDroppedCallbackStruct.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 internal object UniffiForeignFutureDroppedCallbackStruct {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -20623,6 +22271,10 @@ internal object UniffiForeignFutureDroppedCallbackStruct {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiForeignFutureResultF32.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 internal object UniffiForeignFutureResultF32 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -20657,6 +22309,10 @@ internal object UniffiForeignFutureResultF32 {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiForeignFutureResultF64.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 internal object UniffiForeignFutureResultF64 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -20690,6 +22346,10 @@ internal object UniffiForeignFutureResultF64 {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiForeignFutureResultI16.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 internal object UniffiForeignFutureResultI16 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -20724,6 +22384,10 @@ internal object UniffiForeignFutureResultI16 {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiForeignFutureResultI32.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 internal object UniffiForeignFutureResultI32 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -20758,6 +22422,10 @@ internal object UniffiForeignFutureResultI32 {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiForeignFutureResultI64.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 internal object UniffiForeignFutureResultI64 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -20791,6 +22459,10 @@ internal object UniffiForeignFutureResultI64 {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiForeignFutureResultI8.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 internal object UniffiForeignFutureResultI8 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -20825,6 +22497,10 @@ internal object UniffiForeignFutureResultI8 {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiForeignFutureResultRustBuffer.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 internal object UniffiForeignFutureResultRustBuffer {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -20858,6 +22534,10 @@ internal object UniffiForeignFutureResultRustBuffer {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiForeignFutureResultU16.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 internal object UniffiForeignFutureResultU16 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -20892,6 +22572,10 @@ internal object UniffiForeignFutureResultU16 {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiForeignFutureResultU32.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 internal object UniffiForeignFutureResultU32 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -20926,6 +22610,10 @@ internal object UniffiForeignFutureResultU32 {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiForeignFutureResultU64.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 internal object UniffiForeignFutureResultU64 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -20959,6 +22647,10 @@ internal object UniffiForeignFutureResultU64 {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiForeignFutureResultU8.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 internal object UniffiForeignFutureResultU8 {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -20993,6 +22685,10 @@ internal object UniffiForeignFutureResultU8 {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiForeignFutureResultVoid.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 internal object UniffiForeignFutureResultVoid {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -21017,6 +22713,10 @@ internal object UniffiForeignFutureResultVoid {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiHandleMap.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 // Maps 64-bit handles to foreign-side objects that Rust references
 // via callback interfaces. Handles allocated here are always odd
@@ -21062,6 +22762,10 @@ internal class UniffiHandleMap<T : Any> {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiHelpers.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 // Helpers for calling Rust.
 //
@@ -21337,6 +23041,10 @@ object UniffiHelpers {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiInitializer.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 /**
  * Ensures the native library is initialized.
@@ -21354,6 +23062,10 @@ object UniffiInitializer {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiLib.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 // FFM-based library binding. Each FFI function gets a `MethodHandle` field
 // + a wrapper function that performs the `invokeExact` call. The loop
@@ -23173,6 +24885,10 @@ internal object UniffiLib {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiMarkers.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 // Marker singleton used to disambiguate the FFI-handle-wrapping
 // constructor from user-facing constructors. The Java backend's
@@ -23186,6 +24902,10 @@ object NoHandle
 
 // === FILE: uniffi/uniffi_one_ns/UniffiNullRustCallStatusErrorHandler.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 // UniffiRustCallStatusErrorHandler implementation for times when we don't
 // expect a CALL_ERROR.
@@ -23199,6 +24919,10 @@ internal class UniffiNullRustCallStatusErrorHandler : UniffiRustCallStatusErrorH
 
 // === FILE: uniffi/uniffi_one_ns/UniffiOneEnum.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 enum class UniffiOneEnum {
     ONE,
@@ -23208,6 +24932,10 @@ enum class UniffiOneEnum {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiOneErrorInterface.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 // Object wrapper over a Rust `Arc<T>`. Uses a handle-based protocol
 // for cross-FFI lifecycle: the `AtomicLong` call counter + `AtomicBoolean`
@@ -23225,7 +24953,7 @@ package uniffi.uniffi_one_ns
 class UniffiOneErrorInterface internal constructor(
     @Suppress("UNUSED_PARAMETER") phantom: UniffiWithHandle,
     internal val handle: Long,
-) : AutoCloseable, UniffiOneErrorInterfaceInterface {
+) : kotlin.Exception(), AutoCloseable, UniffiOneErrorInterfaceInterface {
     private val wasDestroyed = java.util.concurrent.atomic.AtomicBoolean(false)
     private val callCounter = java.util.concurrent.atomic.AtomicLong(1L)
     // NoHandle wrappers (handle == 0) don't register a cleaner: there's
@@ -23338,8 +25066,40 @@ class UniffiOneErrorInterface internal constructor(
 }
 
 
+// === FILE: uniffi/uniffi_one_ns/UniffiOneErrorInterfaceErrorHandler.kt ===
+package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
+
+// Lift errors of type `UniffiOneErrorInterface` from a RustBuffer
+// reference. Errors flow Rust → Kotlin via this handler hooked into
+// `uniffiRustCall*WithError`. Unlike the sealed-enum error path,
+// Object errors are wrapped Rust handles, so the lift call has to
+// route through the FfiConverter (which knows how to read either
+// the LSB-tagged callback handle or the plain Rust handle).
+class UniffiOneErrorInterfaceErrorHandler : UniffiRustCallStatusErrorHandler<UniffiOneErrorInterface> {
+    override fun lift(errorBuf: java.lang.foreign.MemorySegment): UniffiOneErrorInterface =
+        // `uniffiCheckCallStatus` does not free the error buffer for
+        // typed errors — that's the handler's responsibility. Wrap
+        // the read in `try/finally` so a malformed/throwing read
+        // still releases the RustBuffer instead of leaking it on
+        // every thrown error.
+        try {
+            FfiConverterTypeUniffiOneErrorInterface.read(RustBuffer.asByteBuffer(errorBuf))
+        } finally {
+            RustBuffer.free(errorBuf)
+        }
+}
+
+
 // === FILE: uniffi/uniffi_one_ns/UniffiOneErrorInterfaceInterface.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 interface UniffiOneErrorInterfaceInterface {
     fun message(): kotlin.String
@@ -23348,6 +25108,10 @@ interface UniffiOneErrorInterfaceInterface {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiOneException.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 sealed class UniffiOneException(message: String) : kotlin.Exception(message) {
     class Oops(
@@ -23358,6 +25122,10 @@ sealed class UniffiOneException(message: String) : kotlin.Exception(message) {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiOneExceptionErrorHandler.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 class UniffiOneExceptionErrorHandler : UniffiRustCallStatusErrorHandler<UniffiOneException> {
     override fun lift(errorBuf: java.lang.foreign.MemorySegment): UniffiOneException =
@@ -23367,6 +25135,10 @@ class UniffiOneExceptionErrorHandler : UniffiRustCallStatusErrorHandler<UniffiOn
 
 // === FILE: uniffi/uniffi_one_ns/UniffiOneInterface.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 // Object wrapper over a Rust `Arc<T>`. Uses a handle-based protocol
 // for cross-FFI lifecycle: the `AtomicLong` call counter + `AtomicBoolean`
@@ -23496,6 +25268,10 @@ class UniffiOneInterface internal constructor(
 
 // === FILE: uniffi/uniffi_one_ns/UniffiOneInterfaceInterface.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 interface UniffiOneInterfaceInterface {
     fun increment(): kotlin.Int
@@ -23504,6 +25280,10 @@ interface UniffiOneInterfaceInterface {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiOneNs.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 object UniffiOneNs {
 
@@ -23541,6 +25321,10 @@ object UniffiOneNs {
 }
 // === FILE: uniffi/uniffi_one_ns/UniffiOneProcMacroType.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 data class UniffiOneProcMacroType(
     val sval: kotlin.String
@@ -23549,6 +25333,10 @@ data class UniffiOneProcMacroType(
 
 // === FILE: uniffi/uniffi_one_ns/UniffiOneRecordContainingInterface.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 data class UniffiOneRecordContainingInterface(
     val `inner`: UniffiOneInterface
@@ -23557,12 +25345,20 @@ data class UniffiOneRecordContainingInterface(
 
 // === FILE: uniffi/uniffi_one_ns/UniffiOneTla.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 object UniffiOneTla
 
 
 // === FILE: uniffi/uniffi_one_ns/UniffiOneTrait.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 interface UniffiOneTrait {
     fun hello(): kotlin.String
@@ -23571,6 +25367,10 @@ interface UniffiOneTrait {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiOneTraitImpl.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 // Object wrapper over a Rust `Arc<T>`. Uses a handle-based protocol
 // for cross-FFI lifecycle: the `AtomicLong` call counter + `AtomicBoolean`
@@ -23696,6 +25496,10 @@ class UniffiOneTraitImpl internal constructor(
 
 // === FILE: uniffi/uniffi_one_ns/UniffiOneType.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 data class UniffiOneType(
     val sval: kotlin.String
@@ -23704,6 +25508,10 @@ data class UniffiOneType(
 
 // === FILE: uniffi/uniffi_one_ns/UniffiOneUdlTrait.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 interface UniffiOneUdlTrait {
     fun hello(): kotlin.String
@@ -23712,6 +25520,10 @@ interface UniffiOneUdlTrait {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiOneUdlTraitImpl.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 // Object wrapper over a Rust `Arc<T>`. Uses a handle-based protocol
 // for cross-FFI lifecycle: the `AtomicLong` call counter + `AtomicBoolean`
@@ -23837,6 +25649,10 @@ class UniffiOneUdlTraitImpl internal constructor(
 
 // === FILE: uniffi/uniffi_one_ns/UniffiRustCallStatus.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 object UniffiRustCallStatus {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -23899,6 +25715,10 @@ object UniffiRustCallStatus {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiRustCallStatusErrorHandler.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 interface UniffiRustCallStatusErrorHandler<E : Exception> {
     fun lift(errorBuf: java.lang.foreign.MemorySegment): E
@@ -23907,6 +25727,10 @@ interface UniffiRustCallStatusErrorHandler<E : Exception> {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiRustFutureContinuationCallback.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 internal object UniffiRustFutureContinuationCallback {
     val DESCRIPTOR: java.lang.foreign.FunctionDescriptor =
@@ -23942,6 +25766,10 @@ internal object UniffiRustFutureContinuationCallback {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiSlabAllocator.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 // Thread-local slab allocator for short-lived native memory segments.
 //
@@ -23991,6 +25819,10 @@ internal class UniffiSlabAllocator(layout: java.lang.foreign.MemoryLayout, slots
 
 // === FILE: uniffi/uniffi_one_ns/UniffiVTableCallbackInterfaceUniffiOneTrait.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 internal object UniffiVTableCallbackInterfaceUniffiOneTrait {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(
@@ -24033,6 +25865,10 @@ internal object UniffiVTableCallbackInterfaceUniffiOneTrait {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiVTableCallbackInterfaceUniffiOneUdlTrait.kt ===
 package uniffi.uniffi_one_ns
+import customtypes.*
+import uniffi.ext_types_custom.*
+import uniffi.imported_types_lib.*
+import uniffi.imported_types_sublib.*
 
 internal object UniffiVTableCallbackInterfaceUniffiOneUdlTrait {
     val LAYOUT: java.lang.foreign.StructLayout = java.lang.foreign.MemoryLayout.structLayout(

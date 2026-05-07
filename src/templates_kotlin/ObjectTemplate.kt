@@ -3,6 +3,7 @@
 {%- let methods = obj.methods() %}
 {%- let (interface_name, impl_class_name) = obj|object_names(ci) %}
 {%- let uniffi_trait_methods = obj.uniffi_trait_methods() %}
+{%- let is_error = ci.is_name_used_as_error(name) %}
 
 {#- Always emit a method-signature interface alongside the concrete
    wrapper so consumers can substitute test doubles or alternative
@@ -33,7 +34,13 @@ package {{ config.package_name() }}
 class {{ impl_class_name }} internal constructor(
     @Suppress("UNUSED_PARAMETER") phantom: UniffiWithHandle,
     internal val handle: Long,
-) : AutoCloseable, {{ interface_name }}{% if let Some(cmp) = uniffi_trait_methods.ord_cmp %}, Comparable<{{ cmp.object_name()|class_name(ci) }}>{% endif %} {
+){#- When `is_error` is true the Object is registered as a typed error
+    type. Kotlin requires it to be a `Throwable` subclass for use in
+    `@Throws(...)` annotations; extend `kotlin.Exception()` first
+    (Kotlin's single-class-extension rule), then implement the
+    interfaces. Mirrors `src/templates/ObjectTemplate.java`'s
+    `extends Exception` branch. -#}
+{%- if is_error %} : kotlin.Exception(), AutoCloseable, {{ interface_name }}{% else %} : AutoCloseable, {{ interface_name }}{% endif %}{% if let Some(cmp) = uniffi_trait_methods.ord_cmp %}, Comparable<{{ cmp.object_name()|class_name(ci) }}>{% endif %} {
     private val wasDestroyed = java.util.concurrent.atomic.AtomicBoolean(false)
     private val callCounter = java.util.concurrent.atomic.AtomicLong(1L)
     // NoHandle wrappers (handle == 0) don't register a cleaner: there's
@@ -179,6 +186,32 @@ class {{ impl_class_name }} internal constructor(
        holds the wrapper alive across the trait method's roundtrip. -#}
 {% call kotlin::uniffi_trait_impls(uniffi_trait_methods, "    ") %}
 }
+
+{%- if is_error %}
+
+// UNIFFI:FILE {{ impl_class_name }}ErrorHandler.kt
+package {{ config.package_name() }}
+
+// Lift errors of type `{{ impl_class_name }}` from a RustBuffer
+// reference. Errors flow Rust → Kotlin via this handler hooked into
+// `uniffiRustCall*WithError`. Unlike the sealed-enum error path,
+// Object errors are wrapped Rust handles, so the lift call has to
+// route through the FfiConverter (which knows how to read either
+// the LSB-tagged callback handle or the plain Rust handle).
+class {{ impl_class_name }}ErrorHandler : UniffiRustCallStatusErrorHandler<{{ impl_class_name }}> {
+    override fun lift(errorBuf: java.lang.foreign.MemorySegment): {{ impl_class_name }} =
+        // `uniffiCheckCallStatus` does not free the error buffer for
+        // typed errors — that's the handler's responsibility. Wrap
+        // the read in `try/finally` so a malformed/throwing read
+        // still releases the RustBuffer instead of leaking it on
+        // every thrown error.
+        try {
+            {{ ffi_converter_name }}.read(RustBuffer.asByteBuffer(errorBuf))
+        } finally {
+            RustBuffer.free(errorBuf)
+        }
+}
+{%- endif %}
 
 {%- if obj.has_callback_interface() %}
 {#- Foreign-vtable assembly + per-method upcall stubs that route Rust→Kotlin

@@ -737,7 +737,7 @@ pub fn generate_bindings(config: &Config, ci: &ComponentInterface) -> Result<Str
 mod filters {
     use askama::Values;
     use uniffi_bindgen::interface::{Callable, FfiType, Variant};
-    use uniffi_meta::AsType;
+    use uniffi_meta::{AsType, Type};
 
     use super::{AsCodeType, Config, KotlinCodeOracle};
     use uniffi_bindgen::ComponentInterface;
@@ -834,6 +834,44 @@ mod filters {
         config: &Config,
     ) -> Result<String, askama::Error> {
         Ok(as_ct.as_codetype().type_label(ci, config))
+    }
+
+    /// Package-qualifier prefix for a type's runtime helpers. Returns
+    /// an empty string for types defined in the current crate (so
+    /// `UniffiHelpers.foo(...)` stays unqualified) and `<package>.`
+    /// for types defined in another crate of a multi-crate fixture
+    /// (so the call becomes `<package>.UniffiHelpers.foo(...)`).
+    ///
+    /// Without this qualification, `UniffiHelpers.uniffiRustCallVoidWithError(handler)`
+    /// fails to typecheck across crates: each crate's bindings emit
+    /// their own `UniffiRustCallStatusErrorHandler<E>` interface, so
+    /// a handler from `uniffi-one`'s package doesn't satisfy the
+    /// caller crate's helper signature. Rooting both helper and
+    /// handler in the error type's package keeps interface identity
+    /// consistent.
+    pub(super) fn helpers_prefix(
+        ty: &Type,
+        _v: &dyn Values,
+        ci: &ComponentInterface,
+        config: &Config,
+    ) -> Result<String, askama::Error> {
+        let module_path = match ty {
+            Type::Enum { module_path, .. } => Some(module_path.as_str()),
+            Type::Object { module_path, .. } => Some(module_path.as_str()),
+            _ => None,
+        };
+        Ok(match module_path {
+            Some(mp) if mp.split("::").next().unwrap_or("") != ci.crate_name() => {
+                let crate_name = mp.split("::").next().unwrap_or("");
+                let pkg = config
+                    .external_packages
+                    .get(crate_name)
+                    .cloned()
+                    .unwrap_or_else(|| format!("uniffi.{crate_name}"));
+                format!("{pkg}.")
+            }
+            _ => String::new(),
+        })
     }
 
     /// `FfiConverter<Name>.lift` expression. Used at call sites to
