@@ -985,3 +985,18 @@ fn test_futures_kotlin() -> Result<()> {
 fn test_rondpoint_kotlin() -> Result<()> {
     run_kotlin_test("uniffi-example-rondpoint", "scripts/TestRondpoint.kt")
 }
+
+/// Kotlin runtime test for the upstream `uniffi-fixture-futures`. The
+/// existing `test_futures_kotlin` covers the small `uniffi-example-futures`
+/// (one `sayAfter` round-trip); this one covers the heavier fixture used
+/// by upstream's `test_futures.kts`: namespace async fns, async object
+/// methods, async constructors emitted as companion factories,
+/// async-returning-optional, Rust- and Kotlin-implemented async traits
+/// (including coroutine cancellation propagating into the foreign-future
+/// handle map), the Tokio-runtime path, fallible async, async record
+/// return, and lock/timeout behavior under cancellation.
+#[test]
+#[ignore = "requires kotlinc; opt in with `cargo test -- --ignored`"]
+fn test_fixture_futures_kotlin() -> Result<()> {
+    run_kotlin_test("uniffi-fixture-futures", "scripts/TestFixtureFutures.kt")
+}

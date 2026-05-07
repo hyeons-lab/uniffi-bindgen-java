@@ -96,12 +96,21 @@ internal object UniffiCallbackInterface{{ name }} {
                     throw AssertionError("invokeExact failed", t)
                 }
             }
+            // Lift args here (on the upcall thread) — `MemorySegment`
+            // params are bound to the upcall thread's session, so
+            // accessing them from a coroutine dispatcher worker after
+            // the suspend lambda's `launch` would throw
+            // `WrongThreadException`. The lifted values are pure
+            // Kotlin types, safe to capture across threads.
+            {%- for arg in meth.arguments() %}
+            val uniffiLifted{{ loop.index }} = {{ arg|lift_fn }}({{ arg.name()|var_name }})
+            {%- endfor %}
             {%- match meth.throws_type() %}
             {%- when None %}
             UniffiAsyncHelpers.uniffiTraitInterfaceCallAsync(
                 makeCall = { uniffiObj.{{ meth.name()|fn_name() }}(
                     {%- for arg in meth.arguments() %}
-                    {{ arg|lift_fn }}({{ arg.name()|var_name }}){% if !loop.last %},{% endif %}
+                    uniffiLifted{{ loop.index }}{% if !loop.last %},{% endif %}
                     {%- endfor %}
                 ) },
                 handleSuccess = uniffiHandleSuccess,
@@ -112,7 +121,7 @@ internal object UniffiCallbackInterface{{ name }} {
             UniffiAsyncHelpers.uniffiTraitInterfaceCallAsyncWithError<{% match meth.return_type() %}{%- when Some(return_type) %}{{ return_type|type_name(ci, config) }}{%- when None %}Unit{%- endmatch %}, {{ error_type|type_name(ci, config) }}>(
                 makeCall = { uniffiObj.{{ meth.name()|fn_name() }}(
                     {%- for arg in meth.arguments() %}
-                    {{ arg|lift_fn }}({{ arg.name()|var_name }}){% if !loop.last %},{% endif %}
+                    uniffiLifted{{ loop.index }}{% if !loop.last %},{% endif %}
                     {%- endfor %}
                 ) },
                 handleSuccess = uniffiHandleSuccess,

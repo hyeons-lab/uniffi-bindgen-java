@@ -5067,6 +5067,13 @@ interface ThreadsafeCounterInterface {
 // === FILE: uniffi/coverall/UniffiAsyncHelpers.kt ===
 package uniffi.coverall
 
+// `launch` is an extension function on `CoroutineScope` (defined in
+// `kotlinx.coroutines.Builders`); fully qualifying the receiver as
+// `kotlinx.coroutines.GlobalScope.launch(...)` doesn't bring the
+// extension into scope on its own — without this import, the
+// compiler can't resolve the call site below.
+import kotlinx.coroutines.launch
+
 // Async runtime — turns Rust's poll-based future protocol into Kotlin
 // `suspend fun` via `suspendCancellableCoroutine`. Mirrors upstream
 // uniffi-rs's Kotlin Async.kt; differs only in how the continuation

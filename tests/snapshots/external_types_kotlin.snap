@@ -10810,6 +10810,13 @@ object RustBuffer {
 // === FILE: uniffi/imported_types_lib/UniffiAsyncHelpers.kt ===
 package uniffi.imported_types_lib
 
+// `launch` is an extension function on `CoroutineScope` (defined in
+// `kotlinx.coroutines.Builders`); fully qualifying the receiver as
+// `kotlinx.coroutines.GlobalScope.launch(...)` doesn't bring the
+// extension into scope on its own — without this import, the
+// compiler can't resolve the call site below.
+import kotlinx.coroutines.launch
+
 // Async runtime — turns Rust's poll-based future protocol into Kotlin
 // `suspend fun` via `suspendCancellableCoroutine`. Mirrors upstream
 // uniffi-rs's Kotlin Async.kt; differs only in how the continuation
@@ -19576,6 +19583,13 @@ object RustBuffer {
 
 // === FILE: uniffi/uniffi_one_ns/UniffiAsyncHelpers.kt ===
 package uniffi.uniffi_one_ns
+
+// `launch` is an extension function on `CoroutineScope` (defined in
+// `kotlinx.coroutines.Builders`); fully qualifying the receiver as
+// `kotlinx.coroutines.GlobalScope.launch(...)` doesn't bring the
+// extension into scope on its own — without this import, the
+// compiler can't resolve the call site below.
+import kotlinx.coroutines.launch
 
 // Async runtime — turns Rust's poll-based future protocol into Kotlin
 // `suspend fun` via `suspendCancellableCoroutine`. Mirrors upstream

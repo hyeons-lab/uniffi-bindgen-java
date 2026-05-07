@@ -2,6 +2,13 @@
 // UNIFFI:FILE UniffiAsyncHelpers.kt
 package {{ config.package_name() }}
 
+// `launch` is an extension function on `CoroutineScope` (defined in
+// `kotlinx.coroutines.Builders`); fully qualifying the receiver as
+// `kotlinx.coroutines.GlobalScope.launch(...)` doesn't bring the
+// extension into scope on its own — without this import, the
+// compiler can't resolve the call site below.
+import kotlinx.coroutines.launch
+
 // Async runtime — turns Rust's poll-based future protocol into Kotlin
 // `suspend fun` via `suspendCancellableCoroutine`. Mirrors upstream
 // uniffi-rs's Kotlin Async.kt; differs only in how the continuation
@@ -252,9 +259,21 @@ internal object UniffiAsyncHelpers {
         job.start()
     }
 
-    // For testing — exposed as `public` so consumer integration
-    // tests can assert no Job leaks after async stress. Mirrors the
-    // Java backend's `uniffiForeignFutureHandleCount()`.
+    // Internal accessor — the corresponding public wrapper at file
+    // scope (below) exposes the count to consumer integration tests
+    // for foreign-future leak checking. Keeping the body inside the
+    // `internal` object lets us access `foreignFutureHandleMap`
+    // (which depends on `internal` types) without cascading visibility.
     fun uniffiForeignFutureHandleCount(): Int = foreignFutureHandleMap.size()
 {%- endif %}
 }
+
+{%- if ci.has_async_callback_interface_definition() %}
+// Public top-level entry point — proxies to the internal helper.
+// Mirrors the Java backend's `UniffiAsyncHelpers.uniffiForeignFutureHandleCount()`
+// which is package-public in Java; in Kotlin we get the same effect
+// via this thin wrapper because exposing the internal `UniffiAsyncHelpers`
+// directly would cascade through to its `internal` collaborators
+// (`UniffiHandleMap`, `writeDroppedCallback`, etc.).
+fun uniffiForeignFutureHandleCount(): Int = UniffiAsyncHelpers.uniffiForeignFutureHandleCount()
+{%- endif %}
