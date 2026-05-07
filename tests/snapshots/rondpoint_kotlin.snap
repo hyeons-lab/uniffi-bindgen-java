@@ -164,7 +164,6 @@ object FfiConverterBooleanArray : FfiConverterRustBuffer<BooleanArray> {
 
 
 
-
 // === FILE: uniffi/rondpoint/FfiConverterByte.kt ===
 package uniffi.rondpoint
 
@@ -797,7 +796,6 @@ object FfiConverterTypeOptionneur : FfiConverter<Optionneur, Long> {
     }
 }
 
-
 // === FILE: uniffi/rondpoint/FfiConverterTypeOptionneurDictionnaire.kt ===
 package uniffi.rondpoint
 
@@ -879,7 +877,6 @@ object FfiConverterTypeRetourneur : FfiConverter<Retourneur, Long> {
         buf.putLong(lower(value))
     }
 }
-
 
 // === FILE: uniffi/rondpoint/FfiConverterTypeStringifier.kt ===
 package uniffi.rondpoint
@@ -1229,14 +1226,15 @@ package uniffi.rondpoint
 //
 // Structure mirrors `src/templates/ObjectTemplate.java` verbatim at
 // the protocol level — same handshake, same Cleaner integration.
-// `[Trait, WithForeign]` objects (when has_callback_interface is true)
-// implement an additional Kotlin interface so foreign-side
-// implementations can substitute for the Rust wrapper transparently;
-// in that case methods are emitted with `override`.
+// Every Object implements its sibling `<Name>Interface` (method
+// signatures only, no `AutoCloseable`); for `[Trait, WithForeign]`
+// objects this same interface is the user-facing trait declaration
+// that foreign Kotlin classes can implement directly. Methods are
+// emitted with `override` in both cases.
 class Optionneur internal constructor(
     @Suppress("UNUSED_PARAMETER") phantom: UniffiWithHandle,
     internal val handle: Long,
-) : AutoCloseable {
+) : AutoCloseable, OptionneurInterface {
     private val wasDestroyed = java.util.concurrent.atomic.AtomicBoolean(false)
     private val callCounter = java.util.concurrent.atomic.AtomicLong(1L)
     // NoHandle wrappers (handle == 0) don't register a cleaner: there's
@@ -1336,8 +1334,7 @@ class Optionneur internal constructor(
     }
 
     
-    
-    fun sinonBoolean(`value`: kotlin.Boolean): kotlin.Boolean =
+    override fun sinonBoolean(`value`: kotlin.Boolean): kotlin.Boolean =
         FfiConverterBoolean.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -1346,8 +1343,7 @@ class Optionneur internal constructor(
             }
         )
     
-    
-    fun sinonEnum(`value`: Enumeration): Enumeration =
+    override fun sinonEnum(`value`: Enumeration): Enumeration =
         FfiConverterTypeEnumeration.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -1356,88 +1352,77 @@ class Optionneur internal constructor(
             }
         )
     
-    
-    fun sinonF32(`value`: kotlin.Float): kotlin.Float =
+    override fun sinonF32(`value`: kotlin.Float): kotlin.Float =
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallFloat { _, _status ->
                 UniffiLib.uniffi_uniffi_rondpoint_fn_method_optionneur_sinon_f32(uniffiHandle, `value`, _status)
             }
         }
     
-    
-    fun sinonF64(`value`: kotlin.Double): kotlin.Double =
+    override fun sinonF64(`value`: kotlin.Double): kotlin.Double =
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallDouble { _, _status ->
                 UniffiLib.uniffi_uniffi_rondpoint_fn_method_optionneur_sinon_f64(uniffiHandle, `value`, _status)
             }
         }
     
-    
-    fun sinonI16Dec(`value`: kotlin.Short): kotlin.Short =
+    override fun sinonI16Dec(`value`: kotlin.Short): kotlin.Short =
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallShort { _, _status ->
                 UniffiLib.uniffi_uniffi_rondpoint_fn_method_optionneur_sinon_i16_dec(uniffiHandle, `value`, _status)
             }
         }
     
-    
-    fun sinonI16Hex(`value`: kotlin.Short): kotlin.Short =
+    override fun sinonI16Hex(`value`: kotlin.Short): kotlin.Short =
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallShort { _, _status ->
                 UniffiLib.uniffi_uniffi_rondpoint_fn_method_optionneur_sinon_i16_hex(uniffiHandle, `value`, _status)
             }
         }
     
-    
-    fun sinonI32Dec(`value`: kotlin.Int): kotlin.Int =
+    override fun sinonI32Dec(`value`: kotlin.Int): kotlin.Int =
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallInt { _, _status ->
                 UniffiLib.uniffi_uniffi_rondpoint_fn_method_optionneur_sinon_i32_dec(uniffiHandle, `value`, _status)
             }
         }
     
-    
-    fun sinonI32Hex(`value`: kotlin.Int): kotlin.Int =
+    override fun sinonI32Hex(`value`: kotlin.Int): kotlin.Int =
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallInt { _, _status ->
                 UniffiLib.uniffi_uniffi_rondpoint_fn_method_optionneur_sinon_i32_hex(uniffiHandle, `value`, _status)
             }
         }
     
-    
-    fun sinonI64Dec(`value`: kotlin.Long): kotlin.Long =
+    override fun sinonI64Dec(`value`: kotlin.Long): kotlin.Long =
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallLong { _, _status ->
                 UniffiLib.uniffi_uniffi_rondpoint_fn_method_optionneur_sinon_i64_dec(uniffiHandle, `value`, _status)
             }
         }
     
-    
-    fun sinonI64Hex(`value`: kotlin.Long): kotlin.Long =
+    override fun sinonI64Hex(`value`: kotlin.Long): kotlin.Long =
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallLong { _, _status ->
                 UniffiLib.uniffi_uniffi_rondpoint_fn_method_optionneur_sinon_i64_hex(uniffiHandle, `value`, _status)
             }
         }
     
-    
-    fun sinonI8Dec(`value`: kotlin.Byte): kotlin.Byte =
+    override fun sinonI8Dec(`value`: kotlin.Byte): kotlin.Byte =
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallByte { _, _status ->
                 UniffiLib.uniffi_uniffi_rondpoint_fn_method_optionneur_sinon_i8_dec(uniffiHandle, `value`, _status)
             }
         }
     
-    
-    fun sinonI8Hex(`value`: kotlin.Byte): kotlin.Byte =
+    override fun sinonI8Hex(`value`: kotlin.Byte): kotlin.Byte =
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallByte { _, _status ->
                 UniffiLib.uniffi_uniffi_rondpoint_fn_method_optionneur_sinon_i8_hex(uniffiHandle, `value`, _status)
             }
         }
     
-    
-    fun sinonNull(`value`: kotlin.String?): kotlin.String? =
+    override fun sinonNull(`value`: kotlin.String?): kotlin.String? =
         FfiConverterOptionalString.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -1446,8 +1431,7 @@ class Optionneur internal constructor(
             }
         )
     
-    
-    fun sinonSequence(`value`: List<kotlin.String>): List<kotlin.String> =
+    override fun sinonSequence(`value`: List<kotlin.String>): List<kotlin.String> =
         FfiConverterSequenceString.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -1456,8 +1440,7 @@ class Optionneur internal constructor(
             }
         )
     
-    
-    fun sinonString(`value`: kotlin.String): kotlin.String =
+    override fun sinonString(`value`: kotlin.String): kotlin.String =
         FfiConverterString.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -1466,80 +1449,70 @@ class Optionneur internal constructor(
             }
         )
     
-    
-    fun sinonU16Dec(`value`: kotlin.Short): kotlin.Short =
+    override fun sinonU16Dec(`value`: kotlin.Short): kotlin.Short =
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallShort { _, _status ->
                 UniffiLib.uniffi_uniffi_rondpoint_fn_method_optionneur_sinon_u16_dec(uniffiHandle, `value`, _status)
             }
         }
     
-    
-    fun sinonU16Hex(`value`: kotlin.Short): kotlin.Short =
+    override fun sinonU16Hex(`value`: kotlin.Short): kotlin.Short =
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallShort { _, _status ->
                 UniffiLib.uniffi_uniffi_rondpoint_fn_method_optionneur_sinon_u16_hex(uniffiHandle, `value`, _status)
             }
         }
     
-    
-    fun sinonU32Dec(`value`: kotlin.Int): kotlin.Int =
+    override fun sinonU32Dec(`value`: kotlin.Int): kotlin.Int =
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallInt { _, _status ->
                 UniffiLib.uniffi_uniffi_rondpoint_fn_method_optionneur_sinon_u32_dec(uniffiHandle, `value`, _status)
             }
         }
     
-    
-    fun sinonU32Hex(`value`: kotlin.Int): kotlin.Int =
+    override fun sinonU32Hex(`value`: kotlin.Int): kotlin.Int =
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallInt { _, _status ->
                 UniffiLib.uniffi_uniffi_rondpoint_fn_method_optionneur_sinon_u32_hex(uniffiHandle, `value`, _status)
             }
         }
     
-    
-    fun sinonU32Oct(`value`: kotlin.Int): kotlin.Int =
+    override fun sinonU32Oct(`value`: kotlin.Int): kotlin.Int =
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallInt { _, _status ->
                 UniffiLib.uniffi_uniffi_rondpoint_fn_method_optionneur_sinon_u32_oct(uniffiHandle, `value`, _status)
             }
         }
     
-    
-    fun sinonU64Dec(`value`: kotlin.Long): kotlin.Long =
+    override fun sinonU64Dec(`value`: kotlin.Long): kotlin.Long =
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallLong { _, _status ->
                 UniffiLib.uniffi_uniffi_rondpoint_fn_method_optionneur_sinon_u64_dec(uniffiHandle, `value`, _status)
             }
         }
     
-    
-    fun sinonU64Hex(`value`: kotlin.Long): kotlin.Long =
+    override fun sinonU64Hex(`value`: kotlin.Long): kotlin.Long =
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallLong { _, _status ->
                 UniffiLib.uniffi_uniffi_rondpoint_fn_method_optionneur_sinon_u64_hex(uniffiHandle, `value`, _status)
             }
         }
     
-    
-    fun sinonU8Dec(`value`: kotlin.Byte): kotlin.Byte =
+    override fun sinonU8Dec(`value`: kotlin.Byte): kotlin.Byte =
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallByte { _, _status ->
                 UniffiLib.uniffi_uniffi_rondpoint_fn_method_optionneur_sinon_u8_dec(uniffiHandle, `value`, _status)
             }
         }
     
-    
-    fun sinonU8Hex(`value`: kotlin.Byte): kotlin.Byte =
+    override fun sinonU8Hex(`value`: kotlin.Byte): kotlin.Byte =
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallByte { _, _status ->
                 UniffiLib.uniffi_uniffi_rondpoint_fn_method_optionneur_sinon_u8_hex(uniffiHandle, `value`, _status)
             }
         }
     
-    
-    fun sinonZero(`value`: kotlin.Int?): kotlin.Int? =
+    override fun sinonZero(`value`: kotlin.Int?): kotlin.Int? =
         FfiConverterOptionalInt.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -1573,6 +1546,38 @@ data class OptionneurDictionnaire(
 )
 
 
+// === FILE: uniffi/rondpoint/OptionneurInterface.kt ===
+package uniffi.rondpoint
+
+interface OptionneurInterface {
+    fun sinonBoolean(`value`: kotlin.Boolean): kotlin.Boolean
+    fun sinonEnum(`value`: Enumeration): Enumeration
+    fun sinonF32(`value`: kotlin.Float): kotlin.Float
+    fun sinonF64(`value`: kotlin.Double): kotlin.Double
+    fun sinonI16Dec(`value`: kotlin.Short): kotlin.Short
+    fun sinonI16Hex(`value`: kotlin.Short): kotlin.Short
+    fun sinonI32Dec(`value`: kotlin.Int): kotlin.Int
+    fun sinonI32Hex(`value`: kotlin.Int): kotlin.Int
+    fun sinonI64Dec(`value`: kotlin.Long): kotlin.Long
+    fun sinonI64Hex(`value`: kotlin.Long): kotlin.Long
+    fun sinonI8Dec(`value`: kotlin.Byte): kotlin.Byte
+    fun sinonI8Hex(`value`: kotlin.Byte): kotlin.Byte
+    fun sinonNull(`value`: kotlin.String?): kotlin.String?
+    fun sinonSequence(`value`: List<kotlin.String>): List<kotlin.String>
+    fun sinonString(`value`: kotlin.String): kotlin.String
+    fun sinonU16Dec(`value`: kotlin.Short): kotlin.Short
+    fun sinonU16Hex(`value`: kotlin.Short): kotlin.Short
+    fun sinonU32Dec(`value`: kotlin.Int): kotlin.Int
+    fun sinonU32Hex(`value`: kotlin.Int): kotlin.Int
+    fun sinonU32Oct(`value`: kotlin.Int): kotlin.Int
+    fun sinonU64Dec(`value`: kotlin.Long): kotlin.Long
+    fun sinonU64Hex(`value`: kotlin.Long): kotlin.Long
+    fun sinonU8Dec(`value`: kotlin.Byte): kotlin.Byte
+    fun sinonU8Hex(`value`: kotlin.Byte): kotlin.Byte
+    fun sinonZero(`value`: kotlin.Int?): kotlin.Int?
+}
+
+
 // === FILE: uniffi/rondpoint/Retourneur.kt ===
 package uniffi.rondpoint
 
@@ -1584,14 +1589,15 @@ package uniffi.rondpoint
 //
 // Structure mirrors `src/templates/ObjectTemplate.java` verbatim at
 // the protocol level — same handshake, same Cleaner integration.
-// `[Trait, WithForeign]` objects (when has_callback_interface is true)
-// implement an additional Kotlin interface so foreign-side
-// implementations can substitute for the Rust wrapper transparently;
-// in that case methods are emitted with `override`.
+// Every Object implements its sibling `<Name>Interface` (method
+// signatures only, no `AutoCloseable`); for `[Trait, WithForeign]`
+// objects this same interface is the user-facing trait declaration
+// that foreign Kotlin classes can implement directly. Methods are
+// emitted with `override` in both cases.
 class Retourneur internal constructor(
     @Suppress("UNUSED_PARAMETER") phantom: UniffiWithHandle,
     internal val handle: Long,
-) : AutoCloseable {
+) : AutoCloseable, RetourneurInterface {
     private val wasDestroyed = java.util.concurrent.atomic.AtomicBoolean(false)
     private val callCounter = java.util.concurrent.atomic.AtomicLong(1L)
     // NoHandle wrappers (handle == 0) don't register a cleaner: there's
@@ -1691,8 +1697,7 @@ class Retourneur internal constructor(
     }
 
     
-    
-    fun identiqueBoolean(`value`: kotlin.Boolean): kotlin.Boolean =
+    override fun identiqueBoolean(`value`: kotlin.Boolean): kotlin.Boolean =
         FfiConverterBoolean.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -1701,56 +1706,49 @@ class Retourneur internal constructor(
             }
         )
     
-    
-    fun identiqueDouble(`value`: kotlin.Double): kotlin.Double =
+    override fun identiqueDouble(`value`: kotlin.Double): kotlin.Double =
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallDouble { _, _status ->
                 UniffiLib.uniffi_uniffi_rondpoint_fn_method_retourneur_identique_double(uniffiHandle, `value`, _status)
             }
         }
     
-    
-    fun identiqueFloat(`value`: kotlin.Float): kotlin.Float =
+    override fun identiqueFloat(`value`: kotlin.Float): kotlin.Float =
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallFloat { _, _status ->
                 UniffiLib.uniffi_uniffi_rondpoint_fn_method_retourneur_identique_float(uniffiHandle, `value`, _status)
             }
         }
     
-    
-    fun identiqueI16(`value`: kotlin.Short): kotlin.Short =
+    override fun identiqueI16(`value`: kotlin.Short): kotlin.Short =
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallShort { _, _status ->
                 UniffiLib.uniffi_uniffi_rondpoint_fn_method_retourneur_identique_i16(uniffiHandle, `value`, _status)
             }
         }
     
-    
-    fun identiqueI32(`value`: kotlin.Int): kotlin.Int =
+    override fun identiqueI32(`value`: kotlin.Int): kotlin.Int =
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallInt { _, _status ->
                 UniffiLib.uniffi_uniffi_rondpoint_fn_method_retourneur_identique_i32(uniffiHandle, `value`, _status)
             }
         }
     
-    
-    fun identiqueI64(`value`: kotlin.Long): kotlin.Long =
+    override fun identiqueI64(`value`: kotlin.Long): kotlin.Long =
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallLong { _, _status ->
                 UniffiLib.uniffi_uniffi_rondpoint_fn_method_retourneur_identique_i64(uniffiHandle, `value`, _status)
             }
         }
     
-    
-    fun identiqueI8(`value`: kotlin.Byte): kotlin.Byte =
+    override fun identiqueI8(`value`: kotlin.Byte): kotlin.Byte =
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallByte { _, _status ->
                 UniffiLib.uniffi_uniffi_rondpoint_fn_method_retourneur_identique_i8(uniffiHandle, `value`, _status)
             }
         }
     
-    
-    fun identiqueNombres(`value`: DictionnaireNombres): DictionnaireNombres =
+    override fun identiqueNombres(`value`: DictionnaireNombres): DictionnaireNombres =
         FfiConverterTypeDictionnaireNombres.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -1759,8 +1757,7 @@ class Retourneur internal constructor(
             }
         )
     
-    
-    fun identiqueNombresSignes(`value`: DictionnaireNombresSignes): DictionnaireNombresSignes =
+    override fun identiqueNombresSignes(`value`: DictionnaireNombresSignes): DictionnaireNombresSignes =
         FfiConverterTypeDictionnaireNombresSignes.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -1769,8 +1766,7 @@ class Retourneur internal constructor(
             }
         )
     
-    
-    fun identiqueOptionneurDictionnaire(`value`: OptionneurDictionnaire): OptionneurDictionnaire =
+    override fun identiqueOptionneurDictionnaire(`value`: OptionneurDictionnaire): OptionneurDictionnaire =
         FfiConverterTypeOptionneurDictionnaire.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -1779,8 +1775,7 @@ class Retourneur internal constructor(
             }
         )
     
-    
-    fun identiqueString(`value`: kotlin.String): kotlin.String =
+    override fun identiqueString(`value`: kotlin.String): kotlin.String =
         FfiConverterString.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -1789,38 +1784,56 @@ class Retourneur internal constructor(
             }
         )
     
-    
-    fun identiqueU16(`value`: kotlin.Short): kotlin.Short =
+    override fun identiqueU16(`value`: kotlin.Short): kotlin.Short =
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallShort { _, _status ->
                 UniffiLib.uniffi_uniffi_rondpoint_fn_method_retourneur_identique_u16(uniffiHandle, `value`, _status)
             }
         }
     
-    
-    fun identiqueU32(`value`: kotlin.Int): kotlin.Int =
+    override fun identiqueU32(`value`: kotlin.Int): kotlin.Int =
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallInt { _, _status ->
                 UniffiLib.uniffi_uniffi_rondpoint_fn_method_retourneur_identique_u32(uniffiHandle, `value`, _status)
             }
         }
     
-    
-    fun identiqueU64(`value`: kotlin.Long): kotlin.Long =
+    override fun identiqueU64(`value`: kotlin.Long): kotlin.Long =
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallLong { _, _status ->
                 UniffiLib.uniffi_uniffi_rondpoint_fn_method_retourneur_identique_u64(uniffiHandle, `value`, _status)
             }
         }
     
-    
-    fun identiqueU8(`value`: kotlin.Byte): kotlin.Byte =
+    override fun identiqueU8(`value`: kotlin.Byte): kotlin.Byte =
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallByte { _, _status ->
                 UniffiLib.uniffi_uniffi_rondpoint_fn_method_retourneur_identique_u8(uniffiHandle, `value`, _status)
             }
         }
     
+}
+
+
+// === FILE: uniffi/rondpoint/RetourneurInterface.kt ===
+package uniffi.rondpoint
+
+interface RetourneurInterface {
+    fun identiqueBoolean(`value`: kotlin.Boolean): kotlin.Boolean
+    fun identiqueDouble(`value`: kotlin.Double): kotlin.Double
+    fun identiqueFloat(`value`: kotlin.Float): kotlin.Float
+    fun identiqueI16(`value`: kotlin.Short): kotlin.Short
+    fun identiqueI32(`value`: kotlin.Int): kotlin.Int
+    fun identiqueI64(`value`: kotlin.Long): kotlin.Long
+    fun identiqueI8(`value`: kotlin.Byte): kotlin.Byte
+    fun identiqueNombres(`value`: DictionnaireNombres): DictionnaireNombres
+    fun identiqueNombresSignes(`value`: DictionnaireNombresSignes): DictionnaireNombresSignes
+    fun identiqueOptionneurDictionnaire(`value`: OptionneurDictionnaire): OptionneurDictionnaire
+    fun identiqueString(`value`: kotlin.String): kotlin.String
+    fun identiqueU16(`value`: kotlin.Short): kotlin.Short
+    fun identiqueU32(`value`: kotlin.Int): kotlin.Int
+    fun identiqueU64(`value`: kotlin.Long): kotlin.Long
+    fun identiqueU8(`value`: kotlin.Byte): kotlin.Byte
 }
 
 
@@ -1959,14 +1972,15 @@ package uniffi.rondpoint
 //
 // Structure mirrors `src/templates/ObjectTemplate.java` verbatim at
 // the protocol level — same handshake, same Cleaner integration.
-// `[Trait, WithForeign]` objects (when has_callback_interface is true)
-// implement an additional Kotlin interface so foreign-side
-// implementations can substitute for the Rust wrapper transparently;
-// in that case methods are emitted with `override`.
+// Every Object implements its sibling `<Name>Interface` (method
+// signatures only, no `AutoCloseable`); for `[Trait, WithForeign]`
+// objects this same interface is the user-facing trait declaration
+// that foreign Kotlin classes can implement directly. Methods are
+// emitted with `override` in both cases.
 class Stringifier internal constructor(
     @Suppress("UNUSED_PARAMETER") phantom: UniffiWithHandle,
     internal val handle: Long,
-) : AutoCloseable {
+) : AutoCloseable, StringifierInterface {
     private val wasDestroyed = java.util.concurrent.atomic.AtomicBoolean(false)
     private val callCounter = java.util.concurrent.atomic.AtomicLong(1L)
     // NoHandle wrappers (handle == 0) don't register a cleaner: there's
@@ -2066,8 +2080,7 @@ class Stringifier internal constructor(
     }
 
     
-    
-    fun toStringBoolean(`value`: kotlin.Boolean): kotlin.String =
+    override fun toStringBoolean(`value`: kotlin.Boolean): kotlin.String =
         FfiConverterString.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -2076,8 +2089,7 @@ class Stringifier internal constructor(
             }
         )
     
-    
-    fun toStringDouble(`value`: kotlin.Double): kotlin.String =
+    override fun toStringDouble(`value`: kotlin.Double): kotlin.String =
         FfiConverterString.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -2086,8 +2098,7 @@ class Stringifier internal constructor(
             }
         )
     
-    
-    fun toStringFloat(`value`: kotlin.Float): kotlin.String =
+    override fun toStringFloat(`value`: kotlin.Float): kotlin.String =
         FfiConverterString.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -2096,8 +2107,7 @@ class Stringifier internal constructor(
             }
         )
     
-    
-    fun toStringI16(`value`: kotlin.Short): kotlin.String =
+    override fun toStringI16(`value`: kotlin.Short): kotlin.String =
         FfiConverterString.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -2106,8 +2116,7 @@ class Stringifier internal constructor(
             }
         )
     
-    
-    fun toStringI32(`value`: kotlin.Int): kotlin.String =
+    override fun toStringI32(`value`: kotlin.Int): kotlin.String =
         FfiConverterString.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -2116,8 +2125,7 @@ class Stringifier internal constructor(
             }
         )
     
-    
-    fun toStringI64(`value`: kotlin.Long): kotlin.String =
+    override fun toStringI64(`value`: kotlin.Long): kotlin.String =
         FfiConverterString.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -2126,8 +2134,7 @@ class Stringifier internal constructor(
             }
         )
     
-    
-    fun toStringI8(`value`: kotlin.Byte): kotlin.String =
+    override fun toStringI8(`value`: kotlin.Byte): kotlin.String =
         FfiConverterString.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -2136,8 +2143,7 @@ class Stringifier internal constructor(
             }
         )
     
-    
-    fun toStringU16(`value`: kotlin.Short): kotlin.String =
+    override fun toStringU16(`value`: kotlin.Short): kotlin.String =
         FfiConverterString.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -2146,8 +2152,7 @@ class Stringifier internal constructor(
             }
         )
     
-    
-    fun toStringU32(`value`: kotlin.Int): kotlin.String =
+    override fun toStringU32(`value`: kotlin.Int): kotlin.String =
         FfiConverterString.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -2156,8 +2161,7 @@ class Stringifier internal constructor(
             }
         )
     
-    
-    fun toStringU64(`value`: kotlin.Long): kotlin.String =
+    override fun toStringU64(`value`: kotlin.Long): kotlin.String =
         FfiConverterString.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -2166,8 +2170,7 @@ class Stringifier internal constructor(
             }
         )
     
-    
-    fun toStringU8(`value`: kotlin.Byte): kotlin.String =
+    override fun toStringU8(`value`: kotlin.Byte): kotlin.String =
         FfiConverterString.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -2176,8 +2179,7 @@ class Stringifier internal constructor(
             }
         )
     
-    
-    fun wellKnownString(`value`: kotlin.String): kotlin.String =
+    override fun wellKnownString(`value`: kotlin.String): kotlin.String =
         FfiConverterString.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -2186,6 +2188,25 @@ class Stringifier internal constructor(
             }
         )
     
+}
+
+
+// === FILE: uniffi/rondpoint/StringifierInterface.kt ===
+package uniffi.rondpoint
+
+interface StringifierInterface {
+    fun toStringBoolean(`value`: kotlin.Boolean): kotlin.String
+    fun toStringDouble(`value`: kotlin.Double): kotlin.String
+    fun toStringFloat(`value`: kotlin.Float): kotlin.String
+    fun toStringI16(`value`: kotlin.Short): kotlin.String
+    fun toStringI32(`value`: kotlin.Int): kotlin.String
+    fun toStringI64(`value`: kotlin.Long): kotlin.String
+    fun toStringI8(`value`: kotlin.Byte): kotlin.String
+    fun toStringU16(`value`: kotlin.Short): kotlin.String
+    fun toStringU32(`value`: kotlin.Int): kotlin.String
+    fun toStringU64(`value`: kotlin.Long): kotlin.String
+    fun toStringU8(`value`: kotlin.Byte): kotlin.String
+    fun wellKnownString(`value`: kotlin.String): kotlin.String
 }
 
 

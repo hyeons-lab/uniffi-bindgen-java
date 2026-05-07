@@ -3806,7 +3806,6 @@ object FfiConverterBooleanArray : FfiConverterRustBuffer<BooleanArray> {
 
 
 
-
 // === FILE: uniffi/ext_types_custom/FfiConverterByte.kt ===
 package uniffi.ext_types_custom
 
@@ -4855,14 +4854,15 @@ package uniffi.ext_types_custom
 //
 // Structure mirrors `src/templates/ObjectTemplate.java` verbatim at
 // the protocol level — same handshake, same Cleaner integration.
-// `[Trait, WithForeign]` objects (when has_callback_interface is true)
-// implement an additional Kotlin interface so foreign-side
-// implementations can substitute for the Rust wrapper transparently;
-// in that case methods are emitted with `override`.
+// Every Object implements its sibling `<Name>Interface` (method
+// signatures only, no `AutoCloseable`); for `[Trait, WithForeign]`
+// objects this same interface is the user-facing trait declaration
+// that foreign Kotlin classes can implement directly. Methods are
+// emitted with `override` in both cases.
 class InnerObject internal constructor(
     @Suppress("UNUSED_PARAMETER") phantom: UniffiWithHandle,
     internal val handle: Long,
-) : AutoCloseable {
+) : AutoCloseable, InnerObjectInterface {
     private val wasDestroyed = java.util.concurrent.atomic.AtomicBoolean(false)
     private val callCounter = java.util.concurrent.atomic.AtomicLong(1L)
     // NoHandle wrappers (handle == 0) don't register a cleaner: there's
@@ -4962,6 +4962,13 @@ class InnerObject internal constructor(
     }
 
     
+}
+
+
+// === FILE: uniffi/ext_types_custom/InnerObjectInterface.kt ===
+package uniffi.ext_types_custom
+
+interface InnerObjectInterface {
 }
 
 
@@ -8833,14 +8840,15 @@ package uniffi.imported_types_lib
 //
 // Structure mirrors `src/templates/ObjectTemplate.java` verbatim at
 // the protocol level — same handshake, same Cleaner integration.
-// `[Trait, WithForeign]` objects (when has_callback_interface is true)
-// implement an additional Kotlin interface so foreign-side
-// implementations can substitute for the Rust wrapper transparently;
-// in that case methods are emitted with `override`.
+// Every Object implements its sibling `<Name>Interface` (method
+// signatures only, no `AutoCloseable`); for `[Trait, WithForeign]`
+// objects this same interface is the user-facing trait declaration
+// that foreign Kotlin classes can implement directly. Methods are
+// emitted with `override` in both cases.
 class ExternalCrateInterface internal constructor(
     @Suppress("UNUSED_PARAMETER") phantom: UniffiWithHandle,
     internal val handle: Long,
-) : AutoCloseable {
+) : AutoCloseable, ExternalCrateInterfaceInterface {
     private val wasDestroyed = java.util.concurrent.atomic.AtomicBoolean(false)
     private val callCounter = java.util.concurrent.atomic.AtomicLong(1L)
     // NoHandle wrappers (handle == 0) don't register a cleaner: there's
@@ -8934,8 +8942,7 @@ class ExternalCrateInterface internal constructor(
     }
 
     
-    
-    fun `value`(): kotlin.String =
+    override fun `value`(): kotlin.String =
         FfiConverterString.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -8944,6 +8951,14 @@ class ExternalCrateInterface internal constructor(
             }
         )
     
+}
+
+
+// === FILE: uniffi/imported_types_lib/ExternalCrateInterfaceInterface.kt ===
+package uniffi.imported_types_lib
+
+interface ExternalCrateInterfaceInterface {
+    fun `value`(): kotlin.String
 }
 
 
@@ -9057,7 +9072,6 @@ object FfiConverterBooleanArray : FfiConverterRustBuffer<BooleanArray> {
         }
     }
 }
-
 
 
 
@@ -18794,7 +18808,6 @@ object FfiConverterBooleanArray : FfiConverterRustBuffer<BooleanArray> {
 
 
 
-
 // === FILE: uniffi/uniffi_one_ns/FfiConverterByte.kt ===
 package uniffi.uniffi_one_ns
 
@@ -19202,7 +19215,6 @@ object FfiConverterTypeUniffiOneErrorInterface : FfiConverter<UniffiOneErrorInte
         buf.putLong(lower(value))
     }
 }
-
 
 // === FILE: uniffi/uniffi_one_ns/FfiConverterTypeUniffiOneInterface.kt ===
 package uniffi.uniffi_one_ns
@@ -23191,14 +23203,15 @@ package uniffi.uniffi_one_ns
 //
 // Structure mirrors `src/templates/ObjectTemplate.java` verbatim at
 // the protocol level — same handshake, same Cleaner integration.
-// `[Trait, WithForeign]` objects (when has_callback_interface is true)
-// implement an additional Kotlin interface so foreign-side
-// implementations can substitute for the Rust wrapper transparently;
-// in that case methods are emitted with `override`.
+// Every Object implements its sibling `<Name>Interface` (method
+// signatures only, no `AutoCloseable`); for `[Trait, WithForeign]`
+// objects this same interface is the user-facing trait declaration
+// that foreign Kotlin classes can implement directly. Methods are
+// emitted with `override` in both cases.
 class UniffiOneErrorInterface internal constructor(
     @Suppress("UNUSED_PARAMETER") phantom: UniffiWithHandle,
     internal val handle: Long,
-) : AutoCloseable {
+) : AutoCloseable, UniffiOneErrorInterfaceInterface {
     private val wasDestroyed = java.util.concurrent.atomic.AtomicBoolean(false)
     private val callCounter = java.util.concurrent.atomic.AtomicLong(1L)
     // NoHandle wrappers (handle == 0) don't register a cleaner: there's
@@ -23292,8 +23305,7 @@ class UniffiOneErrorInterface internal constructor(
     }
 
     
-    
-    fun message(): kotlin.String =
+    override fun message(): kotlin.String =
         FfiConverterString.lift(
             callWithHandle { uniffiHandle ->
                 UniffiHelpers.uniffiRustCall { _allocator, _status ->
@@ -23309,6 +23321,14 @@ class UniffiOneErrorInterface internal constructor(
                 UniffiLib.uniffi_uniffi_one_fn_method_uniffioneerrorinterface_uniffi_trait_display(_allocator, uniffiHandle, _status)
             }
         })
+}
+
+
+// === FILE: uniffi/uniffi_one_ns/UniffiOneErrorInterfaceInterface.kt ===
+package uniffi.uniffi_one_ns
+
+interface UniffiOneErrorInterfaceInterface {
+    fun message(): kotlin.String
 }
 
 
@@ -23342,14 +23362,15 @@ package uniffi.uniffi_one_ns
 //
 // Structure mirrors `src/templates/ObjectTemplate.java` verbatim at
 // the protocol level — same handshake, same Cleaner integration.
-// `[Trait, WithForeign]` objects (when has_callback_interface is true)
-// implement an additional Kotlin interface so foreign-side
-// implementations can substitute for the Rust wrapper transparently;
-// in that case methods are emitted with `override`.
+// Every Object implements its sibling `<Name>Interface` (method
+// signatures only, no `AutoCloseable`); for `[Trait, WithForeign]`
+// objects this same interface is the user-facing trait declaration
+// that foreign Kotlin classes can implement directly. Methods are
+// emitted with `override` in both cases.
 class UniffiOneInterface internal constructor(
     @Suppress("UNUSED_PARAMETER") phantom: UniffiWithHandle,
     internal val handle: Long,
-) : AutoCloseable {
+) : AutoCloseable, UniffiOneInterfaceInterface {
     private val wasDestroyed = java.util.concurrent.atomic.AtomicBoolean(false)
     private val callCounter = java.util.concurrent.atomic.AtomicLong(1L)
     // NoHandle wrappers (handle == 0) don't register a cleaner: there's
@@ -23449,14 +23470,21 @@ class UniffiOneInterface internal constructor(
     }
 
     
-    
-    fun increment(): kotlin.Int =
+    override fun increment(): kotlin.Int =
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallInt { _, _status ->
                 UniffiLib.uniffi_uniffi_one_fn_method_uniffioneinterface_increment(uniffiHandle, _status)
             }
         }
     
+}
+
+
+// === FILE: uniffi/uniffi_one_ns/UniffiOneInterfaceInterface.kt ===
+package uniffi.uniffi_one_ns
+
+interface UniffiOneInterfaceInterface {
+    fun increment(): kotlin.Int
 }
 
 
@@ -23538,10 +23566,11 @@ package uniffi.uniffi_one_ns
 //
 // Structure mirrors `src/templates/ObjectTemplate.java` verbatim at
 // the protocol level — same handshake, same Cleaner integration.
-// `[Trait, WithForeign]` objects (when has_callback_interface is true)
-// implement an additional Kotlin interface so foreign-side
-// implementations can substitute for the Rust wrapper transparently;
-// in that case methods are emitted with `override`.
+// Every Object implements its sibling `<Name>Interface` (method
+// signatures only, no `AutoCloseable`); for `[Trait, WithForeign]`
+// objects this same interface is the user-facing trait declaration
+// that foreign Kotlin classes can implement directly. Methods are
+// emitted with `override` in both cases.
 class UniffiOneTraitImpl internal constructor(
     @Suppress("UNUSED_PARAMETER") phantom: UniffiWithHandle,
     internal val handle: Long,
@@ -23639,7 +23668,6 @@ class UniffiOneTraitImpl internal constructor(
     }
 
     
-    
     override fun hello(): kotlin.String =
         FfiConverterString.lift(
             callWithHandle { uniffiHandle ->
@@ -23679,10 +23707,11 @@ package uniffi.uniffi_one_ns
 //
 // Structure mirrors `src/templates/ObjectTemplate.java` verbatim at
 // the protocol level — same handshake, same Cleaner integration.
-// `[Trait, WithForeign]` objects (when has_callback_interface is true)
-// implement an additional Kotlin interface so foreign-side
-// implementations can substitute for the Rust wrapper transparently;
-// in that case methods are emitted with `override`.
+// Every Object implements its sibling `<Name>Interface` (method
+// signatures only, no `AutoCloseable`); for `[Trait, WithForeign]`
+// objects this same interface is the user-facing trait declaration
+// that foreign Kotlin classes can implement directly. Methods are
+// emitted with `override` in both cases.
 class UniffiOneUdlTraitImpl internal constructor(
     @Suppress("UNUSED_PARAMETER") phantom: UniffiWithHandle,
     internal val handle: Long,
@@ -23779,7 +23808,6 @@ class UniffiOneUdlTraitImpl internal constructor(
         }
     }
 
-    
     
     override fun hello(): kotlin.String =
         FfiConverterString.lift(

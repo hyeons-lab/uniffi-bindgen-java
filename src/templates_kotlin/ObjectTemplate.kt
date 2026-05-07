@@ -4,14 +4,15 @@
 {%- let (interface_name, impl_class_name) = obj|object_names(ci) %}
 {%- let uniffi_trait_methods = obj.uniffi_trait_methods() %}
 
-{%- if obj.has_callback_interface() %}
-{#- `[Trait, WithForeign]`: emit `interface <Name>` for the user-facing
-   trait declaration. The Rust-side wrapper class (below) implements it,
-   and foreign Kotlin classes can implement it directly to inject their
-   own implementation; the FfiConverter's LSB dispatch routes between
-   the two. -#}
+{#- Always emit a method-signature interface alongside the concrete
+   wrapper so consumers can substitute test doubles or alternative
+   impls. For `[Trait, WithForeign]` objects this interface is also
+   the user-facing trait declaration that foreign Kotlin classes can
+   implement directly; the FfiConverter's LSB dispatch routes between
+   Rust- and foreign-implemented instances. For plain objects the
+   interface is method-signature-only — lifecycle (`AutoCloseable`)
+   stays on the concrete class. Mirrors the Java backend. -#}
 {% include "Interface.kt" %}
-{%- endif %}
 
 // UNIFFI:FILE {{ impl_class_name }}.kt
 package {{ config.package_name() }}
@@ -24,14 +25,15 @@ package {{ config.package_name() }}
 //
 // Structure mirrors `src/templates/ObjectTemplate.java` verbatim at
 // the protocol level — same handshake, same Cleaner integration.
-// `[Trait, WithForeign]` objects (when has_callback_interface is true)
-// implement an additional Kotlin interface so foreign-side
-// implementations can substitute for the Rust wrapper transparently;
-// in that case methods are emitted with `override`.
+// Every Object implements its sibling `<Name>Interface` (method
+// signatures only, no `AutoCloseable`); for `[Trait, WithForeign]`
+// objects this same interface is the user-facing trait declaration
+// that foreign Kotlin classes can implement directly. Methods are
+// emitted with `override` in both cases.
 class {{ impl_class_name }} internal constructor(
     @Suppress("UNUSED_PARAMETER") phantom: UniffiWithHandle,
     internal val handle: Long,
-) : AutoCloseable{% if obj.has_callback_interface() %}, {{ interface_name }}{% endif %}{% if uniffi_trait_methods.ord_cmp.is_some() %}, Comparable<{{ interface_name }}>{% endif %} {
+) : AutoCloseable, {{ interface_name }}{% if let Some(cmp) = uniffi_trait_methods.ord_cmp %}, Comparable<{{ cmp.object_name()|class_name(ci) }}>{% endif %} {
     private val wasDestroyed = java.util.concurrent.atomic.AtomicBoolean(false)
     private val callCounter = java.util.concurrent.atomic.AtomicLong(1L)
     // NoHandle wrappers (handle == 0) don't register a cleaner: there's
@@ -143,11 +145,7 @@ class {{ impl_class_name }} internal constructor(
     }
 
     {% for meth in obj.methods() -%}
-    {%- if obj.has_callback_interface() %}
     {% call kotlin::override_func_decl(meth, "    ") %}
-    {%- else %}
-    {% call kotlin::func_decl(meth, "    ") %}
-    {%- endif %}
     {% endfor %}
 
     {#- Companion object emitted when there are alternate constructors

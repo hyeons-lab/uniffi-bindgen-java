@@ -106,7 +106,6 @@ object FfiConverterBooleanArray : FfiConverterRustBuffer<BooleanArray> {
 
 
 
-
 // === FILE: uniffi/uniffi_fixture_rename/FfiConverterByte.kt ===
 package uniffi.uniffi_fixture_rename
 
@@ -554,7 +553,6 @@ object FfiConverterTypeKtObject : FfiConverter<KtObject, Long> {
     }
 }
 
-
 // === FILE: uniffi/uniffi_fixture_rename/FfiConverterTypeKtRecord.kt ===
 package uniffi.uniffi_fixture_rename
 
@@ -594,7 +592,6 @@ object FfiConverterTypeKtTrait : FfiConverter<KtTrait, Long> {
         buf.putLong(lower(value))
     }
 }
-
 
 // === FILE: uniffi/uniffi_fixture_rename/FfiConverterTypeRenamedEnum.kt ===
 package uniffi.uniffi_fixture_rename
@@ -680,7 +677,6 @@ object FfiConverterTypeRenamedObject : FfiConverter<RenamedObject, Long> {
         buf.putLong(lower(value))
     }
 }
-
 
 // === FILE: uniffi/uniffi_fixture_rename/FfiConverterTypeRenamedRecord.kt ===
 package uniffi.uniffi_fixture_rename
@@ -819,14 +815,15 @@ package uniffi.uniffi_fixture_rename
 //
 // Structure mirrors `src/templates/ObjectTemplate.java` verbatim at
 // the protocol level — same handshake, same Cleaner integration.
-// `[Trait, WithForeign]` objects (when has_callback_interface is true)
-// implement an additional Kotlin interface so foreign-side
-// implementations can substitute for the Rust wrapper transparently;
-// in that case methods are emitted with `override`.
+// Every Object implements its sibling `<Name>Interface` (method
+// signatures only, no `AutoCloseable`); for `[Trait, WithForeign]`
+// objects this same interface is the user-facing trait declaration
+// that foreign Kotlin classes can implement directly. Methods are
+// emitted with `override` in both cases.
 class KtObject internal constructor(
     @Suppress("UNUSED_PARAMETER") phantom: UniffiWithHandle,
     internal val handle: Long,
-) : AutoCloseable {
+) : AutoCloseable, KtObjectInterface {
     private val wasDestroyed = java.util.concurrent.atomic.AtomicBoolean(false)
     private val callCounter = java.util.concurrent.atomic.AtomicLong(1L)
     // NoHandle wrappers (handle == 0) don't register a cleaner: there's
@@ -926,15 +923,23 @@ class KtObject internal constructor(
     }
 
     
-    
     @Throws(KtException::class)
-    fun kotlinMethod(kotlinArg: kotlin.Int): kotlin.Int =
+    override fun kotlinMethod(kotlinArg: kotlin.Int): kotlin.Int =
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallWithErrorInt(KtExceptionErrorHandler()) { _, _status ->
                 UniffiLib.uniffi_uniffi_fixture_rename_fn_method_bindingobject_method(uniffiHandle, kotlinArg, _status)
             }
         }
     
+}
+
+
+// === FILE: uniffi/uniffi_fixture_rename/KtObjectInterface.kt ===
+package uniffi.uniffi_fixture_rename
+
+interface KtObjectInterface {
+    @Throws(KtException::class)
+    fun kotlinMethod(kotlinArg: kotlin.Int): kotlin.Int
 }
 
 
@@ -957,14 +962,15 @@ package uniffi.uniffi_fixture_rename
 //
 // Structure mirrors `src/templates/ObjectTemplate.java` verbatim at
 // the protocol level — same handshake, same Cleaner integration.
-// `[Trait, WithForeign]` objects (when has_callback_interface is true)
-// implement an additional Kotlin interface so foreign-side
-// implementations can substitute for the Rust wrapper transparently;
-// in that case methods are emitted with `override`.
+// Every Object implements its sibling `<Name>Interface` (method
+// signatures only, no `AutoCloseable`); for `[Trait, WithForeign]`
+// objects this same interface is the user-facing trait declaration
+// that foreign Kotlin classes can implement directly. Methods are
+// emitted with `override` in both cases.
 class KtTrait internal constructor(
     @Suppress("UNUSED_PARAMETER") phantom: UniffiWithHandle,
     internal val handle: Long,
-) : AutoCloseable {
+) : AutoCloseable, KtTraitInterface {
     private val wasDestroyed = java.util.concurrent.atomic.AtomicBoolean(false)
     private val callCounter = java.util.concurrent.atomic.AtomicLong(1L)
     // NoHandle wrappers (handle == 0) don't register a cleaner: there's
@@ -1058,14 +1064,21 @@ class KtTrait internal constructor(
     }
 
     
-    
-    fun kotlinTraitMethod(`value`: kotlin.Int): kotlin.Int =
+    override fun kotlinTraitMethod(`value`: kotlin.Int): kotlin.Int =
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallInt { _, _status ->
                 UniffiLib.uniffi_uniffi_fixture_rename_fn_method_bindingtrait_trait_method(uniffiHandle, `value`, _status)
             }
         }
     
+}
+
+
+// === FILE: uniffi/uniffi_fixture_rename/KtTraitInterface.kt ===
+package uniffi.uniffi_fixture_rename
+
+interface KtTraitInterface {
+    fun kotlinTraitMethod(`value`: kotlin.Int): kotlin.Int
 }
 
 
@@ -1177,14 +1190,15 @@ package uniffi.uniffi_fixture_rename
 //
 // Structure mirrors `src/templates/ObjectTemplate.java` verbatim at
 // the protocol level — same handshake, same Cleaner integration.
-// `[Trait, WithForeign]` objects (when has_callback_interface is true)
-// implement an additional Kotlin interface so foreign-side
-// implementations can substitute for the Rust wrapper transparently;
-// in that case methods are emitted with `override`.
+// Every Object implements its sibling `<Name>Interface` (method
+// signatures only, no `AutoCloseable`); for `[Trait, WithForeign]`
+// objects this same interface is the user-facing trait declaration
+// that foreign Kotlin classes can implement directly. Methods are
+// emitted with `override` in both cases.
 class RenamedObject internal constructor(
     @Suppress("UNUSED_PARAMETER") phantom: UniffiWithHandle,
     internal val handle: Long,
-) : AutoCloseable {
+) : AutoCloseable, RenamedObjectInterface {
     private val wasDestroyed = java.util.concurrent.atomic.AtomicBoolean(false)
     private val callCounter = java.util.concurrent.atomic.AtomicLong(1L)
     // NoHandle wrappers (handle == 0) don't register a cleaner: there's
@@ -1278,8 +1292,7 @@ class RenamedObject internal constructor(
     }
 
     
-    
-    fun renamedMethod(): kotlin.Int =
+    override fun renamedMethod(): kotlin.Int =
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallInt { _, _status ->
                 UniffiLib.uniffi_uniffi_fixture_rename_fn_method_renamedobject_renamed_method(uniffiHandle, _status)
@@ -1298,6 +1311,14 @@ class RenamedObject internal constructor(
             )
         
     }
+}
+
+
+// === FILE: uniffi/uniffi_fixture_rename/RenamedObjectInterface.kt ===
+package uniffi.uniffi_fixture_rename
+
+interface RenamedObjectInterface {
+    fun renamedMethod(): kotlin.Int
 }
 
 
@@ -1399,14 +1420,15 @@ package uniffi.uniffi_fixture_rename
 //
 // Structure mirrors `src/templates/ObjectTemplate.java` verbatim at
 // the protocol level — same handshake, same Cleaner integration.
-// `[Trait, WithForeign]` objects (when has_callback_interface is true)
-// implement an additional Kotlin interface so foreign-side
-// implementations can substitute for the Rust wrapper transparently;
-// in that case methods are emitted with `override`.
+// Every Object implements its sibling `<Name>Interface` (method
+// signatures only, no `AutoCloseable`); for `[Trait, WithForeign]`
+// objects this same interface is the user-facing trait declaration
+// that foreign Kotlin classes can implement directly. Methods are
+// emitted with `override` in both cases.
 class Trait internal constructor(
     @Suppress("UNUSED_PARAMETER") phantom: UniffiWithHandle,
     internal val handle: Long,
-) : AutoCloseable {
+) : AutoCloseable, TraitInterface {
     private val wasDestroyed = java.util.concurrent.atomic.AtomicBoolean(false)
     private val callCounter = java.util.concurrent.atomic.AtomicLong(1L)
     // NoHandle wrappers (handle == 0) don't register a cleaner: there's
@@ -1500,14 +1522,21 @@ class Trait internal constructor(
     }
 
     
-    
-    fun renamedTraitMethod(`value`: kotlin.Int): kotlin.Int =
+    override fun renamedTraitMethod(`value`: kotlin.Int): kotlin.Int =
         callWithHandle { uniffiHandle ->
             UniffiHelpers.uniffiRustCallInt { _, _status ->
                 UniffiLib.uniffi_uniffi_fixture_rename_fn_method_trait_renamed_trait_method(uniffiHandle, `value`, _status)
             }
         }
     
+}
+
+
+// === FILE: uniffi/uniffi_fixture_rename/TraitInterface.kt ===
+package uniffi.uniffi_fixture_rename
+
+interface TraitInterface {
+    fun renamedTraitMethod(`value`: kotlin.Int): kotlin.Int
 }
 
 
