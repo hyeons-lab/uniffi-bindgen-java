@@ -2706,6 +2706,13 @@ interface UdlMegaphoneInterface {
 // === FILE: uniffi/fixture/futures/UniffiAsyncHelpers.kt ===
 package uniffi.fixture.futures
 
+// `launch` is an extension function on `CoroutineScope` (defined in
+// `kotlinx.coroutines.Builders`); fully qualifying the receiver as
+// `kotlinx.coroutines.GlobalScope.launch(...)` doesn't bring the
+// extension into scope on its own — without this import, the
+// compiler can't resolve the call site below.
+import kotlinx.coroutines.launch
+
 // Async runtime — turns Rust's poll-based future protocol into Kotlin
 // `suspend fun` via `suspendCancellableCoroutine`. Mirrors upstream
 // uniffi-rs's Kotlin Async.kt; differs only in how the continuation
@@ -2955,11 +2962,20 @@ internal object UniffiAsyncHelpers {
         job.start()
     }
 
-    // For testing — exposed as `public` so consumer integration
-    // tests can assert no Job leaks after async stress. Mirrors the
-    // Java backend's `uniffiForeignFutureHandleCount()`.
+    // Internal accessor — the corresponding public wrapper at file
+    // scope (below) exposes the count to consumer integration tests
+    // for foreign-future leak checking. Keeping the body inside the
+    // `internal` object lets us access `foreignFutureHandleMap`
+    // (which depends on `internal` types) without cascading visibility.
     fun uniffiForeignFutureHandleCount(): Int = foreignFutureHandleMap.size()
 }
+// Public top-level entry point — proxies to the internal helper.
+// Mirrors the Java backend's `UniffiAsyncHelpers.uniffiForeignFutureHandleCount()`
+// which is package-public in Java; in Kotlin we get the same effect
+// via this thin wrapper because exposing the internal `UniffiAsyncHelpers`
+// directly would cascade through to its `internal` collaborators
+// (`UniffiHandleMap`, `writeDroppedCallback`, etc.).
+fun uniffiForeignFutureHandleCount(): Int = UniffiAsyncHelpers.uniffiForeignFutureHandleCount()
 
 // Primitive + String + ByteArray FfiConverters. All are emitted
 // unconditionally for now; a later revision will gate them on which types
@@ -3184,10 +3200,18 @@ internal object UniffiCallbackInterfaceAsyncParser {
                     throw AssertionError("invokeExact failed", t)
                 }
             }
+            // Lift args here (on the upcall thread) — `MemorySegment`
+            // params are bound to the upcall thread's session, so
+            // accessing them from a coroutine dispatcher worker after
+            // the suspend lambda's `launch` would throw
+            // `WrongThreadException`. The lifted values are pure
+            // Kotlin types, safe to capture across threads.
+            val uniffiLifted1 = FfiConverterInt.lift(delayMs)
+            val uniffiLifted2 = FfiConverterInt.lift(`value`)
             UniffiAsyncHelpers.uniffiTraitInterfaceCallAsync(
                 makeCall = { uniffiObj.asString(
-                    FfiConverterInt.lift(delayMs),
-                    FfiConverterInt.lift(`value`)
+                    uniffiLifted1,
+                    uniffiLifted2
                 ) },
                 handleSuccess = uniffiHandleSuccess,
                 handleError = uniffiHandleError,
@@ -3243,10 +3267,18 @@ internal object UniffiCallbackInterfaceAsyncParser {
                     throw AssertionError("invokeExact failed", t)
                 }
             }
+            // Lift args here (on the upcall thread) — `MemorySegment`
+            // params are bound to the upcall thread's session, so
+            // accessing them from a coroutine dispatcher worker after
+            // the suspend lambda's `launch` would throw
+            // `WrongThreadException`. The lifted values are pure
+            // Kotlin types, safe to capture across threads.
+            val uniffiLifted1 = FfiConverterInt.lift(delayMs)
+            val uniffiLifted2 = FfiConverterString.lift(`value`)
             UniffiAsyncHelpers.uniffiTraitInterfaceCallAsyncWithError<kotlin.Int, ParserException>(
                 makeCall = { uniffiObj.tryFromString(
-                    FfiConverterInt.lift(delayMs),
-                    FfiConverterString.lift(`value`)
+                    uniffiLifted1,
+                    uniffiLifted2
                 ) },
                 handleSuccess = uniffiHandleSuccess,
                 handleError = uniffiHandleError,
@@ -3301,9 +3333,16 @@ internal object UniffiCallbackInterfaceAsyncParser {
                     throw AssertionError("invokeExact failed", t)
                 }
             }
+            // Lift args here (on the upcall thread) — `MemorySegment`
+            // params are bound to the upcall thread's session, so
+            // accessing them from a coroutine dispatcher worker after
+            // the suspend lambda's `launch` would throw
+            // `WrongThreadException`. The lifted values are pure
+            // Kotlin types, safe to capture across threads.
+            val uniffiLifted1 = FfiConverterInt.lift(delayMs)
             UniffiAsyncHelpers.uniffiTraitInterfaceCallAsync(
                 makeCall = { uniffiObj.delay(
-                    FfiConverterInt.lift(delayMs)
+                    uniffiLifted1
                 ) },
                 handleSuccess = uniffiHandleSuccess,
                 handleError = uniffiHandleError,
@@ -3357,9 +3396,16 @@ internal object UniffiCallbackInterfaceAsyncParser {
                     throw AssertionError("invokeExact failed", t)
                 }
             }
+            // Lift args here (on the upcall thread) — `MemorySegment`
+            // params are bound to the upcall thread's session, so
+            // accessing them from a coroutine dispatcher worker after
+            // the suspend lambda's `launch` would throw
+            // `WrongThreadException`. The lifted values are pure
+            // Kotlin types, safe to capture across threads.
+            val uniffiLifted1 = FfiConverterString.lift(delayMs)
             UniffiAsyncHelpers.uniffiTraitInterfaceCallAsyncWithError<Unit, ParserException>(
                 makeCall = { uniffiObj.tryDelay(
-                    FfiConverterString.lift(delayMs)
+                    uniffiLifted1
                 ) },
                 handleSuccess = uniffiHandleSuccess,
                 handleError = uniffiHandleError,
