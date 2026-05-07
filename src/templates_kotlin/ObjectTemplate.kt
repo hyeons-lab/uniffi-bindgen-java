@@ -200,7 +200,16 @@ package {{ config.package_name() }}
 // the LSB-tagged callback handle or the plain Rust handle).
 class {{ impl_class_name }}ErrorHandler : UniffiRustCallStatusErrorHandler<{{ impl_class_name }}> {
     override fun lift(errorBuf: java.lang.foreign.MemorySegment): {{ impl_class_name }} =
-        {{ ffi_converter_name }}.read(RustBuffer.asByteBuffer(errorBuf))
+        // `uniffiCheckCallStatus` does not free the error buffer for
+        // typed errors — that's the handler's responsibility. Wrap
+        // the read in `try/finally` so a malformed/throwing read
+        // still releases the RustBuffer instead of leaking it on
+        // every thrown error.
+        try {
+            {{ ffi_converter_name }}.read(RustBuffer.asByteBuffer(errorBuf))
+        } finally {
+            RustBuffer.free(errorBuf)
+        }
 }
 {%- endif %}
 

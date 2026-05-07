@@ -25081,7 +25081,16 @@ import uniffi.imported_types_sublib.*
 // the LSB-tagged callback handle or the plain Rust handle).
 class UniffiOneErrorInterfaceErrorHandler : UniffiRustCallStatusErrorHandler<UniffiOneErrorInterface> {
     override fun lift(errorBuf: java.lang.foreign.MemorySegment): UniffiOneErrorInterface =
-        FfiConverterTypeUniffiOneErrorInterface.read(RustBuffer.asByteBuffer(errorBuf))
+        // `uniffiCheckCallStatus` does not free the error buffer for
+        // typed errors — that's the handler's responsibility. Wrap
+        // the read in `try/finally` so a malformed/throwing read
+        // still releases the RustBuffer instead of leaking it on
+        // every thrown error.
+        try {
+            FfiConverterTypeUniffiOneErrorInterface.read(RustBuffer.asByteBuffer(errorBuf))
+        } finally {
+            RustBuffer.free(errorBuf)
+        }
 }
 
 
