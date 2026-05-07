@@ -239,7 +239,7 @@ fn inject_external_imports_kotlin(bindings_str: &str, config: &gen_kotlin::Confi
     let mut out = String::with_capacity(bindings_str.len() + import_block.len() * 16);
     for line in bindings_str.split_inclusive('\n') {
         out.push_str(line);
-        let trimmed = line.trim_end_matches(|c| c == '\r' || c == '\n');
+        let trimmed = line.trim_end_matches(['\r', '\n']);
         if trimmed.starts_with("package ") {
             out.push_str(&import_block);
             out.push('\n');
