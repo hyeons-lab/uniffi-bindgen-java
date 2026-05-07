@@ -7,6 +7,14 @@ name: Rust CI
   workflow_dispatch: null
   schedule:
   - cron: 0 14 * * 1
+# Cancel stale runs from older commits on the same ref. Saves CI
+# minutes when a PR receives multiple pushes in rapid succession
+# (the slow `kotlin-ci` macos-26 leg adds up). `github.ref` scopes
+# per-PR (refs/pull/<n>/merge) and per-branch (refs/heads/<name>),
+# so different PRs and `main` runs never cancel each other.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   rust-ci:
     uses: IronCoreLabs/workflows/.github/workflows/rust-ci.yaml@rust-ci-v2
