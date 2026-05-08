@@ -77,5 +77,18 @@ jobs:
         with:
           path: target/kotlin-deps
           key: kotlinx-coroutines-${{ runner.os }}-1.10.2
+      # macos-26 GitHub runners exhibit parallel-test contention that
+      # ubuntu-latest doesn't — observed in #56 (`test_fixture_futures_kotlin`
+      # transient failures) and now confirmed on the cancelled
+      # `macos-26 / JDK 22` leg of this matrix's first run, where 5
+      # tests sat in `running for over 60 seconds` for 20+ min before
+      # the concurrency cancel arrived. Forcing serial execution on
+      # macos-26 trades total wall time for reliability — ubuntu still
+      # runs parallel.
       - name: Run Kotlin runtime tests
-        run: cargo test --test tests kotlin -- --ignored
+        run: |
+          if [ "${{ runner.os }}" = "macOS" ]; then
+            cargo test --test tests kotlin -- --ignored --test-threads=1
+          else
+            cargo test --test tests kotlin -- --ignored
+          fi
