@@ -25,21 +25,27 @@ jobs:
     secrets: inherit
 
   kotlin-ci:
-    name: Kotlin runtime tests (${{ matrix.os }})
+    name: Kotlin runtime tests (${{ matrix.os }}, JDK ${{ matrix.jdk }})
     strategy:
       fail-fast: false
       matrix:
+        # JDK floor is 22 — that's where `java.lang.foreign.*` (the
+        # FFM API the Kotlin codegen uses for downcalls and upcall
+        # stubs) became a stable, non-preview feature. JDK 21 has
+        # FFM as preview only; JDK 17 has no FFM at all. Top end
+        # is JDK 25 (current LTS).
         os: [ubuntu-latest, macos-26]
+        jdk: ['22', '25']
     runs-on: ${{ matrix.os }}
     env:
       JDK_JAVA_OPTIONS: --enable-native-access=ALL-UNNAMED
     steps:
       - uses: actions/checkout@v4
-      - name: Set up JDK 25
+      - name: Set up JDK ${{ matrix.jdk }}
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '25'
+          java-version: ${{ matrix.jdk }}
       - name: Set up Kotlin
         uses: fwilhe2/setup-kotlin@v1
         with:
