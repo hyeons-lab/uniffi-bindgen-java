@@ -46,6 +46,17 @@ jobs:
         with:
           distribution: temurin
           java-version: ${{ matrix.jdk }}
+      # `fwilhe2/setup-kotlin` uses `@actions/tool-cache` which writes
+      # under `RUNNER_TOOL_CACHE` (e.g. `/opt/hostedtoolcache`). That
+      # cache lives on the runner image and isn't preserved across
+      # workflow runs, so kotlinc gets re-downloaded (~80 MB) on every
+      # job. Pinning the kotlin subtree of the tool cache keyed on
+      # OS+version lets the second-and-later runs hit the cache.
+      - name: Cache kotlinc
+        uses: actions/cache@v5
+        with:
+          path: ${{ runner.tool_cache }}/kotlin
+          key: kotlinc-${{ runner.os }}-2.3.20
       - name: Set up Kotlin
         uses: fwilhe2/setup-kotlin@v1
         with:
@@ -55,5 +66,16 @@ jobs:
         with:
           toolchain: 1.94.0
       - uses: Swatinem/rust-cache@v2
+      # `tests/tests.rs::ensure_kotlinx_coroutines_jar` lazily downloads
+      # `kotlinx-coroutines-core-jvm-<VERSION>.jar` from Maven Central
+      # to `target/kotlin-deps/` on first test run. `Swatinem/rust-cache`
+      # only caches the standard `target/<profile>` subtree, so this
+      # custom path needs its own cache step. Key includes the version
+      # so a bump invalidates and re-downloads.
+      - name: Cache kotlinx-coroutines JAR
+        uses: actions/cache@v5
+        with:
+          path: target/kotlin-deps
+          key: kotlinx-coroutines-${{ runner.os }}-1.10.2
       - name: Run Kotlin runtime tests
         run: cargo test --test tests kotlin -- --ignored
