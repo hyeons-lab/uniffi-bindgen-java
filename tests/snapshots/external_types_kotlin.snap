@@ -16153,6 +16153,7 @@ internal object UniffiLib {
     init {
         NamespaceLibrary.uniffiCheckContractApiVersion()
         NamespaceLibrary.uniffiCheckApiChecksums()
+        uniffi.uniffi_one_ns.UniffiCallbackInterfaceUniffiOneTrait.register()
     }
 }
 
@@ -19940,6 +19941,7 @@ internal object UniffiLib {
     init {
         NamespaceLibrary.uniffiCheckContractApiVersion()
         NamespaceLibrary.uniffiCheckApiChecksums()
+        uniffi.uniffi_one_ns.UniffiCallbackInterfaceUniffiOneTrait.register()
     }
 }
 

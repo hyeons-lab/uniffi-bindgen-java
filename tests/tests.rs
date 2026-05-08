@@ -577,7 +577,16 @@ fn bindgen_loader_with_config_override(
     let merged = merge_toml_overrides(maybe_base.as_deref(), maybe_extras.as_deref())?;
 
     let mut paths = BindgenPaths::default();
-    if !merged.is_empty() {
+    // Only add the config-override layer when actual extras exist.
+    // `ConfigOverrideLayer.get_config(_crate)` ignores the crate name
+    // (see `uniffi_bindgen::bindgen_paths::ConfigOverrideLayer`) and
+    // applies the override to every crate. For multi-crate fixtures
+    // (e.g. `uniffi-fixture-ext-types` with 5 crates), re-passing the
+    // base alone clobbers each external crate's own
+    // `[bindings.<lang>]` config. Skipping the override when extras
+    // are empty falls through to the per-crate `cargo_metadata`
+    // layer, preserving each crate's local TOML.
+    if maybe_extras.is_some() && !merged.is_empty() {
         // Unique-ish per-fixture override file; nanosecond is enough
         // to avoid collisions across parallel fixtures.
         let now = SystemTime::now()
@@ -999,4 +1008,23 @@ fn test_rondpoint_kotlin() -> Result<()> {
 #[ignore = "requires kotlinc; opt in with `cargo test -- --ignored`"]
 fn test_fixture_futures_kotlin() -> Result<()> {
     run_kotlin_test("uniffi-fixture-futures", "scripts/TestFixtureFutures.kt")
+}
+
+/// Kotlin runtime test for the upstream `uniffi-fixture-ext-types`.
+/// Round-trips cross-crate type imports across 5 generated packages
+/// (`imported_types_lib`, `imported_types_sublib`, `uniffi_one_ns`,
+/// `ext_types_custom`, `customtypes`): records with cross-crate
+/// fields, cross-crate Object/Trait types, foreign trait impls
+/// (regression for upstream #2343 vtable init), URL custom-type
+/// (lifted as `java.net.URL` per `examples/custom-types`'s own
+/// `[bindings.kotlin]` config), data-class-wrapped Guid/Ouid/HandleU8
+/// customs, sealed-enum + Object-as-error error types (exercising
+/// PR #57's `is_error` Object branch and `helpers_prefix` cross-package
+/// helper qualification), and per-binding `BindingRenamedType →
+/// KotlinRenamedType` rename. Companion to the snapshot test landed
+/// in PR #54.
+#[test]
+#[ignore = "requires kotlinc; opt in with `cargo test -- --ignored`"]
+fn test_external_types_kotlin() -> Result<()> {
+    run_kotlin_test("uniffi-fixture-ext-types", "scripts/TestExternalTypes.kt")
 }

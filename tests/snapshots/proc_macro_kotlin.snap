@@ -9017,9 +9017,9 @@ internal object UniffiLib {
     init {
         NamespaceLibrary.uniffiCheckContractApiVersion()
         NamespaceLibrary.uniffiCheckApiChecksums()
-        UniffiCallbackInterfaceTraitWithForeign.register()
         UniffiCallbackInterfaceOtherCallbackInterface.register()
         UniffiCallbackInterfaceTestCallbackInterface.register()
+        UniffiCallbackInterfaceTraitWithForeign.register()
     }
 }
 
