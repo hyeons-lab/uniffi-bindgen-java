@@ -6030,6 +6030,15 @@ internal object UniffiCallbackInterfaceGuidCallback {
     }
 }
 
+// Public top-level entry point so a downstream crate's `UniffiLib`
+// init can register this vtable across module boundaries. The
+// `internal object UniffiCallbackInterfaceGuidCallback` itself can't be referenced
+// from outside its compile module (Kotlin `internal` is module-
+// scoped); proxying through a public function exposes only the
+// `register()` entry without leaking the rest of the internal
+// surface (`vtable`, upcall stub objects, etc.).
+fun registerUniffiCallbackInterfaceGuidCallback() = UniffiCallbackInterfaceGuidCallback.register()
+
 
 // === FILE: uniffi/ext_types_custom/UniffiCallbackInterfaceGuidCallbackMethod0.kt ===
 package uniffi.ext_types_custom
@@ -9245,7 +9254,7 @@ internal object UniffiLib {
     init {
         NamespaceLibrary.uniffiCheckContractApiVersion()
         NamespaceLibrary.uniffiCheckApiChecksums()
-        UniffiCallbackInterfaceGuidCallback.register()
+        registerUniffiCallbackInterfaceGuidCallback()
     }
 }
 
@@ -16153,7 +16162,7 @@ internal object UniffiLib {
     init {
         NamespaceLibrary.uniffiCheckContractApiVersion()
         NamespaceLibrary.uniffiCheckApiChecksums()
-        uniffi.uniffi_one_ns.UniffiCallbackInterfaceUniffiOneTrait.register()
+        uniffi.uniffi_one_ns.registerUniffiCallbackInterfaceUniffiOneTrait()
     }
 }
 
@@ -19941,7 +19950,7 @@ internal object UniffiLib {
     init {
         NamespaceLibrary.uniffiCheckContractApiVersion()
         NamespaceLibrary.uniffiCheckApiChecksums()
-        uniffi.uniffi_one_ns.UniffiCallbackInterfaceUniffiOneTrait.register()
+        uniffi.uniffi_one_ns.registerUniffiCallbackInterfaceUniffiOneTrait()
     }
 }
 
@@ -21541,6 +21550,15 @@ internal object UniffiCallbackInterfaceUniffiOneTrait {
     }
 }
 
+// Public top-level entry point so a downstream crate's `UniffiLib`
+// init can register this vtable across module boundaries. The
+// `internal object UniffiCallbackInterfaceUniffiOneTrait` itself can't be referenced
+// from outside its compile module (Kotlin `internal` is module-
+// scoped); proxying through a public function exposes only the
+// `register()` entry without leaking the rest of the internal
+// surface (`vtable`, upcall stub objects, etc.).
+fun registerUniffiCallbackInterfaceUniffiOneTrait() = UniffiCallbackInterfaceUniffiOneTrait.register()
+
 
 // === FILE: uniffi/uniffi_one_ns/UniffiCallbackInterfaceUniffiOneTraitMethod0.kt ===
 package uniffi.uniffi_one_ns
@@ -21659,6 +21677,15 @@ internal object UniffiCallbackInterfaceUniffiOneUDLTrait {
             FfiConverterTypeUniffiOneUDLTrait.handleMap.clone(handle)
     }
 }
+
+// Public top-level entry point so a downstream crate's `UniffiLib`
+// init can register this vtable across module boundaries. The
+// `internal object UniffiCallbackInterfaceUniffiOneUDLTrait` itself can't be referenced
+// from outside its compile module (Kotlin `internal` is module-
+// scoped); proxying through a public function exposes only the
+// `register()` entry without leaking the rest of the internal
+// surface (`vtable`, upcall stub objects, etc.).
+fun registerUniffiCallbackInterfaceUniffiOneUDLTrait() = UniffiCallbackInterfaceUniffiOneUDLTrait.register()
 
 
 // === FILE: uniffi/uniffi_one_ns/UniffiCallbackInterfaceUniffiOneUdlTraitMethod0.kt ===
@@ -24879,8 +24906,8 @@ internal object UniffiLib {
     init {
         NamespaceLibrary.uniffiCheckContractApiVersion()
         NamespaceLibrary.uniffiCheckApiChecksums()
-        UniffiCallbackInterfaceUniffiOneTrait.register()
-        UniffiCallbackInterfaceUniffiOneUDLTrait.register()
+        registerUniffiCallbackInterfaceUniffiOneTrait()
+        registerUniffiCallbackInterfaceUniffiOneUDLTrait()
     }
 }
 

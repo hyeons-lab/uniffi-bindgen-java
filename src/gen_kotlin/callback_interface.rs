@@ -4,11 +4,13 @@
 
 //! `CodeType` impl for UniFFI callback interfaces (pure
 //! foreign-implemented traits). Parallel to `gen_java/callback_interface.rs`.
-//! The only meaningful difference is the `initialization_fn`: Kotlin
-//! emits an `object UniffiCallbackInterface<Name>` singleton (not a
-//! class with a static INSTANCE field), so the registration call is
-//! `UniffiCallbackInterface<Name>.register` — no `.INSTANCE`
-//! indirection like the Java backend needs.
+//! The meaningful difference is the `initialization_fn`: Kotlin emits
+//! an `internal object UniffiCallbackInterface<Name>` plus a public
+//! top-level `registerUniffiCallbackInterface<Name>()` proxy
+//! (CallbackInterfaceImpl.kt). Init code calls the proxy so a
+//! downstream crate's `UniffiLib` init can register this vtable
+//! across compile modules — the internal object itself is
+//! module-scoped and would not be reachable.
 
 use super::{CodeType, Config, KotlinCodeOracle};
 use uniffi_bindgen::ComponentInterface;
@@ -34,6 +36,6 @@ impl CodeType for CallbackInterfaceCodeType {
     }
 
     fn initialization_fn(&self) -> Option<String> {
-        Some(format!("UniffiCallbackInterface{}.register", self.id))
+        Some(format!("registerUniffiCallbackInterface{}", self.id))
     }
 }

@@ -999,6 +999,15 @@ internal object UniffiCallbackInterfaceCounter {
     }
 }
 
+// Public top-level entry point so a downstream crate's `UniffiLib`
+// init can register this vtable across module boundaries. The
+// `internal object UniffiCallbackInterfaceCounter` itself can't be referenced
+// from outside its compile module (Kotlin `internal` is module-
+// scoped); proxying through a public function exposes only the
+// `register()` entry without leaking the rest of the internal
+// surface (`vtable`, upcall stub objects, etc.).
+fun registerUniffiCallbackInterfaceCounter() = UniffiCallbackInterfaceCounter.register()
+
 
 // === FILE: uniffi/trait_with_foreign/UniffiCallbackInterfaceCounterMethod0.kt ===
 package uniffi.trait_with_foreign
@@ -3725,7 +3734,7 @@ internal object UniffiLib {
     init {
         NamespaceLibrary.uniffiCheckContractApiVersion()
         NamespaceLibrary.uniffiCheckApiChecksums()
-        UniffiCallbackInterfaceCounter.register()
+        registerUniffiCallbackInterfaceCounter()
     }
 }
 

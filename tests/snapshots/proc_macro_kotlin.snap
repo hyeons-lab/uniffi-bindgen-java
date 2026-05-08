@@ -3453,6 +3453,15 @@ internal object UniffiCallbackInterfaceOtherCallbackInterface {
     }
 }
 
+// Public top-level entry point so a downstream crate's `UniffiLib`
+// init can register this vtable across module boundaries. The
+// `internal object UniffiCallbackInterfaceOtherCallbackInterface` itself can't be referenced
+// from outside its compile module (Kotlin `internal` is module-
+// scoped); proxying through a public function exposes only the
+// `register()` entry without leaking the rest of the internal
+// surface (`vtable`, upcall stub objects, etc.).
+fun registerUniffiCallbackInterfaceOtherCallbackInterface() = UniffiCallbackInterfaceOtherCallbackInterface.register()
+
 
 // === FILE: uniffi/fixture/proc_macro/UniffiCallbackInterfaceOtherCallbackInterfaceMethod0.kt ===
 package uniffi.fixture.proc_macro
@@ -3731,6 +3740,15 @@ internal object UniffiCallbackInterfaceTestCallbackInterface {
             FfiConverterTypeTestCallbackInterface.handleMap.clone(handle)
     }
 }
+
+// Public top-level entry point so a downstream crate's `UniffiLib`
+// init can register this vtable across module boundaries. The
+// `internal object UniffiCallbackInterfaceTestCallbackInterface` itself can't be referenced
+// from outside its compile module (Kotlin `internal` is module-
+// scoped); proxying through a public function exposes only the
+// `register()` entry without leaking the rest of the internal
+// surface (`vtable`, upcall stub objects, etc.).
+fun registerUniffiCallbackInterfaceTestCallbackInterface() = UniffiCallbackInterfaceTestCallbackInterface.register()
 
 
 // === FILE: uniffi/fixture/proc_macro/UniffiCallbackInterfaceTestCallbackInterfaceMethod0.kt ===
@@ -4117,6 +4135,15 @@ internal object UniffiCallbackInterfaceTraitWithForeign {
             FfiConverterTypeTraitWithForeign.handleMap.clone(handle)
     }
 }
+
+// Public top-level entry point so a downstream crate's `UniffiLib`
+// init can register this vtable across module boundaries. The
+// `internal object UniffiCallbackInterfaceTraitWithForeign` itself can't be referenced
+// from outside its compile module (Kotlin `internal` is module-
+// scoped); proxying through a public function exposes only the
+// `register()` entry without leaking the rest of the internal
+// surface (`vtable`, upcall stub objects, etc.).
+fun registerUniffiCallbackInterfaceTraitWithForeign() = UniffiCallbackInterfaceTraitWithForeign.register()
 
 
 // === FILE: uniffi/fixture/proc_macro/UniffiCallbackInterfaceTraitWithForeignMethod0.kt ===
@@ -9017,9 +9044,9 @@ internal object UniffiLib {
     init {
         NamespaceLibrary.uniffiCheckContractApiVersion()
         NamespaceLibrary.uniffiCheckApiChecksums()
-        UniffiCallbackInterfaceOtherCallbackInterface.register()
-        UniffiCallbackInterfaceTestCallbackInterface.register()
-        UniffiCallbackInterfaceTraitWithForeign.register()
+        registerUniffiCallbackInterfaceOtherCallbackInterface()
+        registerUniffiCallbackInterfaceTestCallbackInterface()
+        registerUniffiCallbackInterfaceTraitWithForeign()
     }
 }
 
