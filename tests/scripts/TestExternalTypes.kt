@@ -62,10 +62,19 @@ fun main() {
     val ct = ImportedTypesLib.getCombinedType(null)
     check(ct.uot.sval == "hello")
     check(ct.guid.value == "a-guid")
-    check(ct.url.value == java.net.URI("http://example.com/").toURL())
+    // Compare via toExternalForm rather than `URL.equals`, which can
+    // trigger DNS resolution and make tests flaky offline / slow.
+    check(ct.url.value.toExternalForm() == "http://example.com/")
 
+    // CombinedType round-trip: equality goes through the data class
+    // generated equals, which descends into URL.equals. Compare
+    // CombinedType field-by-field with URL via toExternalForm so
+    // we don't rely on URL.equals for the round-trip check.
     val ct2 = ImportedTypesLib.getCombinedType(ct)
-    check(ct == ct2)
+    check(ct.uot == ct2.uot)
+    check(ct.guid == ct2.guid)
+    check(ct.url.value.toExternalForm() == ct2.url.value.toExternalForm())
+    check(ct.ecd == ct2.ecd)
 
     // ── ObjectsType: record with optional cross-crate Object/Trait
     // fields. Null-input gives both fields null per fixture impl.
@@ -80,13 +89,20 @@ fun main() {
 
     // ── URL custom-type — `examples/custom-types/uniffi.toml`'s
     // `[bindings.kotlin.custom_types.Url]` lifts as `java.net.URL`,
-    // so `Url(value: URL)` is the data-class shape.
+    // so `Url(value: URL)` is the data-class shape. The data class's
+    // generated equals descends into `URL.equals`, which can trigger
+    // DNS resolution; compare via `toExternalForm` for a stable
+    // representation that's deterministic offline.
     val url = Url(java.net.URI("http://example.com/").toURL())
-    check(ImportedTypesLib.getUrl(url) == url)
-    check(ImportedTypesLib.getMaybeUrl(url)!! == url)
+    val expected = "http://example.com/"
+    check(ImportedTypesLib.getUrl(url).value.toExternalForm() == expected)
+    check(ImportedTypesLib.getMaybeUrl(url)!!.value.toExternalForm() == expected)
     check(ImportedTypesLib.getMaybeUrl(null) == null)
-    check(ImportedTypesLib.getUrls(listOf(url)) == listOf(url))
-    check(ImportedTypesLib.getMaybeUrls(listOf(url, null)) == listOf(url, null))
+    check(ImportedTypesLib.getUrls(listOf(url)).map { it.value.toExternalForm() } == listOf(expected))
+    check(
+        ImportedTypesLib.getMaybeUrls(listOf(url, null)).map { it?.value?.toExternalForm() }
+            == listOf(expected, null)
+    )
 
     // ── Guid / Ouid (data-class-wrapped customs).
     check(ExtTypesCustom.getGuid(Guid("guid")).value == "guid")

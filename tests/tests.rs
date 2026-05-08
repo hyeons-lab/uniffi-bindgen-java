@@ -577,16 +577,19 @@ fn bindgen_loader_with_config_override(
     let merged = merge_toml_overrides(maybe_base.as_deref(), maybe_extras.as_deref())?;
 
     let mut paths = BindgenPaths::default();
-    // Only add the config-override layer when actual extras exist.
-    // `ConfigOverrideLayer.get_config(_crate)` ignores the crate name
-    // (see `uniffi_bindgen::bindgen_paths::ConfigOverrideLayer`) and
-    // applies the override to every crate. For multi-crate fixtures
+    // Only add the config-override layer when actual non-empty extras
+    // exist. `ConfigOverrideLayer.get_config(_crate)` ignores the
+    // crate name (see `uniffi_bindgen::bindgen_paths::ConfigOverrideLayer`)
+    // and applies the override to every crate. For multi-crate fixtures
     // (e.g. `uniffi-fixture-ext-types` with 5 crates), re-passing the
     // base alone clobbers each external crate's own
     // `[bindings.<lang>]` config. Skipping the override when extras
-    // are empty falls through to the per-crate `cargo_metadata`
-    // layer, preserving each crate's local TOML.
-    if maybe_extras.is_some() && !merged.is_empty() {
+    // are absent or whitespace-only falls through to the per-crate
+    // `cargo_metadata` layer, preserving each crate's local TOML.
+    let has_extras = maybe_extras
+        .as_deref()
+        .is_some_and(|s| !s.trim().is_empty());
+    if has_extras && !merged.is_empty() {
         // Unique-ish per-fixture override file; nanosecond is enough
         // to avoid collisions across parallel fixtures.
         let now = SystemTime::now()

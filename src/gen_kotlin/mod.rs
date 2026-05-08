@@ -731,13 +731,13 @@ impl<'a> KotlinWrapper<'a> {
             let Some(init) = t.clone().as_codetype().initialization_fn() else {
                 continue;
             };
-            let crate_name = mp.split("::").next().unwrap_or("");
-            let pkg = self
-                .config
-                .external_packages
-                .get(crate_name)
-                .cloned()
-                .unwrap_or_else(|| format!("uniffi.{crate_name}"));
+            // Use the shared resolver so the per-crate fallback
+            // (`uniffi.<namespace>`) matches the one used everywhere else
+            // for external type names. Don't reinvent it locally.
+            let Ok(namespace) = self.ci.namespace_for_module_path(mp) else {
+                continue;
+            };
+            let pkg = self.config.external_type_package_name(mp, namespace);
             fns.push(format!("{pkg}.{init}"));
         }
 
@@ -779,7 +779,7 @@ mod filters {
     use uniffi_bindgen::interface::{Callable, FfiType, Variant};
     use uniffi_meta::{AsType, Type};
 
-    use super::{AsCodeType, Config, KotlinCodeOracle};
+    use super::{AsCodeType, Config, ExternalPackageResolver, KotlinCodeOracle};
     use uniffi_bindgen::ComponentInterface;
 
     // Filter functions are `pub(super)` to match the visibility of the
@@ -902,12 +902,15 @@ mod filters {
         };
         Ok(match module_path {
             Some(mp) if mp.split("::").next().unwrap_or("") != ci.crate_name() => {
-                let crate_name = mp.split("::").next().unwrap_or("");
-                let pkg = config
-                    .external_packages
-                    .get(crate_name)
-                    .cloned()
-                    .unwrap_or_else(|| format!("uniffi.{crate_name}"));
+                // Use the shared resolver so the fallback path matches
+                // what other external type references compute. Reinventing
+                // it locally drifts (`uniffi.{crate}` vs the resolver's
+                // `uniffi.{namespace}`) for crates whose namespace differs
+                // from their crate name and aren't in `external_packages`.
+                let namespace = ci
+                    .namespace_for_module_path(mp)
+                    .map_err(|_| askama::Error::Custom("unknown module path".into()))?;
+                let pkg = config.external_type_package_name(mp, namespace);
                 format!("{pkg}.")
             }
             _ => String::new(),
