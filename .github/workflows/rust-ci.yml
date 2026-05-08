@@ -25,21 +25,38 @@ jobs:
     secrets: inherit
 
   kotlin-ci:
-    name: Kotlin runtime tests (${{ matrix.os }})
+    name: Kotlin runtime tests (${{ matrix.os }}, JDK ${{ matrix.jdk }})
     strategy:
       fail-fast: false
       matrix:
+        # JDK floor is 22 — that's where `java.lang.foreign.*` (the
+        # FFM API the Kotlin codegen uses for downcalls and upcall
+        # stubs) became a stable, non-preview feature. JDK 21 has
+        # FFM as preview only; JDK 17 has no FFM at all. Top end
+        # is JDK 25 (current LTS).
         os: [ubuntu-latest, macos-26]
+        jdk: ['22', '25']
     runs-on: ${{ matrix.os }}
     env:
       JDK_JAVA_OPTIONS: --enable-native-access=ALL-UNNAMED
     steps:
       - uses: actions/checkout@v4
-      - name: Set up JDK 25
+      - name: Set up JDK ${{ matrix.jdk }}
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '25'
+          java-version: ${{ matrix.jdk }}
+      # `fwilhe2/setup-kotlin` uses `@actions/tool-cache` which writes
+      # under `RUNNER_TOOL_CACHE` (e.g. `/opt/hostedtoolcache`). That
+      # cache lives on the runner image and isn't preserved across
+      # workflow runs, so kotlinc gets re-downloaded (~80 MB) on every
+      # job. Pinning the kotlin subtree of the tool cache keyed on
+      # OS+version lets the second-and-later runs hit the cache.
+      - name: Cache kotlinc
+        uses: actions/cache@v5
+        with:
+          path: ${{ runner.tool_cache }}/kotlin
+          key: kotlinc-${{ runner.os }}-2.3.20
       - name: Set up Kotlin
         uses: fwilhe2/setup-kotlin@v1
         with:
@@ -49,5 +66,29 @@ jobs:
         with:
           toolchain: 1.94.0
       - uses: Swatinem/rust-cache@v2
+      # `tests/tests.rs::ensure_kotlinx_coroutines_jar` lazily downloads
+      # `kotlinx-coroutines-core-jvm-<VERSION>.jar` from Maven Central
+      # to `target/kotlin-deps/` on first test run. `Swatinem/rust-cache`
+      # only caches the standard `target/<profile>` subtree, so this
+      # custom path needs its own cache step. Key includes the version
+      # so a bump invalidates and re-downloads.
+      - name: Cache kotlinx-coroutines JAR
+        uses: actions/cache@v5
+        with:
+          path: target/kotlin-deps
+          key: kotlinx-coroutines-${{ runner.os }}-1.10.2
+      # macos-26 GitHub runners exhibit parallel-test contention that
+      # ubuntu-latest doesn't — observed in #56 (`test_fixture_futures_kotlin`
+      # transient failures) and now confirmed on the cancelled
+      # `macos-26 / JDK 22` leg of this matrix's first run, where 5
+      # tests sat in `running for over 60 seconds` for 20+ min before
+      # the concurrency cancel arrived. Forcing serial execution on
+      # macos-26 trades total wall time for reliability — ubuntu still
+      # runs parallel.
       - name: Run Kotlin runtime tests
-        run: cargo test --test tests kotlin -- --ignored
+        run: |
+          if [ "${{ runner.os }}" = "macOS" ]; then
+            cargo test --test tests kotlin -- --ignored --test-threads=1
+          else
+            cargo test --test tests kotlin -- --ignored
+          fi
