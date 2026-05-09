@@ -5,26 +5,33 @@ import java.time.Duration
 import java.time.Instant
 
 fun main() {
+    // Sub-100ns granularity is round-tripped correctly on Linux/macOS
+    // (Rust `SystemTime` is nanosecond-precise on those platforms),
+    // but Windows backs `SystemTime` with `FILETIME`, which only
+    // represents 100-ns ticks — adding 1 ns silently truncates to
+    // 0. Stick to multiples of 100 ns so the same assertions hold
+    // everywhere the Rust runtime compiles.
+
     // Pass timestamp + duration, return timestamp.
-    val addResult = Chronological.add(Instant.ofEpochSecond(100, 100), Duration.ofSeconds(1, 1))
-    val addExpected = Instant.ofEpochSecond(101, 101)
+    val addResult = Chronological.add(Instant.ofEpochSecond(100, 100), Duration.ofSeconds(1, 100))
+    val addExpected = Instant.ofEpochSecond(101, 200)
     check(addResult == addExpected) {
-        "add(100s+100ns, 1s+1ns): got $addResult, expected $addExpected"
+        "add(100s+100ns, 1s+100ns): got $addResult, expected $addExpected"
     }
 
     // Pass timestamps, return duration.
-    val diffResult = Chronological.diff(Instant.ofEpochSecond(101, 101), Instant.ofEpochSecond(100, 100))
-    val diffExpected = Duration.ofSeconds(1, 1)
+    val diffResult = Chronological.diff(Instant.ofEpochSecond(101, 200), Instant.ofEpochSecond(100, 100))
+    val diffExpected = Duration.ofSeconds(1, 100)
     check(diffResult == diffExpected) {
-        "diff(101s+101ns, 100s+100ns): got $diffResult, expected $diffExpected"
+        "diff(101s+200ns, 100s+100ns): got $diffResult, expected $diffExpected"
     }
 
     // Pre-epoch timestamps round-trip correctly.
     val preEpoch = Chronological.add(
-        Instant.parse("1955-11-05T00:06:00.283000001Z"),
-        Duration.ofSeconds(1, 1),
+        Instant.parse("1955-11-05T00:06:00.283000100Z"),
+        Duration.ofSeconds(1, 100),
     )
-    val preEpochExpected = Instant.parse("1955-11-05T00:06:01.283000002Z")
+    val preEpochExpected = Instant.parse("1955-11-05T00:06:01.283000200Z")
     check(preEpoch == preEpochExpected) {
         "add pre-epoch: got $preEpoch, expected $preEpochExpected"
     }
