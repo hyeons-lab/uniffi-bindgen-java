@@ -506,36 +506,26 @@ fn ensure_kotlinx_coroutines_jar() -> Result<Utf8PathBuf> {
 }
 
 /// Verify that `path`'s SHA-256 matches `expected_hex` (lowercase
-/// hex). Tries `shasum -a 256` first (macOS default), falls back
-/// to `sha256sum` (most Linux distros). Returns `Ok(false)` on
-/// hash mismatch so callers can decide whether to re-download.
+/// hex). Hashes in-process via the `sha2` crate so we don't depend
+/// on `shasum` / `sha256sum` being on PATH — neither is by default
+/// on GitHub-hosted Windows runners. Returns `Ok(false)` on hash
+/// mismatch so callers can decide whether to re-download.
 fn verify_sha256(path: &Utf8Path, expected_hex: &str) -> Result<bool> {
-    let output = Command::new("shasum")
-        .arg("-a")
-        .arg("256")
-        .arg(path.as_str())
-        .output()
-        .or_else(|_| {
-            Command::new("sha256sum")
-                .arg(path.as_str())
-                .output()
-                .context("neither shasum nor sha256sum available on PATH")
-        })?;
-    if !output.status.success() {
-        bail!("hash command failed for {path}");
-    }
-    let stdout = String::from_utf8(output.stdout).context("hash command stdout not UTF-8")?;
-    let actual = stdout
-        .split_whitespace()
-        .next()
-        .with_context(|| format!("empty hash output for {path}"))?;
+    use sha2::{Digest, Sha256};
+    let mut file = fs::File::open(path).with_context(|| format!("opening {path} for hashing"))?;
+    let mut hasher = Sha256::new();
+    std::io::copy(&mut file, &mut hasher).with_context(|| format!("reading {path} for hashing"))?;
+    let actual = format!("{:x}", hasher.finalize());
     Ok(actual.eq_ignore_ascii_case(expected_hex))
 }
 
 /// Locate the `kotlinc` binary. Honors `KOTLINC` env var first
 /// (CI override), then falls back to `which kotlinc` (Unix) or
-/// `where kotlinc` (Windows). Returns `None` when neither resolves
-/// so callers can skip gracefully.
+/// `where kotlinc.bat` (Windows — the Kotlin distribution ships
+/// `kotlinc` as a `.bat` wrapper there, and Rust's `Command::new`
+/// won't auto-resolve PATHEXT for direct invocation; we need the
+/// `.bat` extension explicitly). Returns `None` when neither
+/// resolves so callers can skip gracefully.
 fn kotlinc_path() -> Option<Utf8PathBuf> {
     if let Ok(p) = env::var("KOTLINC") {
         let p = Utf8PathBuf::from(p);
@@ -543,13 +533,18 @@ fn kotlinc_path() -> Option<Utf8PathBuf> {
             return Some(p);
         }
     }
-    let lookup = if cfg!(windows) { "where" } else { "which" };
-    let output = Command::new(lookup).arg("kotlinc").output().ok()?;
+    let (lookup_cmd, target) = if cfg!(windows) {
+        ("where", "kotlinc.bat")
+    } else {
+        ("which", "kotlinc")
+    };
+    let output = Command::new(lookup_cmd).arg(target).output().ok()?;
     if !output.status.success() {
         return None;
     }
     // `where` on Windows can return multiple newline-separated
-    // paths (e.g. `kotlinc` and `kotlinc.bat`); take the first.
+    // paths (rare, but possible if multiple Kotlin installs are
+    // on PATH). Take the first.
     let trimmed = String::from_utf8(output.stdout)
         .ok()?
         .lines()
