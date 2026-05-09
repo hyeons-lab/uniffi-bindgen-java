@@ -6,24 +6,28 @@ import java.time.Instant
 
 fun main() {
     // Pass timestamp + duration, return timestamp.
-    check(
-        Chronological.add(Instant.ofEpochSecond(100, 100), Duration.ofSeconds(1, 1)) ==
-            Instant.ofEpochSecond(101, 101),
-    )
+    val addResult = Chronological.add(Instant.ofEpochSecond(100, 100), Duration.ofSeconds(1, 1))
+    val addExpected = Instant.ofEpochSecond(101, 101)
+    check(addResult == addExpected) {
+        "add(100s+100ns, 1s+1ns): got $addResult, expected $addExpected"
+    }
 
     // Pass timestamps, return duration.
-    check(
-        Chronological.diff(Instant.ofEpochSecond(101, 101), Instant.ofEpochSecond(100, 100)) ==
-            Duration.ofSeconds(1, 1),
-    )
+    val diffResult = Chronological.diff(Instant.ofEpochSecond(101, 101), Instant.ofEpochSecond(100, 100))
+    val diffExpected = Duration.ofSeconds(1, 1)
+    check(diffResult == diffExpected) {
+        "diff(101s+101ns, 100s+100ns): got $diffResult, expected $diffExpected"
+    }
 
     // Pre-epoch timestamps round-trip correctly.
-    check(
-        Chronological.add(
-            Instant.parse("1955-11-05T00:06:00.283000001Z"),
-            Duration.ofSeconds(1, 1),
-        ) == Instant.parse("1955-11-05T00:06:01.283000002Z"),
+    val preEpoch = Chronological.add(
+        Instant.parse("1955-11-05T00:06:00.283000001Z"),
+        Duration.ofSeconds(1, 1),
     )
+    val preEpochExpected = Instant.parse("1955-11-05T00:06:01.283000002Z")
+    check(preEpoch == preEpochExpected) {
+        "add pre-epoch: got $preEpoch, expected $preEpochExpected"
+    }
 
     // Rust-side error → ChronologicalException.
     try {
