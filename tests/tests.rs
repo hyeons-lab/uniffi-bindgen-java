@@ -533,8 +533,9 @@ fn verify_sha256(path: &Utf8Path, expected_hex: &str) -> Result<bool> {
 }
 
 /// Locate the `kotlinc` binary. Honors `KOTLINC` env var first
-/// (CI override), then falls back to `which kotlinc`. Returns
-/// `None` when neither resolves so callers can skip gracefully.
+/// (CI override), then falls back to `which kotlinc` (Unix) or
+/// `where kotlinc` (Windows). Returns `None` when neither resolves
+/// so callers can skip gracefully.
 fn kotlinc_path() -> Option<Utf8PathBuf> {
     if let Ok(p) = env::var("KOTLINC") {
         let p = Utf8PathBuf::from(p);
@@ -542,11 +543,20 @@ fn kotlinc_path() -> Option<Utf8PathBuf> {
             return Some(p);
         }
     }
-    let output = Command::new("which").arg("kotlinc").output().ok()?;
+    let lookup = if cfg!(windows) { "where" } else { "which" };
+    let output = Command::new(lookup).arg("kotlinc").output().ok()?;
     if !output.status.success() {
         return None;
     }
-    let trimmed = String::from_utf8(output.stdout).ok()?.trim().to_string();
+    // `where` on Windows can return multiple newline-separated
+    // paths (e.g. `kotlinc` and `kotlinc.bat`); take the first.
+    let trimmed = String::from_utf8(output.stdout)
+        .ok()?
+        .lines()
+        .next()
+        .map(str::trim)
+        .unwrap_or("")
+        .to_string();
     if trimmed.is_empty() {
         None
     } else {
@@ -635,12 +645,13 @@ fn merge_toml_overrides(base: Option<&str>, extras: Option<&str>) -> Result<Stri
     })
 }
 
-/// Derive the canonical `lib<name>.<ext>` filename Java's
-/// `System.loadLibrary("<name>")` expects, given the cargo-emitted
-/// cdylib path (which includes a 16-hex-char build hash, e.g.
-/// `libuniffi_arithmetic-CARGO_BUILD_HASH.dylib`). Strips the `lib`
-/// prefix, drops the `-<hash>` suffix, then re-emits the canonical
-/// form.
+/// Derive the canonical filename Java's `System.loadLibrary("<name>")`
+/// expects, given the cargo-emitted cdylib path (which includes a
+/// 16-hex-char build hash, e.g. `libuniffi_arithmetic-CARGO_BUILD_HASH.dylib`).
+/// Strips the `lib` prefix (when present — Windows MSVC cdylibs
+/// don't carry one), drops the `-<hash>` suffix, then re-emits the
+/// platform-canonical form: `lib<name>.<ext>` on Unix-like systems,
+/// `<name>.dll` on Windows.
 fn canonical_lib_filename(cdylib_path: &Utf8Path) -> String {
     let cdylib_filename = cdylib_path.file_name().unwrap();
     let extension = cdylib_path.extension().unwrap();
@@ -650,13 +661,24 @@ fn canonical_lib_filename(cdylib_path: &Utf8Path) -> String {
         .split('-')
         .next()
         .unwrap_or(cdylib_filename);
-    format!("lib{lib_base_name}.{extension}")
+    if cfg!(windows) {
+        format!("{lib_base_name}.{extension}")
+    } else {
+        format!("lib{lib_base_name}.{extension}")
+    }
 }
 
-/// Copy the cdylib into `out_dir/native/` and create the
-/// `lib<name>.<ext>` symlink that `System.loadLibrary` expects.
-/// Shared by `run_test` (Java) and `run_kotlin_test` (Kotlin) so
-/// there's one canonical implementation of the symlink dance.
+/// Copy the cdylib into `out_dir/native/` under the canonical
+/// `lib<name>.<ext>` (or `<name>.dll` on Windows) filename that
+/// `System.loadLibrary` expects. Shared by `run_test` (Java) and
+/// `run_kotlin_test` (Kotlin) so there's one canonical implementation
+/// of the cdylib-staging dance.
+///
+/// Originally this symlinked the canonical name to the cargo-emitted
+/// hashed name, but `std::os::unix::fs::symlink` is Unix-only. Plain
+/// double-copy is portable, costs one extra ~2-MB write per test
+/// (well within tolerance), and avoids the Windows symlink-permissions
+/// dance (developer mode required, otherwise needs admin token).
 fn prepare_native_lib_dir(out_dir: &Utf8Path, cdylib_path: &Utf8Path) -> Result<Utf8PathBuf> {
     let native_lib_dir = out_dir.join("native");
     fs::create_dir_all(&native_lib_dir)?;
@@ -664,9 +686,9 @@ fn prepare_native_lib_dir(out_dir: &Utf8Path, cdylib_path: &Utf8Path) -> Result<
     let cdylib_dest = native_lib_dir.join(cdylib_filename);
     fs::copy(cdylib_path, &cdylib_dest)?;
 
-    let symlink_path = native_lib_dir.join(canonical_lib_filename(cdylib_path));
-    if !symlink_path.exists() {
-        std::os::unix::fs::symlink(cdylib_dest.file_name().unwrap(), &symlink_path)?;
+    let canonical_path = native_lib_dir.join(canonical_lib_filename(cdylib_path));
+    if !canonical_path.exists() {
+        fs::copy(cdylib_path, &canonical_path)?;
     }
     Ok(native_lib_dir)
 }

@@ -34,7 +34,7 @@ jobs:
         # stubs) became a stable, non-preview feature. JDK 21 has
         # FFM as preview only; JDK 17 has no FFM at all. Top end
         # is JDK 25 (current LTS).
-        os: [ubuntu-latest, macos-26]
+        os: [ubuntu-latest, macos-26, windows-latest]
         jdk: ['22', '25']
     runs-on: ${{ matrix.os }}
     env:
@@ -86,6 +86,11 @@ jobs:
       # macos-26 trades total wall time for reliability — ubuntu still
       # runs parallel.
       - name: Run Kotlin runtime tests
+        # `shell: bash` for cross-platform — Windows runners default
+        # to powershell for `run:` steps, which doesn't understand
+        # `[ ... = ... ]` test syntax. GitHub-hosted Windows runners
+        # ship Git Bash so `bash` is available.
+        shell: bash
         run: |
           if [ "${{ runner.os }}" = "macOS" ]; then
             cargo test --test tests kotlin -- --ignored --test-threads=1
