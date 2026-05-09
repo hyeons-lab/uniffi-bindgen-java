@@ -213,17 +213,26 @@ fn run_kotlin_test(fixture_name: &str, test_file: &str) -> Result<()> {
     if kt_files.is_empty() {
         bail!("no generated .kt files under {}", out_dir);
     }
-    let mut kotlinc_cmd = kotlinc_command(&kotlinc);
-    kotlinc_cmd.arg("-include-runtime");
+    // Build a kotlinc `@argfile` so the full arg list (every
+    // generated `.kt` path + classpath) doesn't blow Windows'
+    // ~8 KB cmd.exe command-line limit on big fixtures (ext-types
+    // generates hundreds of files across 5 packages — total args
+    // exceed the limit, surfacing as "The filename or extension is
+    // too long. (os error 206)" at spawn time). kotlinc reads
+    // `@<file>` and tokenizes it as if specified inline; safe and
+    // identical behavior on every platform.
+    let mut bindings_args: Vec<String> = vec!["-include-runtime".to_string()];
     if needs_coroutines {
-        kotlinc_cmd
-            .arg("-classpath")
-            .arg(calc_classpath(coroutines_paths.clone()));
+        bindings_args.push("-classpath".to_string());
+        bindings_args.push(calc_classpath(coroutines_paths.clone()));
     }
-    let kotlinc_status = kotlinc_cmd
-        .arg("-d")
-        .arg(bindings_jar.as_str())
-        .args(&kt_files)
+    bindings_args.push("-d".to_string());
+    bindings_args.push(bindings_jar.to_string());
+    bindings_args.extend(kt_files.iter().cloned());
+    let bindings_argfile = out_dir.join("kotlinc-bindings.args");
+    write_kotlinc_argfile(&bindings_argfile, &bindings_args)?;
+    let kotlinc_status = kotlinc_command(&kotlinc)
+        .arg(format!("@{bindings_argfile}"))
         .spawn()
         .with_context(|| format!("spawning kotlinc at {kotlinc}"))?
         .wait()
@@ -244,12 +253,17 @@ fn run_kotlin_test(fixture_name: &str, test_file: &str) -> Result<()> {
     fs::create_dir_all(&test_classes_dir)?;
     let mut test_compile_classpath: Vec<&Utf8PathBuf> = vec![&bindings_jar];
     test_compile_classpath.extend(coroutines_paths.iter().copied());
+    let test_args = vec![
+        "-classpath".to_string(),
+        calc_classpath(test_compile_classpath),
+        "-d".to_string(),
+        test_classes_dir.to_string(),
+        test_path.to_string(),
+    ];
+    let test_argfile = out_dir.join("kotlinc-test.args");
+    write_kotlinc_argfile(&test_argfile, &test_args)?;
     let test_kotlinc_status = kotlinc_command(&kotlinc)
-        .arg("-classpath")
-        .arg(calc_classpath(test_compile_classpath))
-        .arg("-d")
-        .arg(test_classes_dir.as_str())
-        .arg(test_path.as_str())
+        .arg(format!("@{test_argfile}"))
         .spawn()
         .context("spawning kotlinc on test script")?
         .wait()
@@ -559,6 +573,35 @@ fn kotlinc_path() -> Option<Utf8PathBuf> {
     }
 }
 
+/// Write a kotlinc `@argfile`. The Kotlin compiler reads `@<file>`
+/// as a list of args, one per line (or whitespace-separated). To
+/// keep paths-with-spaces working, each arg is double-quoted and
+/// internal `"` / `\\` are escaped per kotlinc's argfile parser.
+///
+/// This is the workaround for Windows' command-line length limit:
+/// big fixtures (ext-types) emit hundreds of `.kt` files; passing
+/// each as an inline arg blows past the ~8 KB `cmd.exe` cap and
+/// surfaces as `(os error 206) The filename or extension is too long`
+/// at spawn time. Argfiles are platform-agnostic — safe everywhere.
+fn write_kotlinc_argfile(path: &Utf8Path, args: &[String]) -> Result<()> {
+    let mut buf = String::with_capacity(args.iter().map(|a| a.len() + 4).sum());
+    for arg in args {
+        let escaped: String = arg
+            .chars()
+            .flat_map(|c| match c {
+                '\\' => vec!['\\', '\\'],
+                '"' => vec!['\\', '"'],
+                _ => vec![c],
+            })
+            .collect();
+        buf.push('"');
+        buf.push_str(&escaped);
+        buf.push('"');
+        buf.push('\n');
+    }
+    fs::write(path, buf).with_context(|| format!("writing kotlinc argfile {path}"))
+}
+
 /// Construct a `Command` for invoking `kotlinc` that's safe to spawn
 /// from Rust on every supported platform.
 ///
@@ -587,7 +630,10 @@ fn kotlinc_path() -> Option<Utf8PathBuf> {
 fn kotlinc_command(kotlinc: &Utf8Path) -> Command {
     if cfg!(windows) {
         let mut cmd = Command::new("cmd");
-        cmd.arg("/d").arg("/c").arg("call").arg(kotlinc.as_std_path());
+        cmd.arg("/d")
+            .arg("/c")
+            .arg("call")
+            .arg(kotlinc.as_std_path());
         cmd
     } else {
         Command::new(kotlinc.as_std_path())
