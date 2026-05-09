@@ -364,17 +364,21 @@ fn run_kotlin_test_with_library_override(
     if kt_files.is_empty() {
         bail!("no generated .kt files under {}", out_dir);
     }
-    let mut kotlinc_cmd = kotlinc_command(&kotlinc);
-    kotlinc_cmd.arg("-include-runtime");
+    // See `run_kotlin_test` for argfile rationale (Windows ~8 KB
+    // cmdline cap blows on big fixtures with hundreds of `.kt`
+    // paths).
+    let mut bindings_args: Vec<String> = vec!["-include-runtime".to_string()];
     if needs_coroutines {
-        kotlinc_cmd
-            .arg("-classpath")
-            .arg(calc_classpath(coroutines_paths.clone()));
+        bindings_args.push("-classpath".to_string());
+        bindings_args.push(calc_classpath(coroutines_paths.clone()));
     }
-    let kotlinc_status = kotlinc_cmd
-        .arg("-d")
-        .arg(bindings_jar.as_str())
-        .args(&kt_files)
+    bindings_args.push("-d".to_string());
+    bindings_args.push(bindings_jar.to_string());
+    bindings_args.extend(kt_files.iter().cloned());
+    let bindings_argfile = out_dir.join("kotlinc-bindings.args");
+    write_kotlinc_argfile(&bindings_argfile, &bindings_args)?;
+    let kotlinc_status = kotlinc_command(&kotlinc)
+        .arg(format!("@{bindings_argfile}"))
         .spawn()
         .with_context(|| format!("spawning kotlinc at {kotlinc}"))?
         .wait()
@@ -390,12 +394,17 @@ fn run_kotlin_test_with_library_override(
     fs::create_dir_all(&test_classes_dir)?;
     let mut test_compile_classpath: Vec<&Utf8PathBuf> = vec![&bindings_jar];
     test_compile_classpath.extend(coroutines_paths.iter().copied());
+    let test_args = vec![
+        "-classpath".to_string(),
+        calc_classpath(test_compile_classpath),
+        "-d".to_string(),
+        test_classes_dir.to_string(),
+        test_path.to_string(),
+    ];
+    let test_argfile = out_dir.join("kotlinc-test.args");
+    write_kotlinc_argfile(&test_argfile, &test_args)?;
     let test_kotlinc_status = kotlinc_command(&kotlinc)
-        .arg("-classpath")
-        .arg(calc_classpath(test_compile_classpath))
-        .arg("-d")
-        .arg(test_classes_dir.as_str())
-        .arg(test_path.as_str())
+        .arg(format!("@{test_argfile}"))
         .spawn()
         .context("spawning kotlinc on test script")?
         .wait()
@@ -846,6 +855,11 @@ fn build_jar(fixture_name: &str, out_dir: &Utf8PathBuf) -> Result<Utf8PathBuf> {
 }
 
 fn calc_classpath(extra_paths: Vec<&Utf8PathBuf>) -> String {
+    // JVM classpath separator: `;` on Windows, `:` everywhere else.
+    // Hard-coding `:` produced `InvalidPathException: Illegal char <:>`
+    // on the windows-2025 leg because `D:\…jar:D:\…jar` was being
+    // parsed as a single path containing a colon.
+    let separator = if cfg!(windows) { ";" } else { ":" };
     extra_paths
         .into_iter()
         .map(|p| p.to_string())
@@ -853,7 +867,7 @@ fn calc_classpath(extra_paths: Vec<&Utf8PathBuf>) -> String {
         // which implement Iterator
         .chain(env::var("CLASSPATH"))
         .collect::<Vec<String>>()
-        .join(":")
+        .join(separator)
 }
 
 /// Read the contents of the file. Any errors will be turned into None.
