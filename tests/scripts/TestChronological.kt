@@ -76,7 +76,9 @@ fun main() {
     check(javaAfter.isAfter(rustNow))
 
     // Optional values (nullable Instant + Duration arguments).
-    check(Chronological.optional(Instant.MAX, Duration.ofSeconds(0)))
+    // Same FILETIME-on-Windows constraint as the upper-bound check
+    // above — pass `farFuture` (year 3000) instead of `Instant.MAX`.
+    check(Chronological.optional(farFuture, Duration.ofSeconds(0)))
     check(!Chronological.optional(null, Duration.ofSeconds(0)))
-    check(!Chronological.optional(Instant.MAX, null))
+    check(!Chronological.optional(farFuture, null))
 }
