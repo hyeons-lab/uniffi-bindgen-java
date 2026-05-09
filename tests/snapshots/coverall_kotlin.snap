@@ -5602,6 +5602,15 @@ internal object UniffiCallbackInterfaceGetters {
     }
 }
 
+// Public top-level entry point so a downstream crate's `UniffiLib`
+// init can register this vtable across module boundaries. The
+// `internal object UniffiCallbackInterfaceGetters` itself can't be referenced
+// from outside its compile module (Kotlin `internal` is module-
+// scoped); proxying through a public function exposes only the
+// `register()` entry without leaking the rest of the internal
+// surface (`vtable`, upcall stub objects, etc.).
+fun registerUniffiCallbackInterfaceGetters() = UniffiCallbackInterfaceGetters.register()
+
 
 // === FILE: uniffi/coverall/UniffiCallbackInterfaceGettersMethod0.kt ===
 package uniffi.coverall
@@ -5994,6 +6003,15 @@ internal object UniffiCallbackInterfaceNodeTrait {
             FfiConverterTypeNodeTrait.handleMap.clone(handle)
     }
 }
+
+// Public top-level entry point so a downstream crate's `UniffiLib`
+// init can register this vtable across module boundaries. The
+// `internal object UniffiCallbackInterfaceNodeTrait` itself can't be referenced
+// from outside its compile module (Kotlin `internal` is module-
+// scoped); proxying through a public function exposes only the
+// `register()` entry without leaking the rest of the internal
+// surface (`vtable`, upcall stub objects, etc.).
+fun registerUniffiCallbackInterfaceNodeTrait() = UniffiCallbackInterfaceNodeTrait.register()
 
 
 // === FILE: uniffi/coverall/UniffiCallbackInterfaceNodeTraitMethod0.kt ===
@@ -12709,8 +12727,8 @@ internal object UniffiLib {
     init {
         NamespaceLibrary.uniffiCheckContractApiVersion()
         NamespaceLibrary.uniffiCheckApiChecksums()
-        UniffiCallbackInterfaceGetters.register()
-        UniffiCallbackInterfaceNodeTrait.register()
+        registerUniffiCallbackInterfaceGetters()
+        registerUniffiCallbackInterfaceNodeTrait()
     }
 }
 

@@ -700,10 +700,50 @@ impl<'a> KotlinWrapper<'a> {
     /// interfaces (and, in a later phase, objects that carry a
     /// callback interface implementation).
     pub fn initialization_fns(&self) -> Vec<String> {
-        self.ci
+        let mut fns: Vec<String> = self
+            .ci
             .iter_local_types()
             .filter_map(|t| t.clone().as_codetype().initialization_fn())
-            .collect()
+            .collect();
+
+        // Also call the init functions for any external callback-interface
+        // types we transitively reference. Each cdylib's scaffolding
+        // registers its own foreign vtables in the cdylib's UniffiLib
+        // class-init — but a downstream crate (e.g. `imported_types_lib`)
+        // that uses `UniffiOneTrait` defined in `uniffi-one` never
+        // triggers `uniffi-one`'s class load, so its
+        // `UniffiCallbackInterfaceUniffiOneTrait.register()` never fires.
+        // The Rust side then panics in `UniFFIForeignPointerCell::get`'s
+        // `expect()` when the foreign handler's `Drop` runs.
+        //
+        // Walk the external types and FQN-prefix each init function with
+        // the type's defining package (resolved via `external_packages`)
+        // so the registration call lands in the right namespace.
+        for t in self.ci.iter_external_types() {
+            let module_path = match t {
+                Type::Enum { module_path, .. } => Some(module_path.as_str()),
+                Type::Object { module_path, .. } => Some(module_path.as_str()),
+                Type::Custom { module_path, .. } => Some(module_path.as_str()),
+                Type::CallbackInterface { module_path, .. } => Some(module_path.as_str()),
+                _ => None,
+            };
+            let Some(mp) = module_path else { continue };
+            let Some(init) = t.clone().as_codetype().initialization_fn() else {
+                continue;
+            };
+            // Use the shared resolver so the per-crate fallback
+            // (`uniffi.<namespace>`) matches the one used everywhere else
+            // for external type names. Don't reinvent it locally.
+            let Ok(namespace) = self.ci.namespace_for_module_path(mp) else {
+                continue;
+            };
+            let pkg = self.config.external_type_package_name(mp, namespace);
+            fns.push(format!("{pkg}.{init}"));
+        }
+
+        fns.sort();
+        fns.dedup();
+        fns
     }
 }
 
@@ -739,7 +779,7 @@ mod filters {
     use uniffi_bindgen::interface::{Callable, FfiType, Variant};
     use uniffi_meta::{AsType, Type};
 
-    use super::{AsCodeType, Config, KotlinCodeOracle};
+    use super::{AsCodeType, Config, ExternalPackageResolver, KotlinCodeOracle};
     use uniffi_bindgen::ComponentInterface;
 
     // Filter functions are `pub(super)` to match the visibility of the
@@ -862,12 +902,15 @@ mod filters {
         };
         Ok(match module_path {
             Some(mp) if mp.split("::").next().unwrap_or("") != ci.crate_name() => {
-                let crate_name = mp.split("::").next().unwrap_or("");
-                let pkg = config
-                    .external_packages
-                    .get(crate_name)
-                    .cloned()
-                    .unwrap_or_else(|| format!("uniffi.{crate_name}"));
+                // Use the shared resolver so the fallback path matches
+                // what other external type references compute. Reinventing
+                // it locally drifts (`uniffi.{crate}` vs the resolver's
+                // `uniffi.{namespace}`) for crates whose namespace differs
+                // from their crate name and aren't in `external_packages`.
+                let namespace = ci
+                    .namespace_for_module_path(mp)
+                    .map_err(|_| askama::Error::Custom("unknown module path".into()))?;
+                let pkg = config.external_type_package_name(mp, namespace);
                 format!("{pkg}.")
             }
             _ => String::new(),

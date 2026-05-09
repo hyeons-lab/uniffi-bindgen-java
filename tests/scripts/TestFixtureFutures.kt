@@ -201,9 +201,18 @@ fun main() = runBlocking {
         // future then cancels it before the inner `delay()` would
         // complete. After waiting longer than the requested delay,
         // `completedDelays` must NOT have advanced.
+        //
+        // Timing: the original upstream values (delay=10ms, wait=100ms)
+        // raced under macos-26 CI load — the inner kotlinx `delay(10)`
+        // could complete before the foreign-future cancellation
+        // propagated, incrementing `completedDelays` and flaking the
+        // assertion. Bumping the delay to 200ms and the wait to 1000ms
+        // gives cancellation ~200ms to propagate before the delay would
+        // naturally fire, and still fails loud if the cancel didn't
+        // stick at all (the wait exceeds the delay 5×).
         val before = parser.completedDelays
-        Futures.cancelDelayUsingTrait(parser, 10)
-        delay(100)
+        Futures.cancelDelayUsingTrait(parser, 200)
+        delay(1000)
         check(parser.completedDelays == before) {
             "cancelled delay still completed: ${parser.completedDelays} vs $before"
         }

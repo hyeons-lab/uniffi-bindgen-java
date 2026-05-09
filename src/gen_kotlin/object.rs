@@ -43,8 +43,17 @@ impl CodeType for ObjectCodeType {
         // registration at library init that pure callback interfaces
         // do — the Rust side has to know how to dispatch back to a
         // foreign implementor.
+        //
+        // Use the public top-level register proxy
+        // (`registerUniffiCallbackInterface<Name>()`) emitted by
+        // `CallbackInterfaceImpl.kt` rather than the `internal
+        // object UniffiCallbackInterface<Name>.register()` call
+        // directly. The internal object is module-scoped (Kotlin
+        // `internal`) and a downstream crate's `UniffiLib` init
+        // can't reference it across compile modules. The public
+        // proxy works locally too, so this is uniformly correct.
         self.imp
             .has_callback_interface()
-            .then(|| format!("UniffiCallbackInterface{}.register", self.name))
+            .then(|| format!("registerUniffiCallbackInterface{}", self.name))
     }
 }

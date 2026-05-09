@@ -759,6 +759,15 @@ internal object UniffiCallbackInterfaceGreeter {
     }
 }
 
+// Public top-level entry point so a downstream crate's `UniffiLib`
+// init can register this vtable across module boundaries. The
+// `internal object UniffiCallbackInterfaceGreeter` itself can't be referenced
+// from outside its compile module (Kotlin `internal` is module-
+// scoped); proxying through a public function exposes only the
+// `register()` entry without leaking the rest of the internal
+// surface (`vtable`, upcall stub objects, etc.).
+fun registerUniffiCallbackInterfaceGreeter() = UniffiCallbackInterfaceGreeter.register()
+
 
 // === FILE: uniffi/simple_callback/UniffiCallbackInterfaceGreeterMethod0.kt ===
 package uniffi.simple_callback
@@ -3323,7 +3332,7 @@ internal object UniffiLib {
     init {
         NamespaceLibrary.uniffiCheckContractApiVersion()
         NamespaceLibrary.uniffiCheckApiChecksums()
-        UniffiCallbackInterfaceGreeter.register()
+        registerUniffiCallbackInterfaceGreeter()
     }
 }
 

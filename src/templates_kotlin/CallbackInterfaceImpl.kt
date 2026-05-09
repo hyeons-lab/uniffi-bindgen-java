@@ -206,3 +206,12 @@ internal object UniffiCallbackInterface{{ name }} {
             {{ ffi_converter_name }}.handleMap.clone(handle)
     }
 }
+
+// Public top-level entry point so a downstream crate's `UniffiLib`
+// init can register this vtable across module boundaries. The
+// `internal object {{ trait_impl }}` itself can't be referenced
+// from outside its compile module (Kotlin `internal` is module-
+// scoped); proxying through a public function exposes only the
+// `register()` entry without leaking the rest of the internal
+// surface (`vtable`, upcall stub objects, etc.).
+fun register{{ trait_impl }}() = {{ trait_impl }}.register()
