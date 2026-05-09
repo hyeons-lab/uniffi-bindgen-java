@@ -34,7 +34,12 @@ jobs:
         # stubs) became a stable, non-preview feature. JDK 21 has
         # FFM as preview only; JDK 17 has no FFM at all. Top end
         # is JDK 25 (current LTS).
-        os: [ubuntu-latest, macos-26, windows-latest]
+        # Pin runner images explicitly. `*-latest` aliases roll
+        # forward whenever GitHub bumps the default, which can
+        # silently change tool versions or default shells under
+        # us. Macos was already pinned (#59); now matching pattern
+        # for the other two.
+        os: [ubuntu-24.04, macos-26, windows-2025]
         jdk: ['22', '25']
     runs-on: ${{ matrix.os }}
     env:
