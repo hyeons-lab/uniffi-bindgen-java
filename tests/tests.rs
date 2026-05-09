@@ -564,18 +564,30 @@ fn kotlinc_path() -> Option<Utf8PathBuf> {
 ///
 /// On Unix-likes this is a thin wrapper over `Command::new(path)`.
 ///
-/// On Windows we route through `cmd.exe /c "<path>" ...args` because
-/// `kotlinc` ships as `kotlinc.bat`, and Rust's `Command::new` on a
-/// `.bat` file refuses to spawn when args contain characters the
-/// CVE-2024-24576 mitigation considers risky for `cmd` parsing —
+/// On Windows we route through `cmd.exe /d /c call <path> ...args`
+/// because `kotlinc` ships as `kotlinc.bat`, and Rust's `Command::new`
+/// on a `.bat` file refuses to spawn when args contain characters
+/// the CVE-2024-24576 mitigation considers risky for `cmd` parsing —
 /// our classpath args use the Windows separator `;`, which trips
-/// the check. Going through `cmd /c` makes the batch resolution
-/// `cmd`'s responsibility, side-stepping the mitigation entirely
-/// for our (controlled, non-user-input) arg shapes.
+/// the check.
+///
+/// Three Windows-specific quirks the wrapper guards against:
+///   • `/d` disables `cmd.exe`'s AutoRun registry hook so a stray
+///     `HKCU\Software\Microsoft\Command Processor\AutoRun` value
+///     can't inject commands into our shell.
+///   • `call` (instead of bare path) avoids cmd's leading-quote
+///     stripping pitfall — `cmd /c "C:\path with spaces\foo.bat" arg`
+///     can be parsed as if the outer quotes belong to a different
+///     phrase, dropping or merging them. `cmd /d /c call <path> arg`
+///     uses the `call` command's own arg-parsing which handles
+///     quoted paths reliably.
+///   • Routing through cmd makes the batch resolution cmd's
+///     responsibility, side-stepping the BatBadBut mitigation
+///     entirely for our (controlled) arg shapes.
 fn kotlinc_command(kotlinc: &Utf8Path) -> Command {
     if cfg!(windows) {
         let mut cmd = Command::new("cmd");
-        cmd.arg("/c").arg(kotlinc.as_std_path());
+        cmd.arg("/d").arg("/c").arg("call").arg(kotlinc.as_std_path());
         cmd
     } else {
         Command::new(kotlinc.as_std_path())
