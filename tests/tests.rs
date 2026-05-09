@@ -213,7 +213,7 @@ fn run_kotlin_test(fixture_name: &str, test_file: &str) -> Result<()> {
     if kt_files.is_empty() {
         bail!("no generated .kt files under {}", out_dir);
     }
-    let mut kotlinc_cmd = Command::new(kotlinc.as_std_path());
+    let mut kotlinc_cmd = kotlinc_command(&kotlinc);
     kotlinc_cmd.arg("-include-runtime");
     if needs_coroutines {
         kotlinc_cmd
@@ -244,7 +244,7 @@ fn run_kotlin_test(fixture_name: &str, test_file: &str) -> Result<()> {
     fs::create_dir_all(&test_classes_dir)?;
     let mut test_compile_classpath: Vec<&Utf8PathBuf> = vec![&bindings_jar];
     test_compile_classpath.extend(coroutines_paths.iter().copied());
-    let test_kotlinc_status = Command::new(kotlinc.as_std_path())
+    let test_kotlinc_status = kotlinc_command(&kotlinc)
         .arg("-classpath")
         .arg(calc_classpath(test_compile_classpath))
         .arg("-d")
@@ -350,7 +350,7 @@ fn run_kotlin_test_with_library_override(
     if kt_files.is_empty() {
         bail!("no generated .kt files under {}", out_dir);
     }
-    let mut kotlinc_cmd = Command::new(kotlinc.as_std_path());
+    let mut kotlinc_cmd = kotlinc_command(&kotlinc);
     kotlinc_cmd.arg("-include-runtime");
     if needs_coroutines {
         kotlinc_cmd
@@ -376,7 +376,7 @@ fn run_kotlin_test_with_library_override(
     fs::create_dir_all(&test_classes_dir)?;
     let mut test_compile_classpath: Vec<&Utf8PathBuf> = vec![&bindings_jar];
     test_compile_classpath.extend(coroutines_paths.iter().copied());
-    let test_kotlinc_status = Command::new(kotlinc.as_std_path())
+    let test_kotlinc_status = kotlinc_command(&kotlinc)
         .arg("-classpath")
         .arg(calc_classpath(test_compile_classpath))
         .arg("-d")
@@ -556,6 +556,29 @@ fn kotlinc_path() -> Option<Utf8PathBuf> {
         None
     } else {
         Some(Utf8PathBuf::from(trimmed))
+    }
+}
+
+/// Construct a `Command` for invoking `kotlinc` that's safe to spawn
+/// from Rust on every supported platform.
+///
+/// On Unix-likes this is a thin wrapper over `Command::new(path)`.
+///
+/// On Windows we route through `cmd.exe /c "<path>" ...args` because
+/// `kotlinc` ships as `kotlinc.bat`, and Rust's `Command::new` on a
+/// `.bat` file refuses to spawn when args contain characters the
+/// CVE-2024-24576 mitigation considers risky for `cmd` parsing —
+/// our classpath args use the Windows separator `;`, which trips
+/// the check. Going through `cmd /c` makes the batch resolution
+/// `cmd`'s responsibility, side-stepping the mitigation entirely
+/// for our (controlled, non-user-input) arg shapes.
+fn kotlinc_command(kotlinc: &Utf8Path) -> Command {
+    if cfg!(windows) {
+        let mut cmd = Command::new("cmd");
+        cmd.arg("/c").arg(kotlinc.as_std_path());
+        cmd
+    } else {
+        Command::new(kotlinc.as_std_path())
     }
 }
 
