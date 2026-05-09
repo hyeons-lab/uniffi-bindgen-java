@@ -70,6 +70,11 @@ uniffi-fixture-trait-methods = { git = "https://github.com/mozilla/uniffi-rs.git
 uniffi-fixture-trait-methods-kt = { path = "fixtures/trait-methods-kt" }
 uniffi-fixture-trait-with-foreign = { path = "fixtures/trait-with-foreign" }
 uniffi_testing = { git = "https://github.com/mozilla/uniffi-rs.git", tag = "v0.31.0" }
+# Cross-platform SHA-256 for kotlinx-coroutines JAR verification
+# (`tests/tests.rs::verify_sha256`). Was shelling out to `shasum` /
+# `sha256sum`, neither on the default Windows PATH; in-process
+# hashing avoids that.
+sha2 = "0.10"
 
 [[bench]]
 name = "benchmarks"
