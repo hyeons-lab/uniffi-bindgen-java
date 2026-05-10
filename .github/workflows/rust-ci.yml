@@ -16,13 +16,52 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  rust-ci:
-    uses: IronCoreLabs/workflows/.github/workflows/rust-ci.yaml@rust-ci-v2
-    with:
-      run_clippy: true
-      minimum_coverage: "0"
-      cargo_command_env_vars: "PATH=$JAVA_HOME_25_X64/bin:$PATH JDK_JAVA_OPTIONS=--enable-native-access=ALL-UNNAMED"
-    secrets: inherit
+  fmt:
+    name: Format
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.94.0
+          components: rustfmt
+      - run: cargo fmt --all -- --check
+
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.94.0
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo clippy --all-targets --all-features -- -D warnings
+        env:
+          JDK_JAVA_OPTIONS: --enable-native-access=ALL-UNNAMED
+
+  test:
+    name: Rust tests
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.94.0
+      - uses: Swatinem/rust-cache@v2
+      - name: Run Rust tests
+        run: cargo test --lib --bins --tests
+        env:
+          JDK_JAVA_OPTIONS: --enable-native-access=ALL-UNNAMED
 
   kotlin-ci:
     name: Kotlin runtime tests (${{ matrix.os }}, JDK ${{ matrix.jdk }})
