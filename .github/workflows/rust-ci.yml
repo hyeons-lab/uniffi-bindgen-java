@@ -26,9 +26,9 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@de0fac21075357c0e7ff1d684097c73c32e9decd # v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@e97e2d8448aa2398e0d4a052c2ff4e7478702d8e # v1
+        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: 1.94.0
           components: rustfmt
@@ -39,13 +39,13 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@de0fac21075357c0e7ff1d684097c73c32e9decd # v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@e97e2d8448aa2398e0d4a052c2ff4e7478702d8e # v1
+        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: 1.94.0
           components: clippy
-      - uses: Swatinem/rust-cache@c193711c4f238f903ba199a1e0ef887162649711 # v2.9.1
+      - uses: Swatinem/rust-cache@23869a5bd66c73db3c0ac40331f3206eb23791dc # v2.9.1
       - run: cargo clippy --all-targets --all-features -- -D warnings
         env:
           JDK_JAVA_OPTIONS: --enable-native-access=ALL-UNNAMED
@@ -55,17 +55,17 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@de0fac21075357c0e7ff1d684097c73c32e9decd # v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Set up JDK 25
-        uses: actions/setup-java@f2beeb2480e51444637a396e6206148556d0666c # v5.1.0
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
         with:
           distribution: temurin
           java-version: '25'
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@e97e2d8448aa2398e0d4a052c2ff4e7478702d8e # v1
+        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: 1.94.0
-      - uses: Swatinem/rust-cache@c193711c4f238f903ba199a1e0ef887162649711 # v2.9.1
+      - uses: Swatinem/rust-cache@23869a5bd66c73db3c0ac40331f3206eb23791dc # v2.9.1
       - name: Run Rust tests
         run: cargo test --lib --bins --tests
         env:
@@ -84,30 +84,30 @@ jobs:
     env:
       JDK_JAVA_OPTIONS: --enable-native-access=ALL-UNNAMED
     steps:
-      - uses: actions/checkout@de0fac21075357c0e7ff1d684097c73c32e9decd # v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Set up JDK ${{ matrix.jdk }}
-        uses: actions/setup-java@f2beeb2480e51444637a396e6206148556d0666c # v5.1.0
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
         with:
           distribution: temurin
           java-version: ${{ matrix.jdk }}
       # Pinning the kotlin subtree of the tool cache keyed on OS+version.
       - name: Cache kotlinc
-        uses: actions/cache@1bd1f32a3514402c753730760744d10ad2dd2fa6 # v5.0.0
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: ${{ runner.tool_cache }}/kotlin
           key: kotlinc-${{ runner.os }}-2.3.20
       - name: Set up Kotlin
-        uses: fwilhe2/setup-kotlin@7163c927163c927163c927163c927163c927163c # v1.8
+        uses: fwilhe2/setup-kotlin@7163c92e0f906bdf586bd76b14143aa61d6b49e4 # v1.8
         with:
           version: 2.3.20
       - name: Install Rust toolchain (keep in sync with rust-toolchain.toml)
-        uses: dtolnay/rust-toolchain@e97e2d8448aa2398e0d4a052c2ff4e7478702d8e # v1
+        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: 1.94.0
-      - uses: Swatinem/rust-cache@c193711c4f238f903ba199a1e0ef887162649711 # v2.9.1
+      - uses: Swatinem/rust-cache@23869a5bd66c73db3c0ac40331f3206eb23791dc # v2.9.1
       # Custom cache for kotlinx-coroutines JAR.
       - name: Cache kotlinx-coroutines JAR
-        uses: actions/cache@1bd1f32a3514402c753730760744d10ad2dd2fa6 # v5.0.0
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: target/kotlin-deps
           key: kotlinx-coroutines-${{ runner.os }}-1.10.2
