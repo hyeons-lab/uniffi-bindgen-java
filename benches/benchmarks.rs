@@ -47,15 +47,10 @@ fn main() -> Result<()> {
     paths.add_cargo_metadata_layer(false)?;
     let loader = BindgenLoader::new(paths);
 
-    generate(
-        &loader,
-        &GenerateOptions {
-            source: cdylib_path.clone(),
-            out_dir: out_dir.clone(),
-            format: false,
-            crate_filter: None,
-        },
-    )?;
+    let mut options = GenerateOptions::new(cdylib_path.clone(), out_dir.clone());
+    options.format = false;
+    options.crate_filter = None;
+    generate(&loader, &options)?;
 
     // Copy cdylib and create symlink for System.loadLibrary
     let native_lib_dir = tmp_dir.join("native");
